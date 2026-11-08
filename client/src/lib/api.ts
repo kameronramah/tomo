@@ -31,8 +31,11 @@ export type Message = {
   guest: boolean;
   content: string;
   createdAt: number;
+  editedAt?: number;
   attachments?: Attachment[];
+  reactions?: Reaction[];
 };
+export type Reaction = { emoji: string; count: number; userIds: string[] };
 export type Attachment = {
   id: string;
   kind: "image" | "audio" | "file";
@@ -370,6 +373,8 @@ export class Api {
   /** Adresse complète d'une pièce jointe. */
   fileUrl = (a: Attachment) => `${this.baseUrl}${a.url}`;
   deleteMessage = (id: string) => this.request("DELETE", `/messages/${id}`);
+  editMessage = (id: string, content: string) => this.request<Message>("PATCH", `/messages/${id}`, { content });
+  react = (id: string, emoji: string) => this.request<{ reactions: Reaction[] }>("POST", `/messages/${id}/reactions`, { emoji });
 
   // ---- Amis, messages privés, appels ---------------------------------------
   friends = () => this.request<Friend[]>("GET", "/friends");

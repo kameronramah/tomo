@@ -120,6 +120,8 @@ for (const sql of [
   "ALTER TABLE users ADD COLUMN friend_policy TEXT NOT NULL DEFAULT 'everyone'", // everyone | servers | nobody
   "ALTER TABLE users ADD COLUMN show_game INTEGER NOT NULL DEFAULT 1",
   "ALTER TABLE users ADD COLUMN show_last_seen INTEGER NOT NULL DEFAULT 1",
+  // --- Messages (v0.7) ---
+  "ALTER TABLE messages ADD COLUMN edited_at INTEGER", // dernière modification
 ]) {
   try {
     db.exec(sql);
@@ -136,6 +138,15 @@ CREATE TABLE IF NOT EXISTS blocks (
   created_at INTEGER NOT NULL,
   PRIMARY KEY (blocker_id, blocked_id)
 );
+-- Réactions aux messages (une ligne par personne et par emoji)
+CREATE TABLE IF NOT EXISTS message_reactions (
+  message_id TEXT NOT NULL,
+  user_id    TEXT NOT NULL,
+  emoji      TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (message_id, user_id, emoji)
+);
+CREATE INDEX IF NOT EXISTS reactions_by_message ON message_reactions (message_id);
 -- Conversations privées avec quelqu'un qui n'est pas ami : acceptée ou ignorée par user_id.
 CREATE TABLE IF NOT EXISTS dm_state (
   user_id  TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

@@ -109,6 +109,7 @@ type HomeProps = {
   myName: string;
   speaking: ReadonlySet<string>;
   unread: Record<string, number>;
+  mentions?: Record<string, number>;
   /** Liste des membres (colonne de droite) */
   members: ReactNode;
   joiningRoomId?: string;
@@ -253,7 +254,11 @@ export function ServerHome(p: HomeProps) {
                     <span className="fil-name ellipsis">{c.name}</span>
                     <span className="small muted">{n > 0 ? `${n} nouveau${n > 1 ? "x" : ""} message${n > 1 ? "s" : ""}` : "Ouvrir le fil"}</span>
                   </span>
-                  {n > 0 && <span className="badge amber-badge-fill">{n > 99 ? "99+" : n}</span>}
+                  {(p.mentions?.[`channel:${c.id}`] ?? 0) > 0 ? (
+                    <span className="count red">@{p.mentions![`channel:${c.id}`]}</span>
+                  ) : (
+                    n > 0 && <span className="badge amber-badge-fill">{n > 99 ? "99+" : n}</span>
+                  )}
                 </button>
                 {p.isManager && <MoreMenu label={c.name} onRename={() => p.onRenameChannel(c)} onDelete={() => p.onDeleteChannel(c)} />}
               </div>

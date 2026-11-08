@@ -17,6 +17,17 @@ function AuthorName({ id, name, onOpen }: { id: string | null; name: string; onO
   );
 }
 import { AttachmentView, Lightbox } from "./Attachments";
+import {
+  EmojiPicker,
+  MentionSuggest,
+  MessageText,
+  MessageToolbar,
+  Reactions,
+  fromTokens,
+  mentionsMe,
+  toTokens,
+  type Mentionable,
+} from "./MessageParts";
 
 type Props = {
   api: Api;
@@ -38,6 +49,10 @@ type Props = {
   hideComposer?: boolean;
   /** Clic sur l'avatar ou le nom de quelqu'un */
   onOpenProfile?: (userId: string) => void;
+  /** Personnes qu'on peut @mentionner ici */
+  mentionables?: Mentionable[];
+  /** Je suis en vocal dans ce serveur (les @vocal me concernent) */
+  inVoiceHere?: boolean;
 };
 
 const GROUP_MS = 5 * 60 * 1000;
@@ -73,19 +88,6 @@ function dayLabel(ts: number) {
 }
 const timeLabel = (ts: number) => new Date(ts).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-/** Rend les liens cliquables, le reste en texte brut (pas de HTML injecté). */
-function renderContent(text: string) {
-  const parts = text.split(/(https?:\/\/[^\s]+)/g);
-  return parts.map((p, i) =>
-    /^https?:\/\//.test(p) ? (
-      <a key={i} href={p} target="_blank" rel="noreferrer noopener">
-        {p}
-      </a>
-    ) : (
-      <span key={i}>{p}</span>
-    ),
-  );
-}
 
 export default function ChatView(props: Props) {
   const { api, realtime, scope, target, myId } = props;
@@ -156,8 +158,86 @@ export default function ChatView(props: Props) {
       if (e.type === "messageDeleted" && e.scope === scope && e.target === stored) {
         setMessages((list) => list.filter((m) => m.id !== e.id));
       }
+      if (e.type === "messageEdited" && e.message.scope === scope && e.message.target === stored) {
+        setMessages((list) => list.map((m) => (m.id === e.message.id ? e.message : m)));
+      }
+      if (e.type === "reactions" && e.scope === scope && e.target === stored) {
+        setMessages((list) => list.map((m) => (m.id === e.messageId ? { ...m, reactions: e.reactions } : m)));
+      }
     });
   }, [realtime, scope, stored]);
+
+  // ---- Réactions, modification, mentions -------------------------------------
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: string; text: string } | null>(null);
+  const chosen = useRef(new Map<string, string>()); // « Nom » → id, pour les mentions choisies
+  const [suggest, setSuggest] = useState<{ query: string; start: number; index: number } | null>(null);
+
+  async function react(messageId: string, emoji: string) {
+    setPickerFor(null);
+    try {
+      const r = await api.react(messageId, emoji);
+      setMessages((list) => list.map((m) => (m.id === messageId ? { ...m, reactions: r.reactions } : m)));
+    } catch (e) {
+      setError(errorMessage(e));
+    }
+  }
+
+  function startEdit(m: Message) {
+    setEditing({ id: m.id, text: fromTokens(m.content, chosen.current) });
+  }
+
+  async function saveEdit() {
+    if (!editing) return;
+    const { id, text } = editing;
+    setEditing(null);
+    try {
+      const msg = await api.editMessage(id, toTokens(text.trim(), chosen.current));
+      setMessages((list) => list.map((m) => (m.id === id ? msg : m)));
+    } catch (e) {
+      setError(errorMessage(e));
+    }
+    inputRef.current?.focus();
+  }
+
+  const mentionables: Mentionable[] = [
+    ...(props.mentionables ?? []).filter((m) => m.id !== myId),
+    ...(scope === "dm" ? [] : [{ id: "vocal", name: "vocal", hint: "ceux en vocal" }]),
+    ...(scope !== "dm" && props.canModerate ? [{ id: "tous", name: "tous", hint: "tout le serveur" }] : []),
+  ];
+  const suggestions = suggest
+    ? mentionables.filter((m) => m.name.toLowerCase().startsWith(suggest.query.toLowerCase())).slice(0, 6)
+    : [];
+
+  /** Repère « @mot » juste avant le curseur pour proposer des mentions. */
+  function updateSuggest(value: string, caret: number) {
+    const before = value.slice(0, caret);
+    const m = /(^|\s)@([\p{L}\p{N}_.\- ]{0,24})$/u.exec(before);
+    if (!m || m[2].includes("  ")) return setSuggest(null);
+    setSuggest({ query: m[2], start: caret - m[2].length - 1, index: 0 });
+  }
+
+  function insertMention(m: Mentionable) {
+    if (!suggest) return;
+    const label = m.id === "vocal" || m.id === "tous" ? m.id : m.name;
+    if (m.id !== "vocal" && m.id !== "tous") chosen.current.set(m.name, m.id);
+    const caret = inputRef.current?.selectionStart ?? draft.length;
+    const next = `${draft.slice(0, suggest.start)}@${label} ${draft.slice(caret)}`;
+    setDraft(next);
+    setSuggest(null);
+    requestAnimationFrame(() => {
+      const pos = suggest.start + label.length + 2;
+      inputRef.current?.focus();
+      inputRef.current?.setSelectionRange(pos, pos);
+    });
+  }
+
+  function mentionAuthor(m: Message) {
+    const name = props.mentionables?.find((x) => x.id === m.authorId)?.name ?? m.authorName;
+    chosen.current.set(name, m.authorId);
+    setDraft((d) => `${d}${d && !d.endsWith(" ") ? " " : ""}@${name} `);
+    inputRef.current?.focus();
+  }
 
   // Reste collé en bas quand on y était
   useLayoutEffect(() => {
@@ -223,7 +303,7 @@ export default function ChatView(props: Props) {
   }
 
   async function send() {
-    const content = draft.trim();
+    const content = toTokens(draft.trim(), chosen.current);
     if (pending.some((p) => p.status === "uploading")) return;
     const ready = pending.filter((p) => p.status === "ready" && p.att);
     if (!content && ready.length === 0) return;
@@ -287,9 +367,13 @@ export default function ChatView(props: Props) {
     const newDay = !prev || new Date(prev.createdAt).toDateString() !== new Date(m.createdAt).toDateString();
     if (newDay) rows.push(<div key={`d-${m.id}`} className="day-sep"><span>{dayLabel(m.createdAt)}</span></div>);
     const grouped = !newDay && prev && prev.authorId === m.authorId && m.createdAt - prev.createdAt < GROUP_MS;
-    const canDelete = m.authorId === myId || props.canModerate;
+    const mine = m.authorId === myId;
+    const canDelete = mine || !!props.canModerate;
+    const isEditing = editing?.id === m.id;
+    const forMe = !mine && mentionsMe(m.content, myId, props.inVoiceHere);
+    const remove = () => api.deleteMessage(m.id).then(() => setMessages((l) => l.filter((x) => x.id !== m.id))).catch((e) => setError(errorMessage(e)));
     rows.push(
-      <div key={m.id} className={`msg${grouped ? " grouped" : ""}${m.authorId === myId ? " mine" : ""}`}>
+      <div key={m.id} className={`msg${grouped ? " grouped" : ""}${mine ? " mine" : ""}${forMe ? " for-me" : ""}`}>
         {grouped ? (
           <span className="msg-time-gutter">{timeLabel(m.createdAt)}</span>
         ) : (
@@ -305,7 +389,29 @@ export default function ChatView(props: Props) {
               <time>{timeLabel(m.createdAt)}</time>
             </div>
           )}
-          {m.content && <div className={`msg-text${props.masked ? " masked" : ""}`}>{renderContent(m.content)}</div>}
+          {isEditing ? (
+            <div className="msg-edit">
+              <textarea
+                value={editing.text}
+                autoFocus
+                maxLength={2000}
+                aria-label="Modifier le message"
+                onChange={(e) => setEditing({ id: m.id, text: e.target.value })}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) (e.preventDefault(), saveEdit());
+                  if (e.key === "Escape") setEditing(null);
+                }}
+              />
+              <span className="small muted">Entrée pour enregistrer · Échap pour annuler</span>
+            </div>
+          ) : (
+            m.content && (
+              <div className={`msg-text${props.masked ? " masked" : ""}`}>
+                <MessageText text={m.content} myId={myId} masked={props.masked} onOpenProfile={props.onOpenProfile} />
+              </div>
+            )
+          )}
+          {m.editedAt && !isEditing && <span className="edited">modifié</span>}
           {props.masked && !!m.attachments?.length && (
             <span className="masked-note">
               {m.attachments.length} fichier{m.attachments.length > 1 ? "s" : ""} masqué{m.attachments.length > 1 ? "s" : ""} jusqu'à ce que tu acceptes
@@ -318,16 +424,21 @@ export default function ChatView(props: Props) {
               ))}
             </div>
           )}
+          {!props.masked && (
+            <Reactions reactions={m.reactions ?? []} myId={myId} onToggle={(e) => react(m.id, e)} onAdd={() => setPickerFor(m.id)} />
+          )}
+          {pickerFor === m.id && <EmojiPicker onPick={(e) => react(m.id, e)} onClose={() => setPickerFor(null)} />}
         </div>
-        {canDelete && (
-          <button
-            className="icon-btn sm msg-delete"
-            aria-label="Supprimer le message"
-            title="Supprimer"
-            onClick={() => api.deleteMessage(m.id).then(() => setMessages((l) => l.filter((x) => x.id !== m.id))).catch((e) => setError(errorMessage(e)))}
-          >
-            <Icon name="trash" size={15} />
-          </button>
+        {!props.masked && !isEditing && (
+          <MessageToolbar
+            mine={mine}
+            canDelete={canDelete}
+            onReact={(e) => react(m.id, e)}
+            onMore={() => setPickerFor(m.id)}
+            onEdit={() => startEdit(m)}
+            onDelete={remove}
+            onMention={!m.guest && !props.hideComposer ? () => mentionAuthor(m) : undefined}
+          />
         )}
       </div>,
     );
@@ -419,6 +530,7 @@ export default function ChatView(props: Props) {
             send();
           }}
         >
+          {suggest && suggestions.length > 0 && <MentionSuggest items={suggestions} index={suggest.index} onPick={insertMention} />}
           <input
             ref={fileRef}
             type="file"
@@ -435,7 +547,11 @@ export default function ChatView(props: Props) {
           <textarea
             ref={inputRef}
             value={draft}
-            onChange={(e) => setDraft(e.target.value)}
+            onChange={(e) => {
+              setDraft(e.target.value);
+              updateSuggest(e.target.value, e.target.selectionStart ?? e.target.value.length);
+            }}
+            onBlur={() => setSuggest(null)}
             onPaste={(e) => {
               const files = [...e.clipboardData.files];
               if (files.length) {
@@ -444,6 +560,30 @@ export default function ChatView(props: Props) {
               }
             }}
             onKeyDown={(e) => {
+              // Suggestions de mentions ouvertes : flèches pour choisir, Tab / Entrée pour insérer
+              if (suggest && suggestions.length > 0) {
+                if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+                  e.preventDefault();
+                  const d = e.key === "ArrowDown" ? 1 : -1;
+                  setSuggest({ ...suggest, index: (suggest.index + d + suggestions.length) % suggestions.length });
+                  return;
+                }
+                if (e.key === "Tab" || e.key === "Enter") {
+                  e.preventDefault();
+                  insertMention(suggestions[suggest.index] ?? suggestions[0]);
+                  return;
+                }
+                if (e.key === "Escape") return setSuggest(null);
+              }
+              // Flèche ↑ dans un champ vide : modifier mon dernier message
+              if (e.key === "ArrowUp" && !draft) {
+                const last = [...messages].reverse().find((m) => m.authorId === myId && m.content);
+                if (last) {
+                  e.preventDefault();
+                  startEdit(last);
+                  return;
+                }
+              }
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
                 send();

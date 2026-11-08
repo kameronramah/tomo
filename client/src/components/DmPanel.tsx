@@ -43,6 +43,7 @@ export default function DmPanel(p: Props) {
       placeholder={`Écrire à ${name}`}
       emptyText={`C'est le début de ta conversation avec ${name}.`}
       onOpenProfile={p.onOpenProfile}
+      mentionables={[{ id: p.userId, name }]}
       header={
         <>
           <header className="chat-header">

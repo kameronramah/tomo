@@ -6,6 +6,7 @@ import {
   type ChosenStatus,
   type DmSummary,
   type MyProfile,
+  type Person,
   type Friend,
   type Message,
   type RoomInfo,
@@ -21,6 +22,7 @@ import { playSound, setQuietMode, startRinging } from "./lib/sounds";
 import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
 import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
 import { flashIcon, setAppBadge } from "./lib/badge";
+import { mentionsMe } from "./components/MessageParts";
 import ProfileCard from "./components/ProfileCard";
 import { speakingDetector } from "./lib/speaking";
 import { errorMessage } from "./lib/ui";
@@ -342,7 +344,29 @@ export default function App() {
     dmOrder.reduce((n, id) => n + (unread[`dm:${id}`] ?? 0), 0) +
     friends.filter((f) => f.status === "incoming").length +
     dmRequests.length;
-  useEffect(() => void setAppBadge(messagesBadge), [messagesBadge]);
+  /** Mentions non lues (@toi, @tous, @vocal) par fil / pièce. */
+  const [mentions, setMentions] = useState<Record<string, number>>({});
+  const mentionTotal = Object.values(mentions).reduce((a, b) => a + b, 0);
+  useEffect(() => void setAppBadge(messagesBadge + mentionTotal), [messagesBadge, mentionTotal]);
+
+  /** Membres du serveur ouvert (pour proposer les @mentions). */
+  const [serverPeople, setServerPeople] = useState<Person[]>([]);
+  useEffect(() => {
+    if (!detail?.id) return setServerPeople([]);
+    let alive = true;
+    const load = () => api.people(detail.id).then((p) => alive && setServerPeople(p)).catch(() => {});
+    load();
+    const t = setInterval(load, 30_000);
+    return () => ((alive = false), clearInterval(t));
+  }, [api, detail?.id]);
+  const mentionables = useMemo(
+    () =>
+      serverPeople
+        .filter((p) => !p.guest)
+        .sort((a, b) => Number(!!b.room) - Number(!!a.room) || a.displayName.localeCompare(b.displayName))
+        .map((p) => ({ id: p.id, name: p.displayName, hint: p.room ? "en vocal" : p.status === "offline" ? "hors ligne" : undefined })),
+    [serverPeople],
+  );
 
   /** Serveur de chaque clé de non-lus (pour le point gris sur la colonne des serveurs). */
   const keyServerRef = useRef<Record<string, string>>({});
@@ -371,7 +395,8 @@ export default function App() {
 
   useEffect(() => {
     if (viewingKey && unread[viewingKey]) setUnread((u) => ({ ...u, [viewingKey]: 0 }));
-  }, [viewingKey, unread]);
+    if (viewingKey && mentions[viewingKey]) setMentions((x) => ({ ...x, [viewingKey]: 0 }));
+  }, [viewingKey, unread, mentions]);
 
   // ---- Événements temps réel -----------------------------------------------------
   const handleEvent = useCallback(
@@ -391,6 +416,17 @@ export default function App() {
             });
           }
           if (typeof e.serverId === "string") keyServerRef.current[key] = e.serverId;
+          // Mention (@toi, @tous, ou @vocal si je suis en vocal dans ce serveur)
+          const v = voiceRef.current;
+          const inVoiceThere = v?.kind === "room" && v.serverId === e.serverId;
+          if (m.scope !== "dm" && mentionsMe(m.content, myId, inVoiceThere)) {
+            if (viewingRef.current !== key || !document.hasFocus()) {
+              setMentions((x) => ({ ...x, [key]: (x[key] ?? 0) + 1 }));
+              playSound("message");
+              void flashIcon();
+              void notify(`${m.authorName} t'a mentionné`, m.content.replace(/<@[^>]+>/g, "@…"));
+            }
+          }
           if (viewingRef.current === key && document.hasFocus()) return;
           if (viewingRef.current !== key) setUnread((u) => ({ ...u, [key]: (u[key] ?? 0) + 1 }));
           if (m.scope === "dm") {
@@ -782,6 +818,8 @@ export default function App() {
               myId={myId}
               canModerate={isManager}
               onOpenProfile={setProfileId}
+              mentionables={mentionables}
+              inVoiceHere
               placeholder={`Écrire dans ${voiceRoomInfo?.label ?? voice.roomLabel}`}
               emptyText="Le chat du salon : liens, infos de partie… Les messages restent pour les prochaines fois."
               compact
@@ -866,6 +904,8 @@ export default function App() {
         myId={myId}
         canModerate={isManager}
         onOpenProfile={setProfileId}
+        mentionables={mentionables}
+        inVoiceHere={voice?.kind === "room" && voice.serverId === detail.id}
         placeholder={`Écrire dans #${openChannel.name}`}
         emptyText={`Bienvenue dans #${openChannel.name} ! Lance la conversation.`}
         header={
@@ -895,6 +935,7 @@ export default function App() {
         myName={displayName}
         speaking={speaking}
         unread={unread}
+        mentions={mentions}
         members={<MemberList api={api} realtime={realtime} serverId={detail.id} myId={myId} onOpenProfile={setProfileId} />}
         joiningRoomId={joiningRoomId}
         onJoin={enterRoom}
@@ -975,6 +1016,7 @@ export default function App() {
               myName={me?.displayName ?? displayName}
               speaking={speaking}
               unread={unread}
+              mentions={mentions}
               openRoomId={stageVisible && voice?.kind === "room" ? voice.roomId : undefined}
               openChannelId={openChannel?.id}
               joiningRoomId={joiningRoomId}

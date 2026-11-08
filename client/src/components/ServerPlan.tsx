@@ -12,6 +12,8 @@ type Props = {
   myName: string;
   speaking: ReadonlySet<string>;
   unread: Record<string, number>;
+  /** Mentions non lues (pastille rouge « @n ») */
+  mentions?: Record<string, number>;
   /** Ce qui est ouvert à droite */
   openRoomId?: string;
   openChannelId?: string;
@@ -116,11 +118,12 @@ export default function ServerPlan(p: Props) {
         <span className="section-title">Fils</span>
         {detail.channels.map((c) => {
           const n = p.unread[`channel:${c.id}`] ?? 0;
+          const at = p.mentions?.[`channel:${c.id}`] ?? 0;
           return (
             <button key={c.id} className={`plan-fil${c.id === p.openChannelId ? " open" : ""}${n ? " unread" : ""}`} onClick={() => p.onOpenChannel(c)} aria-current={c.id === p.openChannelId ? "page" : undefined}>
               <span className="fil-hash sm">#</span>
               <span className="grow ellipsis">{c.name}</span>
-              {n > 0 && <span className="count amber">{n > 99 ? "99+" : n}</span>}
+              {at > 0 ? <span className="count red">@{at}</span> : n > 0 && <span className="count amber">{n > 99 ? "99+" : n}</span>}
             </button>
           );
         })}
