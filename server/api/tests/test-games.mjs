@@ -6,7 +6,13 @@ let ok = 0, fail = 0;
 const check = (label, cond) => (cond ? ok++ : fail++, console.log(`${cond ? "OK  " : "FAIL"} ${label}`));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-async function call(method, path, body, token) {
+async function call(method, path, body, token, raw, retried) {
+  // Limitation anti-force brute (10 essais/min sur /auth) : on attend une minute et on réessaie.
+  const r = await call0(method, path, body, token, raw);
+  if (r.status === 429 && !retried) { console.log("(limitation de l'API : pause d'une minute)"); await new Promise((x) => setTimeout(x, 61_000)); return call(method, path, body, token, raw, true); }
+  return r;
+}
+async function call0(method, path, body, token) {
   const res = await fetch(base + path, {
     method,
     headers: { ...(body ? { "content-type": "application/json" } : {}), ...(token ? { authorization: `Bearer ${token}` } : {}) },

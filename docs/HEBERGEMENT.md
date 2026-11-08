@@ -72,6 +72,17 @@ docker compose logs -f
 - Dans l'appli tomo : sur l'écran de connexion, « Instance : … modifier » → `https://<API_DOMAIN>`, puis crée ton compte et ton serveur.
 - Une fois tes potes inscrits, tu peux fermer les inscriptions avec `REGISTRATION=closed` dans `.env` (puis `docker compose up -d`).
 
+### Options gratuites (dans `.env`)
+| Variable | À quoi ça sert | Où l'obtenir |
+|---|---|---|
+| `KLIPY_API_KEY` | Recherche de GIF dans les messages | https://partner.klipy.com |
+| `STEAM_API_KEY` | Stats Steam sur les profils (heures jouées) | https://steamcommunity.com/dev/apikey (mettre le domaine de l'API) |
+| `RIOT_API_KEY` | Liaison Riot + stats League of Legends | https://developer.riotgames.com — la clé « development » expire toutes les 24 h : demander une clé « personal » (gratuite) |
+
+Sans ces clés, tomo marche normalement ; seules ces options sont désactivées. Après un changement : `docker compose up -d`.
+
+> La liaison Steam renvoie le navigateur vers `https://<API_DOMAIN>/links/steam/callback` : l'API doit donc être joignable en HTTPS (c'est le cas avec Caddy).
+
 ## VPS partagé (ports 80/443 déjà pris)
 Si le VPS a déjà un nginx ou un Caddy :
 1. Retirer le service `caddy` de `docker-compose.yml`.
@@ -85,8 +96,10 @@ cd tomo && git pull
 cd server && docker compose up -d --build
 ```
 
+Les applis des joueurs, elles, se mettent à jour toutes seules depuis GitHub (voir [PUBLIER-UNE-VERSION.md](PUBLIER-UNE-VERSION.md)). Pense à mettre à jour le serveur en même temps qu'une nouvelle version de l'appli.
+
 ## Sauvegarde
-Toute la base (comptes, serveurs, salons, invitations) tient dans un fichier SQLite du volume `api-data`.
+Toute la base (comptes, serveurs, messages, mur des légendes, défis…) tient dans un fichier SQLite du volume `api-data`, et les pièces jointes dans `uploads/` du même volume.
 ```bash
 docker compose stop api
 docker compose cp api:/data/. ./sauvegarde-tomo/

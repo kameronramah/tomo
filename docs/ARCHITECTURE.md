@@ -4,82 +4,103 @@
 
 ```
         PC des joueurs                                   VPS
-┌──────────────────────────┐              ┌────────────────────────────────┐
-│  Client tomo (Tauri)     │   HTTPS      │  Caddy (443)                   │
-│  ├─ UI React             │ ───────────▶ │   ├─ api.<domaine>  → API :3000│
-│  ├─ livekit-client (JS)  │              │   └─ rtc.<domaine>  → LiveKit  │
-│  ├─ Web Audio (volume,   │   WebRTC     │                       :7880    │
-│  │  spatial, clips)      │ ◀══════════▶ │  LiveKit (SFU)                 │
-│  └─ Rust (raccourcis     │  UDP/TCP     │   ├─ UDP 50000-60000 (média)   │
-│     globaux, détection   │              │   ├─ TCP 7881 (repli)          │
-│     du jeu, overlay)     │              │   └─ TURN UDP 3478             │
-└──────────────────────────┘              │  API (Node + SQLite)           │
-                                          └────────────────────────────────┘
+┌──────────────────────────────┐          ┌────────────────────────────────┐
+│  Client tomo (Tauri 2)       │  HTTPS   │  Caddy (443)                   │
+│  ├─ UI React (+ overlay)     │ ───────▶ │   ├─ api.<domaine>  → API :3000│
+│  ├─ livekit-client (JS)      │  WS      │   └─ rtc.<domaine>  → LiveKit  │
+│  ├─ Web Audio : volume       │          │                       :7880    │
+│  │  uniformisé, spatial,     │  WebRTC  │  LiveKit (SFU)                 │
+│  │  clips, RNNoise           │ ◀══════▶ │   ├─ UDP 50000-60000 (média)   │
+│  ├─ Fil de calcul : Whisper  │          │   ├─ TCP 7881 (repli)          │
+│  │  + Opus-MT (sous-titres)  │          │   └─ TURN UDP 3478             │
+│  └─ Rust : coffre-fort,      │          │  API (Node 24 + SQLite)        │
+│     Mumble Link, jeux        │          └────────────────────────────────┘
+│     lancés, clips, overlay   │
+└──────────────────────────────┘          GitHub Releases : installateurs +
+                                          latest.json (mise à jour automatique)
 ```
 
 1. L'utilisateur se connecte (pseudo + mot de passe) : l'API renvoie un **jeton d'accès** (15 min) et un **jeton de renouvellement**.
-2. Il choisit un salon d'un de ses serveurs : l'API vérifie qu'il en est membre (ou invité de ce serveur) et signe un **jeton LiveKit** pour ce salon.
-3. Le client se connecte à LiveKit avec ce jeton. L'audio transite par le SFU, qui relaie chaque voix aux autres sans la décoder.
+2. Le client ouvre un **WebSocket** (`/ws?token=`) : messages, présence, « joue à … », appels, réactions… arrivent en direct.
+3. Pour entrer dans une pièce vocale, l'API vérifie les droits et signe un **jeton LiveKit** limité à cette pièce. L'audio/vidéo passe par LiveKit (SFU), qui relaie chaque flux sans le décoder.
 
-## Modèle de données
-
-Une **instance tomo** (= un VPS) héberge des **comptes** et des **serveurs** créés par les utilisateurs.
+## Modèle de données (SQLite)
 
 | Table | Contenu |
 |---|---|
-| `users` | pseudo (unique, insensible à la casse), hash scrypt du mot de passe |
-| `sessions` | hash SHA-256 du jeton de renouvellement, expiration (30 jours) |
-| `servers` | nom, créateur |
-| `members` | rôle par serveur : `owner` (créateur), `admin`, `member` |
-| `rooms` | salons vocaux d'un serveur, ordre, audio spatial ON/OFF |
-| `invites` | code `XXXX-XXXX`, type `member` ou `guest`, expiration, utilisations max |
+| `users` | pseudo, hash scrypt, nom affiché, photo/bannière, phrase, couleur, statut, confidentialité (`dm_policy`, `call_policy`, `friend_policy`, `show_game`, `show_last_seen`) |
+| `sessions` | hash SHA-256 du jeton de renouvellement, expiration |
+| `servers`, `members` | serveurs et rôles (`owner`, `admin`, `member`) |
+| `rooms`, `channels` | pièces vocales (audio spatial ON/OFF) et fils de discussion |
+| `invites` | codes membre ou invité d'un soir |
+| `messages`, `message_reactions` | messages (modifiables, `edited_at`), réactions emoji |
+| `attachments` | pièces jointes (fichier dans `DATA_DIR/uploads`) ; `message_id` = message, `profile:<id>` ou `legend:<id>` |
+| `friendships`, `blocks`, `dm_state` | amis, blocages, demandes de message acceptées / ignorées |
+| `legends`, `legend_reactions` | mur des légendes (citations, images, clips) |
+| `challenges`, `challenge_players`, `challenge_votes`, `points` | défis à points et classement du mois |
+| `game_accounts` | Steam (SteamID), Riot (PUUID, Riot ID, région), qui voit mes stats |
+
+Le « joue à … » n'est pas en base : chaque connexion WebSocket annonce son jeu, le serveur le garde en mémoire et ne le montre que si `show_game` est activé.
 
 | Action | Membre | Admin | Créateur |
 |---|---|---|---|
-| Rejoindre les salons, audio spatial ON/OFF, code membre | ✅ | ✅ | ✅ |
-| Créer / renommer / supprimer des salons, codes invités, exclure un membre | | ✅ | ✅ |
-| Nommer / retirer des admins, exclure un admin, supprimer le serveur | | | ✅ |
+| Pièces, fils, code membre, épingler au mur, lancer un défi | ✅ | ✅ | ✅ |
+| Créer / renommer / supprimer pièces et fils, codes invités, exclure, @tous, retirer une légende ou annuler un défi des autres | | ✅ | ✅ |
+| Nommer / retirer des admins, supprimer le serveur | | | ✅ |
 
-Un **invité** (code invité, sans compte) reçoit un jeton limité à **un seul serveur**, qui expire avec le code (24 h maximum). Il peut seulement entrer dans les salons.
+Un **invité** (code invité, sans compte) a un jeton limité à **un seul serveur**, qui expire avec le code.
+
+## Comment marchent les fonctionnalités
+
+### Audio
+- **Chaîne par voix reçue** (`setWebAudioPlugins`, en ligne droite) : **volume uniformisé** (`leveler.ts`) puis **audio spatial** (`PannerNode` HRTF) si la pièce l'a activé. Le son d'un partage d'écran n'est jamais traité.
+- **Micro** : suppression de bruit « légère » (filtre du navigateur) ou « avancée » (**RNNoise** en AudioWorklet, `denoise.ts`), plus une **porte de bruit** réglable. Branché sur la piste LiveKit avec `setProcessor` : ce qui part est le son nettoyé.
+- **« Qui parle »** : mesuré localement toutes les 40 ms (`speaking.ts`).
+
+### Audio spatial
+Positions échangées sur le canal de données LiveKit (sujet `pos`, ~10/s). Source « carte » (chacun déplace son avatar) ou « jeu » (**Mumble Link**, lu par la partie Rust). Repli au centre si pas de position récente ou jeux différents. Réglable par jeu (Paramètres › Jeux).
+
+### Jeux lancés
+La partie Rust (`games.rs`, crate `sysinfo`) lit **uniquement les noms des programmes ouverts**, toutes les 10 s. `games.ts` les compare à une liste de jeux connus + ceux ajoutés à la main. Le jeu en cours sert au « joue à … », à la pièce automatique, au mode focus (notifications coupées sauf coéquipiers), à l'audio spatial et à l'overlay par jeu.
+
+### Overlay en jeu
+Une seconde fenêtre Tauri (`label: overlay`), transparente, toujours au-dessus, **traversée par les clics** (`setIgnoreCursorEvents`). La fenêtre principale lui envoie son état (qui parle, chat, sous-titres) par événement Tauri toutes les 200 ms. Elle n'a aucune autre permission. Marche avec les jeux en plein écran fenêtré / sans bordure.
+
+### Sous-titres et traduction
+Un fil de calcul (`captions.worker.ts`) charge **Whisper** (reconnaissance) et **Opus-MT** (traduction FR ⇄ EN) avec Transformers.js, sur la carte graphique (WebGPU) ou le processeur. Les modèles sont téléchargés une fois depuis Hugging Face puis gardés en cache. Chaque voix reçue est découpée en phrases (silence de 0,7 s) puis transcrite dans la langue de la personne (attribut LiveKit `lang`). Rien ne sort du PC.
+
+### Mode coach
+Annotations (crayon, flèche, ping) sur un partage d'écran, échangées sur le canal de données LiveKit (sujet `coach`) en coordonnées 0..1 de l'image. Celui qui partage les ouvre ou les ferme (attribut `coach`). « Capturer » envoie l'image annotée dans le chat de la pièce.
+
+### Clips
+`AudioWorklet` → tampon circulaire en mémoire (30 s à 2 min) → WAV écrit par Rust dans Musique\tomo Clips. Un clip peut être mis au **mur des légendes** (envoyé comme pièce jointe).
+
+### Mise à jour automatique
+Plugin `updater` de Tauri. GitHub Actions construit les installateurs à chaque tag `v*`, les **signe** (clé privée dans les secrets du dépôt) et publie `latest.json` dans la Release. L'appli vérifie au démarrage puis toutes les 6 h, télécharge en arrière-plan et propose de redémarrer. Pas de canal bêta.
+
+### Stats de jeu
+- **Steam** : liaison par la connexion officielle Steam (OpenID 2.0, vérifiée par l'API) ; heures jouées sur 2 semaines via l'API Web Steam (`STEAM_API_KEY`).
+- **Riot** : liaison par Riot ID (la connexion officielle RSO est réservée aux applis validées) ; rang et dernières parties de League of Legends (`RIOT_API_KEY`). Réponses gardées 10 min en mémoire.
+
+### Langues
+`i18n.ts` : le texte est écrit en français dans le code (`t("Paramètres")`), `i18n-en.ts` le traduit. Un texte absent du dictionnaire reste en français.
 
 ## Pourquoi ces choix
-
-- **LiveKit** : serveur WebRTC open source (Apache 2.0) qui gère salons, audio, vidéo, partage d'écran et canaux de données. On n'a pas à écrire de serveur média.
-- **SFU plutôt que pair-à-pair** : chaque joueur n'envoie son audio qu'une fois, ce qui marche bien au-delà de 4 personnes.
-- **Tauri** : application de bureau bien plus légère qu'Electron (utilise le WebView du système). La partie Rust gère ce que le web ne sait pas faire : raccourcis globaux, liste des processus, overlay.
-- **SQLite** : zéro administration, un seul fichier, largement suffisant pour un groupe d'amis.
-- **Caddy** : HTTPS automatique avec Let's Encrypt, configuration en quelques lignes.
-
-## Comment les fonctionnalités clés seront réalisées
-
-### Volume normalisé
-Côté client : chaque piste audio reçue passe dans un `DynamicsCompressorNode` (Web Audio) puis un gain, avant la sortie. Aucun traitement serveur.
-
-### Clip audio après coup
-Le client mixe toutes les voix (et le micro) dans un `MediaStreamAudioDestinationNode`, enregistré en continu dans un **tampon circulaire** de 60 s. Sur le raccourci, le tampon est exporté en `.ogg` (Opus).
-
-### Mode radio (plusieurs salons)
-Le client ouvre **plusieurs connexions `Room` LiveKit** en parallèle. Chaque salon a son volume, et le micro n'est publié que dans le salon dont la touche de push-to-talk est enfoncée.
-
-### Audio spatial activable
-- **État** : stocké dans les **métadonnées du salon** LiveKit (`{"spatial": true}`), modifiées via l'API. Tous les participants, y compris ceux qui arrivent plus tard, voient le même état.
-- **Positions** : chaque client envoie sa position en jeu (x, y, z, orientation) environ 10 fois par seconde via les **data channels** LiveKit (mode `lossy`).
-- **Rendu** : chaque voix reçue passe dans un `PannerNode` (HRTF) positionné relativement au joueur local.
-- **Bascule** : si `spatial = false`, ou si un participant n'envoie pas de position depuis plus de 2 s, son panner est contourné et on revient à l'audio normal.
-- **Profils par jeu** : à la détection d'un jeu, le client propose (ou applique, selon les réglages) le mode par défaut du profil. L'interrupteur manuel garde toujours le dernier mot.
-- **Sources de positions** : un connecteur par jeu (mod Minecraft, API de jeu, mémoire partagée façon « Mumble Link »).
-
-### Callouts rapides
-Phrases pré-générées avec **Piper** au premier lancement (cache local), puis publiées comme une piste audio courte dans le salon.
-
-### Détection du jeu
-La partie Rust de Tauri liste les processus (crate `sysinfo`) et les compare à une table `processus → jeu` versionnée dans le dépôt.
+- **LiveKit** : serveur WebRTC open source (Apache 2.0) : salons, audio, vidéo, partage d'écran, canaux de données.
+- **SFU plutôt que pair-à-pair** : chacun n'envoie son flux qu'une fois.
+- **Tauri** : bien plus léger qu'Electron ; la partie Rust fait ce que le web ne sait pas faire (coffre-fort, mémoire partagée Mumble Link, liste des programmes, fenêtres transparentes).
+- **SQLite** : zéro administration, un seul fichier.
+- **Caddy** : HTTPS automatique.
+- **Transformers.js plutôt que whisper.cpp natif** : même modèle Whisper, mais rien à compiler pour Windows et Mac, et utilisation de la carte graphique via WebGPU.
 
 ## Sécurité
-- **Mots de passe** : 12 caractères minimum, hachés avec **scrypt** (N=32768, sel aléatoire de 16 octets), comparés à temps constant. Un hash factice est vérifié quand le pseudo n'existe pas, pour ne pas révéler quels pseudos existent.
-- **Sessions** : jeton d'accès JWT HS256 de 15 min (gardé en mémoire uniquement) + jeton de renouvellement aléatoire de 256 bits, **stocké haché** côté serveur et **remplacé à chaque usage** (rotation). « Déconnecter tous mes appareils » supprime toutes les sessions.
-- **« Rester connecté »** : le jeton de renouvellement est rangé dans le **Gestionnaire d'identification Windows** (crate Rust `keyring`), jamais dans un fichier.
-- **Anti force brute** : 10 tentatives/minute/IP sur les routes de connexion, et pseudo bloqué 15 min après 5 échecs.
-- **Droits vérifiés côté serveur** à chaque requête (rôle sur le serveur concerné).
-- **Jetons LiveKit** de 6 h, signés par l'API, limités à un salon. La clé secrète LiveKit ne quitte jamais le serveur.
-- Tout passe en **HTTPS** / DTLS-SRTP (WebRTC chiffre toujours le média en transit).
+- **Mots de passe** : 12 caractères minimum, **scrypt** (N=32768), comparaison à temps constant, hash factice si le pseudo n'existe pas.
+- **Sessions** : JWT de 15 min en mémoire + jeton de renouvellement **haché** côté serveur et **remplacé à chaque usage**.
+- **« Rester connecté »** : jeton rangé dans le coffre-fort du système (crate `keyring`).
+- **Anti force brute** : 10 tentatives/min/IP sur `/auth`, pseudo bloqué 15 min après 5 échecs.
+- **Droits vérifiés côté serveur** à chaque route (`access.ts`).
+- **Pièces jointes** : type déduit des octets, adresses signées, pas de SVG affiché, fichiers orphelins effacés.
+- **Jetons LiveKit** limités à une pièce ; la clé secrète ne quitte jamais le serveur.
+- **Liaison Steam** : réponse d'OpenID revérifiée auprès de Steam, état à usage unique (10 min).
+- **Mises à jour** : refusées si la signature ne correspond pas à la clé publique intégrée à l'appli.
+- **Vie privée** : jeux détectés, sous-titres, suppression de bruit et traduction calculés sur le PC ; le « joue à … » et les stats ne sont visibles que si on l'autorise.

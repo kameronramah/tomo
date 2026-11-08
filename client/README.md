@@ -1,11 +1,8 @@
 # Client tomo (Tauri + React)
 
-Application de bureau tomo :
-- **connexion / création de compte / entrée comme invité** avec un code ;
-- **sélecteur de serveur** (menu + accès rapide + Ctrl 1…9), création d'un serveur, rejoindre avec un code ;
-- **salons en cartes** avec qui est dedans, passage d'un salon à l'autre en un clic ;
-- **scène du salon vocal** : tuiles des participants, qui parle, volume par personne, dock (micro, son, périphériques, quitter), interrupteur d'audio spatial ;
-- **gestion du serveur** pour les admins : salons, membres, invitations.
+Application de bureau tomo (Windows, Mac) : connexion / compte / invité, serveurs en dossiers, pièces vocales, fils, messages privés et appels, partage d'écran et mode coach, clips, audio spatial, sous-titres, overlay en jeu, jeux détectés, mur des légendes, défis, stats, paramètres.
+
+> Pour **installer** tomo sans rien compiler : https://github.com/kameronramah/tomo/releases/latest
 
 ## Prérequis (Windows)
 - [Node.js LTS](https://nodejs.org)
@@ -32,34 +29,36 @@ winget install Microsoft.VisualStudio.2022.BuildTools --override "--wait --passi
    Le script recharge le PATH, vérifie que l'API de dev répond, installe les dépendances si besoin, puis lance `npm run tauri dev`. Il passe par un `.cmd` pour ne pas dépendre de la politique d'exécution des scripts PowerShell. Sur un autre système : `cd client && npm install && npm run tauri dev`.
 3. L'appli pointe par défaut sur l'instance `http://localhost:3000` : crée un compte, puis un serveur.
 
-> Astuce : `npm run dev` lance seulement la partie web sur http://localhost:1420. Chaque onglet a sa propre session : pratique pour simuler plusieurs joueurs.
+> Astuce : `npm run dev` lance seulement la partie web sur http://localhost:1420. Chaque onglet a sa propre session : pratique pour simuler plusieurs joueurs. Ce qui demande la partie Rust (jeux détectés, overlay, clips sur disque, mise à jour automatique, coffre-fort) ne marche que dans l'appli de bureau.
 
 ### Compte de test et outils de test
 
-Le serveur de dev crée automatiquement un **compte de test** : son pseudo et son mot de passe sont `DEV_USERNAME` / `DEV_PASSWORD` dans [`server/docker-compose.dev.yml`](../server/docker-compose.dev.yml). Connecté avec ce compte, une icône 🧪 en bas à gauche ouvre le panneau **Outils de test** :
+Le serveur de dev crée automatiquement un **compte de test** (`DEV_USERNAME` / `DEV_PASSWORD` dans [`server/docker-compose.dev.yml`](../server/docker-compose.dev.yml)). Connecté avec ce compte, une icône 🧪 ouvre le panneau **Outils de test** :
 
 | Outil | À quoi ça sert |
 |---|---|
-| Infos | instance, identité LiveKit, état et qualité de connexion, ping, version de LiveKit |
-| Faux joueurs (+1 / +3 bots) | remplir un salon quand on teste seul ; ils « parlent » (bip doux) pour tester l'indicateur et les volumes |
+| Infos | instance, identité LiveKit, état et qualité de connexion, ping |
+| Faux joueurs (+1 / +3 bots) | remplir une pièce ; ils « parlent » (bip doux) et se déplacent sur la carte spatiale |
+| Bot écran | un faux partage d'écran 1080p60 (annotations du mode coach ouvertes) |
 | Retour micro | s'entendre soi-même pour régler son micro |
-| Coupure courte / reconnexion complète | vérifier que l'appli se reconnecte toute seule |
-| Jeton expiré / session perdue | vérifier le renouvellement automatique de session et le retour à l'écran de connexion |
-| Faux membres | remplir la liste des membres d'un serveur (et les supprimer d'un clic) |
-| Journal | les événements du salon en direct |
+| Coupure courte / reconnexion | vérifier que l'appli se reconnecte toute seule |
+| Jeton expiré / session perdue | vérifier le renouvellement de session |
+| Faux membres | remplir la liste des membres d'un serveur |
+| Journal | les événements de la pièce en direct |
 
-**Sécurité :** ces outils n'existent que si l'API tourne avec `DEV_TOOLS=1` (serveur de dev). En production (`docker-compose.yml`), les routes `/dev` n'existent pas et le compte de test n'est pas créé. **Ne mets jamais `DEV_TOOLS` dans le `.env` du VPS.**
+**Sécurité :** ces outils n'existent que si l'API tourne avec `DEV_TOOLS=1`. **Ne mets jamais `DEV_TOOLS` dans le `.env` du VPS.**
 
-### Tester l'audio spatial sans jeu
+### Tester sans jeu
+- **Audio spatial** : active « Audio spatial » dans une pièce, ajoute des bots : ils tournent autour de toi.
+- **Mumble Link** : `client\scripts\mumble-sim.cmd` fait croire à tomo qu'un jeu compatible tourne. Test automatique : `cargo test --lib mumble`.
+- **Jeux détectés** : Paramètres › Jeux › « Ajouter un jeu » avec le nom d'un programme ouvert (ex. `notepad.exe`), puis ouvre ce programme. Test de la lecture des programmes : `cargo test --lib games`.
+- **Sous-titres** : la première activation télécharge le modèle (40 à 250 Mo selon le réglage) ; il faut au moins un pote (ou un 2ᵉ onglet connecté avec un autre compte) qui parle.
 
-- **Carte** : active « Audio spatial » dans un salon, puis ajoute des bots (outils de test) : ils tournent autour de toi, et leur bip se déplace dans ton casque.
-- **Connecteur de jeu** : lance le simulateur Mumble Link, qui fait croire à tomo qu'un jeu compatible tourne :
-  ```bash
-  client\scripts\mumble-sim.cmd
-  ```
-  (à lancer depuis le dossier du projet ; le script règle le PATH et le dossier de compilation. Sur un autre système : `cd client/src-tauri` puis `cargo run --example mumble_sim`.)
-  La carte passe en « Position du jeu : Simulateur tomo » et suit le joueur simulé. Ctrl+C pour arrêter : tomo repasse sur la carte au bout de 2 s.
-- Test automatique de la lecture Mumble Link : `cargo test --lib mumble`.
+### Ajouter un texte à l'interface
+Écris-le en français entouré de `t("…")` (`import { t } from "../lib/i18n"`), et ajoute sa traduction dans `src/lib/i18n-en.ts`. Pour retrouver les textes sans traduction :
+```powershell
+$en=[IO.File]::ReadAllText("$PWD\src\lib\i18n-en.ts"); Get-ChildItem src -Recurse -Include *.ts,*.tsx | % { [regex]::Matches([IO.File]::ReadAllText($_.FullName), '\bt\(("(?:[^"\\]|\\.)*")') | % { $_.Groups[1].Value } } | Sort-Object -Unique | ? { -not $en.Contains("  $($_):") }
+```
 
 L'adresse de l'instance par défaut peut être fixée à la compilation : `VITE_TOMO_INSTANCE=https://tomo-api.duckdns.org npm run tauri build`.
 
@@ -67,27 +66,31 @@ L'adresse de l'instance par défaut peut être fixée à la compilation : `VITE_
 ```bash
 npm run tauri build
 ```
-L'installateur se trouve ensuite dans `src-tauri/target/release/bundle/`.
+L'installateur se trouve ensuite dans `src-tauri/target/release/bundle/`. Pour une vraie version (Windows + Mac, signée pour la mise à jour automatique) : voir [docs/PUBLIER-UNE-VERSION.md](../docs/PUBLIER-UNE-VERSION.md).
 
 > Si l'édition de liens échoue avec `LNK1104` : le chemin du projet est trop long pour Windows. Place le projet dans un dossier court (ex. `C:\dev\tomo`) ou définis `CARGO_TARGET_DIR` vers un chemin court.
 
 ## Structure
 ```
 src/
-├── App.tsx                  # état global : session, serveurs, vocal, fenêtres
-├── App.css                  # charte tomo (graphite, turquoise, ambre)
+├── App.tsx                  # chef d'orchestre : session, serveurs, vocal, appels, messages, fenêtres
+├── App.css                  # charte tomo (variables en haut, sections par version en bas)
+├── main.tsx                 # fenêtre principale, ou overlay (?overlay=1)
 ├── components/
-│   ├── AuthScreen.tsx       # connexion, inscription, invité
-│   ├── Sidebar.tsx          # sélecteur de serveur, salons, profil
-│   ├── Home.tsx             # bienvenue, accueil d'un serveur, test du micro
-│   ├── Stage.tsx            # salon vocal (tuiles + dock)
-│   ├── Dialogs.tsx          # créer/rejoindre, inviter, gérer le serveur
-│   └── Brand.tsx            # logo, icônes, avatars
+│   ├── AuthScreen, ServerRail, Home (accueil d'un serveur), ServerPlan, Stage (scène vocale),
+│   ├── VoiceIsland, ChatView + MessageParts (réactions, mentions), Attachments, GifPicker,
+│   ├── MessagesView, DmPanel, FriendsView, ProfileCard, MemberList, Dialogs, IncomingCall,
+│   ├── ScreenView + CoachLayer (mode coach), MapView (carte spatiale), CaptionsBar (sous-titres),
+│   ├── LegendsView, ChallengesView, GameCard, GameStats, UpdateCard, Overlay,
+│   └── Settings (+ SettingsProfile, SettingsGames, SettingsOverlay), DevPanel, TitleBar, Brand
 └── lib/
-    ├── api.ts               # client API + renouvellement de session
-    ├── secure.ts            # coffre-fort (Gestionnaire d'identification Windows)
-    ├── voice.ts             # connexion LiveKit, volumes, couper le son
-    ├── prefs.ts             # préférences locales (instance, périphériques)
-    └── ui.ts                # couleurs d'avatar, dates
-src-tauri/                   # partie Rust : fenêtre, coffre-fort (keyring)
+    ├── api.ts, realtime.ts       # API REST + WebSocket
+    ├── voice.ts, leveler.ts, spatial.ts, speaking.ts, denoise.ts, clips.ts, screen.ts, coach.ts
+    ├── captions.ts + captions.worker.ts   # sous-titres et traduction locaux
+    ├── games.ts, gameLink.ts     # jeux lancés, Mumble Link
+    ├── overlay.ts, updater.ts, desktop.ts, badge.ts
+    ├── i18n.ts + i18n-en.ts      # langues
+    ├── people.ts, folders.ts, prefs.ts, secure.ts, sounds.ts, ui.ts, dev.ts
+src-tauri/src/               # lib.rs (commandes), clips.rs, mumble.rs, games.rs
+src-tauri/capabilities/      # permissions : default.json (fenêtre principale), overlay.json
 ```

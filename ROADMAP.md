@@ -13,84 +13,78 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 ## V0.2 — tomo : comptes, serveurs, nouvelle interface ✅
 - [x] Nouveau nom (**tomo**), logo et charte, interface selon les maquettes validées
 - [x] Comptes sécurisés : scrypt, sessions 15 min + renouvellement à rotation, blocage après 5 échecs, limitation par IP
-- [x] « Rester connecté » via le coffre-fort de Windows
+- [x] « Rester connecté » via le coffre-fort du système
 - [x] Serveurs créés par les utilisateurs (créateur = admin), aucun serveur par défaut
 - [x] Gestion par l'admin : salons, membres (admin / exclure), invitations, renommer, supprimer
 - [x] Codes membres + **codes invités d'un soir sans compte**
 - [x] Changement de serveur/salon en un clic, Ctrl + 1…9, parcourir un serveur sans quitter son vocal
-- [x] Couper micro / son, test du micro avant d'entrer
-- [x] Interrupteur d'audio spatial par salon (état synchronisé ; rendu 3D en V2)
 - [ ] Serveur déployé sur le VPS (LiveKit + Caddy + API)
 - [ ] Test à plusieurs, chacun chez soi
 
 ## V0.3 — Messagerie, appels, paramètres ✅
 - [x] Temps réel (WebSocket) : messages, présence, appels
-- [x] Salons textuels par serveur (créer / renommer / supprimer par les admins)
-- [x] Chat de chaque salon vocal (panneau à droite de la scène)
-- [x] Amis : demande par pseudo, accepter / refuser, en ligne / hors ligne
-- [x] Messages privés entre amis, non-lus et notifications
-- [x] Appels privés entre amis : sonnerie, accepter / refuser, raccrocher
-- [x] Sons d'interface (rejoindre, quitter, arrivées, micro, messages, sonnerie), réglables
-- [x] Ping et qualité réseau visibles (bloc « En vocal », scène, Paramètres > Réseau)
-- [x] Espace Paramètres : compte (mot de passe, appareils), audio, sons, apparence (zoom, compact, animations), raccourcis, réseau
-- [x] Raccourcis Ctrl+Maj+M (micro), Ctrl+Maj+D (son), Ctrl+, (paramètres)
+- [x] Fils de discussion par serveur, chat de chaque pièce vocale
+- [x] Amis, messages privés, appels privés avec sonnerie
+- [x] Sons d'interface, ping et qualité réseau visibles, espace Paramètres
 - [x] Compte de test et outils de test (serveur de dev uniquement)
+
+## V0.6 — Design « Pièces & bulles », pièces jointes ✅
+- [x] Nouveau design : colonne des serveurs avec **dossiers**, pièces en cartes, scène en bulles, île vocale
+- [x] **Pièces jointes**, **messages vocaux**, **GIF** (Klipy)
+- [x] **Volume uniformisé** automatique
+- [x] **Installateurs** Windows (.exe / .msi) et Mac (.dmg universel) par GitHub Actions
+
+## V0.7 — Profils et vie sociale ✅
+- [x] **Profils** : photo, bannière, petite phrase, couleur, nom affiché ; fiche profil des autres
+- [x] **Statuts** : en ligne / inactif (auto) / ne pas déranger / invisible + statut personnalisé avec durée
+- [x] **Membres du serveur** à droite, par statut, avec recherche et rôles
+- [x] **Messages hors amis** (confidentialité, demandes de message, blocage)
+- [x] Notifications Windows / Mac, heures calmes, lancement avec l'ordinateur, pastilles de non-lus (icône, onglet, serveurs)
+- [x] Plan du serveur visible en vocal et dans un fil
+- [x] **Modifier un message**, **réactions**, **mentions** @pseudo / @vocal / @tous (pastille rouge « @n »)
+
+## V0.8 — Pensé pour le jeu ✅
+- [x] **Suppression de bruit avancée** (RNNoise sur le PC) + porte de bruit + test « s'écouter » avant / après
+- [x] **Mise à jour automatique** depuis GitHub Releases (signée), carte « tomo X est prête », sans canal bêta
+- [x] **Langue de tomo** : français / anglais (Paramètres › Apparence)
+- [x] **Jeu détecté** (liste des programmes) + « joue à … » (profil, membres, cartes des pièces)
+- [x] **Paramètres › Jeux** : par jeu audio spatial, overlay, **pièce automatique**, **mode focus**, masquer ; ajout d'un jeu à la main
+- [x] Proposition de rejoindre les potes qui jouent au même jeu en vocal
+- [x] **Overlay en jeu** : qui parle, chat de la pièce, sous-titres (Paramètres › Overlay en jeu)
+- [x] **Sous-titres en direct + traduction** FR ⇄ EN calculés sur le PC (Whisper + Opus-MT), icône CC, transcription enregistrable
+- [x] **Mode coach** : annotations sur un partage d'écran (crayon, flèche, ping), capture envoyée dans le chat
+- [x] **Mur des légendes** : citations, images, clips épinglés, réactions
+- [x] **Défis à points** (sans paris) : validation par les participants, classement du mois
+- [x] **Stats de jeu** : Steam (OpenID, heures jouées) et League of Legends (Riot ID : rang, dernières parties), Paramètres › Comptes de jeu
+- [ ] Tester en vrai : overlay par-dessus un jeu, sous-titres à plusieurs, liaison Steam, clé Riot, mise à jour automatique d'une version à la suivante
 
 ## V1 — MVP « on lâche Discord »
 > Objectif : utilisable tous les soirs par le groupe.
 
-- [x] Changer son mot de passe, voir ses appareils connectés
-- [x] **Profils** : photo, bannière, petite phrase, couleur, nom affiché ; fiche profil des autres (jeu en cours, serveurs en commun, volume, message, appel, bloquer)
-- [x] **Statuts** : en ligne / inactif (auto après 10 min) / ne pas déranger / invisible + statut personnalisé avec durée
-- [x] **Membres du serveur** : liste à droite par statut (en vocal, en ligne, hors ligne), recherche, rôles
-- [x] **Messages hors amis** : Paramètres > Confidentialité (amis / + membres de mes serveurs / tout le monde), « Demandes de message » à accepter, blocage
-- [x] **Nouveaux réglages** : notifications Windows / Mac en arrière-plan (contenu masquable), heures calmes, lancer avec l'ordinateur + démarrer réduit, durée des clips (30 s / 1 min / 2 min), Paramètres rangés en Compte / Vocal / Appli
-- [ ] Réglages restants : section Jeux (avec la détection du jeu, V2), push-to-talk / seuil de voix, « baisser les autres quand je parle », mises à jour automatiques
-- [x] **Pièces jointes** : images (aperçu + agrandissement), fichiers (25 Mo max), glisser-déposer, coller une image, **messages vocaux** (2 min max, onde)
-- [x] **GIF** : recherche intégrée via Klipy (Tenor a fermé son API en juin 2026), clé `KLIPY_API_KEY` sur le serveur
-- [x] **Installateurs** Windows (.exe / .msi) et Mac (.dmg universel) fabriqués par GitHub Actions à chaque tag `v*`
-- [ ] Signer l'app Mac (compte Apple Developer, payant → voir « Mis de côté ») et l'app Windows
-- [ ] Modifier un message, réactions, mentions @pseudo
+- [ ] Déployer sur le VPS et tester à plusieurs (voir V0.2)
+- [ ] Push-to-talk / seuil de voix, « baisser les autres quand je parle »
 - [ ] Réordonner les salons par glisser-déposer
-- [x] **Volume uniformisé automatiquement** : chaque voix reçue ramenée au même niveau (mesure pendant la parole, gain −12/+18 dB, compresseur + limiteur), activé par défaut, interrupteur dans Paramètres > Audio
-- [x] **Nouveau design « Pièces & bulles »** : colonne des serveurs avec **dossiers** (glisser un serveur sur un autre), pièces vocales en cartes, fils, bulle « Ce soir », scène en bulles, discussions en bulles, vocal en cours dans une île flottante
-- [ ] Suppression de bruit (RNNoise ou celle du navigateur)
-- [x] **Clip audio après coup** : tampon de 60 s en mémoire, bouton du dock ou Ctrl+Maj+C → fichier `.wav` dans Musique\tomo Clips, liste et écoute dans Paramètres > Clips, icône visible par les autres quand les clips sont activés
-- [x] Chat texte par salon (salons textuels + chat des salons vocaux)
-- [ ] Mise à jour automatique du client via GitHub Releases
+- [ ] Signer l'app Mac et l'app Windows (payant → voir « Mis de côté »)
 
-## V2 — Pensé pour le jeu
-- [ ] **Détection du jeu lancé** (liste des processus) + statut « joue à … »
-- [ ] Rejoindre automatiquement le salon du jeu (optionnel)
-- [ ] **Mode focus / ranked** : notifications coupées, whitelist de coéquipiers
+## V2 — Encore plus pour le jeu
 - [ ] **Callouts rapides** : touches → phrases en synthèse vocale (Piper, local)
-- [ ] **Mode radio** : connecté à plusieurs salons, un push-to-talk par salon, volume par salon
-- [ ] **Audio spatial activable**
-  - [x] Interrupteur ON/OFF **par salon**, synchronisé pour tout le monde
-  - [x] Rendu 3D des voix (PannerNode HRTF), volume selon la distance, portée réglable
-  - [x] **Carte du salon** : chacun déplace son avatar (marche avec tous les jeux)
-  - [x] **Connecteur Mumble Link** : position lue dans le jeu (Minecraft avec mod, GW2, Arma…), prioritaire sur la carte
-  - [x] Repli automatique en audio normal si pas de position récente ou jeux / serveurs différents
-  - [x] Simulateur Mumble Link (`cargo run --example mumble_sim`) et bots de test qui se déplacent
-  - [ ] Tester avec un vrai jeu (Minecraft + mod MumbleLink)
-  - [ ] Raccourci clavier pour basculer + son de confirmation
-  - [ ] Profils par jeu (ON/OFF par défaut selon le jeu détecté), surchargés par l'interrupteur
-  - [ ] Occlusion (murs) et réverbération selon l'environnement du jeu
-- [ ] Overlay en jeu (qui parle, sous-titres)
+- [ ] **Mode radio** : connecté à plusieurs salons, un push-to-talk par salon
+- [ ] Audio spatial : tester avec un vrai jeu (Minecraft + mod MumbleLink, Valheim + mod PositionalAudio)
+- [ ] Audio spatial : raccourci pour basculer, occlusion (murs) et réverbération
+- [ ] Overlay : mini-panneau cliquable (micro, son, clip) avec un raccourci global
+- [ ] Valorant dans les stats (l'API Riot demande une appli « production » validée par Riot)
+- [ ] Défis : validation automatique avec les stats (« le plus de kills ce soir »)
+- [ ] Défi de la semaine suivi automatiquement (temps passé en vocal)
 
 ## V3 — Social
 - [ ] **« Qui est dispo ce soir ? »** : créneaux récurrents + suggestion du meilleur moment
-- [ ] **Mur des légendes** : épingler des clips et des citations
-- [ ] **Défis et paris amicaux** avec points virtuels et classement
-- [ ] **Stats de jeu** via les APIs gratuites Steam et Riot
-- [x] **Partage d'écran haute qualité** : profils Jeu fluide (1080p 60), Netteté (1440p), Maximum (4K), Économie (720p), H.264 matériel ou VP9, son du PC, versions allégées automatiques pour les petites connexions, plein écran, plusieurs partages en même temps
-- [ ] **Annotation** en direct sur un partage (mode coach)
+- [ ] **Paris amicaux** sur les défis — en attente : décider d'abord à quoi servent les points
+- [ ] Mur des légendes : épingler une capture du mode coach directement, épingler depuis un message privé
 
 ## V4 — Accessibilité et langues
-> Exécuté en local, donc gratuit, mais gourmand : tout est désactivable.
-
-- [ ] **Sous-titres en direct** (whisper.cpp, petit modèle)
-- [ ] **Traduction** des sous-titres (LibreTranslate / Argos, local)
+- [x] Sous-titres et traduction locaux (voir V0.8)
+- [ ] Plus de langues (interface et traduction : espagnol, allemand…)
+- [ ] Sous-titres de ma propre voix (pour vérifier ce que les autres lisent)
 - [ ] Choix d'exécution : sur le PC du joueur ou sur le serveur
 
 ---
@@ -101,49 +95,51 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 ### Interface
 - [ ] Bloc « En vocal » : le ping passe à la ligne quand le panneau latéral est étroit
 - [ ] Pseudo coupé dans la carte profil en fenêtre étroite (3 boutons à côté)
-- [ ] Le ping affiche « — ms » pendant les 5 premières secondes d'une connexion vocale (en attendant la 1ʳᵉ mesure)
-- [ ] Pastille de non-lus par serveur dans le sélecteur et l'accès rapide
+- [ ] Le ping affiche « — ms » pendant les 5 premières secondes d'une connexion vocale
 - [ ] Indicateur « X est en train d'écrire… »
 - [ ] Recherche dans les messages
-- [ ] Mettre à jour les maquettes « Connexion » et « Créer un compte » (elles montrent encore l'ancien parcours)
+- [ ] Mettre à jour les maquettes « Connexion » et « Créer un compte »
+- [ ] Mode coach : barre d'outils en icônes seules quand la fenêtre est petite
+- [ ] Quelques textes restent en français en mode anglais (notifications système, messages d'erreur rares du serveur) : à traduire au fil de l'eau
+- [ ] Le mur des légendes affiche le pseudo de l'époque (pas le nom affiché actuel)
 
 ### Raccourcis
-- [ ] **Raccourcis globaux** (qui marchent quand le jeu est au premier plan), configurables dans Paramètres > Raccourcis
-- [ ] **Push-to-talk** : choix détection de la voix / push-to-talk, touche au choix, petit son à l'appui et au relâchement
-- [ ] Raccourci global pour le clip 60 s et pour l'audio spatial
+- [ ] **Raccourcis globaux** (qui marchent quand le jeu est au premier plan), configurables
+- [ ] **Push-to-talk** : touche au choix, petit son à l'appui et au relâchement
+- [ ] Raccourci global pour le clip, l'audio spatial et l'overlay (Ctrl+Maj+O)
 
 ### Audio et vocal
-- [ ] Paramètres > Audio : appliquer tout de suite le changement de micro / sortie (aujourd'hui : à la prochaine connexion)
-- [ ] Idem pour suppression de bruit / annulation d'écho / gain automatique
+- [ ] Paramètres > Audio : appliquer tout de suite le changement de micro / sortie, d'écho et de gain auto
 - [ ] Vérifier le « retour micro » des outils de test avec un vrai micro
-- [ ] Clips : choisir la durée (30 s / 60 s / 2 min) et le format (.ogg plus léger)
-- [ ] Clips : les partager directement dans un salon textuel ou un message privé
-- [ ] Carte spatiale : se déplacer aussi aux flèches du clavier
-- [ ] Partage d'écran : choisir la qualité reçue (auto / max) et la garder en mémoire
-- [ ] Partage d'écran : changer de profil sans arrêter le partage
-- [ ] Partage d'écran : vignette « en direct » dans la liste des salons
-- [ ] Partage d'écran : tester AV1 (encore plus efficace) quand les cartes graphiques le permettent
-- [ ] Carte spatiale : montrer qui parle avec une onde autour de l'avatar
+- [ ] Clips : format .ogg plus léger ; les partager directement dans un fil ou un message privé
+- [ ] Carte spatiale : se déplacer aux flèches du clavier ; onde autour de l'avatar qui parle
+- [ ] Partage d'écran : choisir la qualité reçue, changer de profil sans arrêter, vignette « en direct », AV1
+- [ ] Sous-titres : ne pas recharger le modèle à chaque entrée dans une pièce
+
+### Jeux
+- [ ] Liste des jeux connus : la compléter (et « javaw.exe = Minecraft » peut se tromper avec d'autres programmes Java)
+- [ ] Choisir un .exe avec l'explorateur de fichiers plutôt que taper son nom
 
 ### Messagerie et appels
-- [ ] Notifications Windows (toast) pour les messages privés quand tomo est en arrière-plan
 - [ ] Appel manqué affiché dans la conversation privée
 - [ ] Appels de groupe entre amis (plus de 2 personnes)
-- [ ] Les appels en train de sonner sont perdus si l'API redémarre (gardés en mémoire)
+- [ ] Les appels en train de sonner sont perdus si l'API redémarre
 - [ ] Liens d'invitation cliquables (`tomo://invite/ABCD-EFGH`)
 
 ### Compte et sécurité
 - [ ] Révoquer un appareil précis (aujourd'hui : tous d'un coup)
-- [ ] Le blocage « 5 échecs = 15 min » peut servir à bloquer volontairement un pseudo : passer à un délai progressif par IP + pseudo
+- [ ] Le blocage « 5 échecs = 15 min » peut servir à bloquer volontairement un pseudo : délai progressif par IP + pseudo
 - [ ] Limiter l'envoi de messages par compte (aujourd'hui : par adresse IP)
+- [ ] Riot : vérifier que le Riot ID appartient bien à la personne (impossible sans la connexion officielle Riot)
 
 ### Fenêtre
-- [ ] Vérifier le redimensionnement par les bords et l'agrandissement (ne pas passer sous la barre des tâches)
+- [ ] Vérifier le redimensionnement par les bords et l'agrandissement
 - [ ] Documenter l'overlay NVIDIA (Alt + R pour le masquer) dans l'aide
 
 ### Projet
-- [ ] Transformer les scripts de test PowerShell en vraie suite de tests (Vitest) lancée par GitHub Actions
+- [ ] Transformer les scripts de test (PowerShell + Node) en vraie suite de tests (Vitest) lancée par GitHub Actions
 - [x] Construire les installateurs automatiquement à chaque version (GitHub Actions + Releases, Windows + Mac)
+- [x] Mise à jour automatique via GitHub Releases
 
 ---
 
@@ -154,5 +150,6 @@ Fonctionnalités qui demandent de l'argent ou du matériel dédié. On les repre
 |---|---|
 | Résumé de soirée par IA | API LLM payante, ou carte graphique dédiée (Ollama) |
 | Signature de l'exécutable Windows | Certificat ≈ 100 €/an (sans lui : simple avertissement SmartScreen) |
+| Signature de l'app Mac | Compte Apple Developer 99 $/an (sans lui : clic droit › Ouvrir au premier lancement) |
 | Applications mobiles sur les stores | Apple 99 $/an, Google 25 $ |
 | Hébergement managé (LiveKit Cloud…) | Inutile : on auto-héberge |

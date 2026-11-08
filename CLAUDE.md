@@ -1,23 +1,27 @@
 # CLAUDE.md — Contexte du projet tomo
 
 > Fichier lu automatiquement par Claude Code. Il résume tout ce qu'il faut savoir pour reprendre le projet.
-> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.6.0**.
+> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.8.0**.
 > Copie locale du propriétaire : `C:\Users\Kameron\Documents\tomo`.
+> Installer la dernière version : https://github.com/kameronramah/tomo/releases/latest
 
 ---
 
 ## 1. Le projet en bref
 
-**tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire).
+**tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire). La marque s'écrit **« tomo » en minuscules, partout**.
 
-Ce qui existe déjà (v0.6) — en plus : nouveau design « Pièces & bulles » (dossiers de serveurs), pièces jointes, messages vocaux, GIF (Klipy), volume uniformisé, installateurs Windows + Mac :
-- Comptes sécurisés, serveurs créés par les utilisateurs (créateur = admin), salons vocaux et textuels, invitations (code membre + **code invité d'un soir sans compte**).
-- Messagerie temps réel : salons textuels, chat de chaque salon vocal, amis, messages privés, **appels privés** avec sonnerie.
-- **Audio spatial** : carte du salon (chacun déplace son avatar) + position lue dans le jeu via **Mumble Link**.
-- **Clip des 60 dernières secondes** (fichier .wav dans Musique\tomo Clips).
-- **Partage d'écran haute qualité** (1080p60 H.264, 1440p/4K VP9, son du PC, plein écran).
-- Sons d'interface, ping et qualité réseau visibles, espace **Paramètres** complet, barre de titre intégrée, interface adaptative (720 px → 4K).
-- **Compte de test + outils de test** (bots qui parlent/bougent/partagent un écran, coupures réseau simulées…) — uniquement en dev.
+Ce qui existe (v0.8) :
+- **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils, invitations (membre + **invité d'un soir sans compte**).
+- **Messagerie** temps réel : fils, chat de chaque pièce, amis, messages privés (demandes hors amis), **appels privés** ; pièces jointes, messages vocaux, GIF (Klipy), **modifier, réactions, mentions** @pseudo / @vocal / @tous.
+- **Profils, statuts, confidentialité, blocage**, membres du serveur, notifications système, pastilles de non-lus.
+- **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **partage d'écran** HD + **mode coach** (annotations), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
+- **Jeux** : détection du jeu lancé (« joue à … »), réglages par jeu (pièce auto, mode focus, spatial, overlay, masquer), proposition de rejoindre les potes, **stats Steam / League of Legends**.
+- **Social** : **mur des légendes** (citations, images, clips), **défis à points** (sans paris), classement du mois.
+- **Appli** : français / anglais, **mise à jour automatique** (GitHub Releases signées), installateurs Windows + Mac, Paramètres complets.
+- **Compte de test + outils de test** (bots qui parlent, bougent, partagent un écran…) — uniquement en dev.
+
+Les **paris** sont volontairement en attente (le propriétaire veut d'abord décider à quoi servent les points). Pas de canal bêta pour les mises à jour (demande explicite).
 
 La feuille de route complète est dans [ROADMAP.md](ROADMAP.md) (avec une section **« Petites améliorations »** à compléter au fil de l'eau).
 
@@ -27,12 +31,13 @@ La feuille de route complète est dans [ROADMAP.md](ROADMAP.md) (avec une sectio
 
 - **Toujours répondre en français**, en tutoyant, avec un ton simple et concret. Il n'est pas forcément technique : expliquer le « pourquoi » sans jargon.
 - **Gratuit avant tout** : ne jamais proposer de service payant ; s'il en faut un, le mettre dans « Mis de côté » de la ROADMAP.
-- **Maquettes d'abord** pour les gros changements d'interface (il les valide avant le code). La charte graphique est validée (voir §6).
+- **Maquettes d'abord** pour les gros changements d'interface (il les valide avant le code). La charte graphique est validée (voir §6). Maquettes v0.7/v0.8 : https://claude.ai/artifact/HVWgLBMvzvko38Gyi7npGU
 - **Ne pas copier le style de Discord** : il veut une identité propre à tomo, moderne et sobre.
 - **Noter les petites améliorations repérées** dans la section « Petites améliorations » de la ROADMAP (il l'a demandé explicitement). Les raccourcis globaux et le push-to-talk y sont rangés volontairement.
 - **Il aime qu'on pousse sur GitHub** une fois une étape testée (`git push origin main`).
 - **Git** : l'identité des commits doit être l'adresse anonyme GitHub `72966920+kameronramah@users.noreply.github.com` (nom `kameronramah`). **Ne jamais utiliser son adresse e-mail professionnelle** (projet personnel).
-- Tester avant d'annoncer : dire clairement ce qui a été vérifié et ce qui ne l'a pas été (ex. son réel, micro, jeu réel).
+- Tester avant d'annoncer : dire clairement ce qui a été vérifié et ce qui ne l'a pas été (ex. son réel, micro, jeu réel, overlay par-dessus un vrai jeu).
+- **Tout nouveau texte d'interface** passe par `t("…")` (français dans le code) **et** reçoit sa traduction dans `client/src/lib/i18n-en.ts`.
 
 ---
 
@@ -42,45 +47,56 @@ La feuille de route complète est dans [ROADMAP.md](ROADMAP.md) (avec une sectio
 tomo/
 ├── client/                 Appli de bureau Tauri 2 (Rust) + React 19 + TypeScript + Vite
 │   ├── src/
-│   │   ├── App.tsx         Chef d'orchestre : session, serveurs, vocal, appels, messagerie, fenêtres
+│   │   ├── App.tsx         Chef d'orchestre : session, serveurs, vocal, appels, messagerie, jeux, overlay
 │   │   ├── App.css         Toute la charte (variables CSS en haut, sections par version en bas)
-│   │   ├── main.tsx        Fenêtre + barre de titre intégrée
-│   │   ├── components/     AuthScreen, ServerRail (colonne des serveurs + dossiers), Home (accueil d'un
-│   │   │                   serveur : pièces en cartes, fils, « Ce soir »), Stage (scène vocale en bulles +
-│   │   │                   dock), VoiceIsland (vocal en cours, flottant), MessagesView, MapView, ScreenView,
-│   │   │                   ChatView (bulles, pièces jointes, vocaux), Attachments, GifPicker, FriendsView,
-│   │   │                   Settings, Dialogs, IncomingCall, DevPanel, TitleBar, Brand (logo, icônes)
-│   │   └── lib/            api.ts (client REST + renouvellement de session), realtime.ts (WebSocket),
-│   │                       voice.ts (LiveKit, volumes, extras), spatial.ts (moteur 3D), leveler.ts (volume
-│   │                       uniformisé), speaking.ts (« qui parle » mesuré localement), folders.ts (dossiers
-│   │                       de serveurs, localStorage), voiceNote.ts (messages vocaux), gameLink.ts
-│   │                       (Mumble Link), clips.ts, screen.ts, sounds.ts (sons synthétisés), prefs.ts
-│   │                       (réglages locaux), secure.ts (coffre-fort), dev.ts (bots), ui.ts
-│   ├── src-tauri/src/      lib.rs (commandes), clips.rs (fichiers de clips), mumble.rs (lecture Mumble Link)
+│   │   ├── main.tsx        Fenêtre principale + barre de titre, ou overlay (?overlay=1)
+│   │   ├── components/     AuthScreen, ServerRail (serveurs + dossiers), Home (accueil d'un serveur),
+│   │   │                   ServerPlan, Stage (scène vocale + dock), VoiceIsland, ChatView + MessageParts
+│   │   │                   (réactions, mentions, édition), Attachments, GifPicker, MessagesView, DmPanel,
+│   │   │                   FriendsView, ProfileCard, MemberList, ScreenView + CoachLayer, MapView,
+│   │   │                   CaptionsBar, LegendsView, ChallengesView, GameCard, GameStats, UpdateCard,
+│   │   │                   Overlay, Settings (+ SettingsProfile, SettingsGames, SettingsOverlay),
+│   │   │                   Dialogs, IncomingCall, DevPanel, TitleBar, Brand (logo, icônes, avatars)
+│   │   └── lib/            api.ts, realtime.ts, voice.ts, leveler.ts (volume uniformisé), spatial.ts,
+│   │                       speaking.ts, denoise.ts (RNNoise), clips.ts, screen.ts, coach.ts,
+│   │                       captions.ts + captions.worker.ts (Whisper / Opus-MT), games.ts (jeux lancés),
+│   │                       gameLink.ts (Mumble Link), overlay.ts, updater.ts, i18n.ts + i18n-en.ts,
+│   │                       people.ts (annuaire), desktop.ts (notifications, démarrage), badge.ts,
+│   │                       folders.ts, prefs.ts (réglages locaux), secure.ts, sounds.ts, ui.ts, dev.ts
+│   ├── src-tauri/src/      lib.rs (commandes, plugins), clips.rs, mumble.rs, games.rs (programmes ouverts)
+│   ├── src-tauri/capabilities/  default.json (fenêtre principale), overlay.json (overlay : écoute seulement)
 │   ├── src-tauri/examples/mumble_sim.rs   Simulateur de jeu Mumble Link
 │   └── scripts/            dev.cmd / dev.ps1 (lancer en dev), mumble-sim.cmd / .ps1
 ├── server/
 │   ├── api/                API Node 24 + TypeScript + Fastify 5 + SQLite intégré (node:sqlite)
-│   │   ├── src/            index.ts, config.ts, db.ts (schéma + migrations), security.ts (scrypt, JWT),
-│   │   │                   access.ts (droits), realtime.ts (WebSocket), livekit.ts, routes-auth.ts,
-│   │   │                   routes-servers.ts, routes-chat.ts, routes-social.ts, routes-dev.ts
-│   │   └── tests/          test-api.ps1 (34 tests), test-social.ps1 (20 tests)
+│   │   ├── src/            index.ts, config.ts, db.ts, security.ts, access.ts, realtime.ts (WebSocket,
+│   │   │                   présence, « joue à »), livekit.ts, routes-auth.ts, routes-servers.ts,
+│   │   │                   routes-chat.ts (messages, réactions, mentions), routes-social.ts, profiles.ts,
+│   │   │                   attachments.ts, gifs.ts, legends.ts, challenges.ts, gamestats.ts, routes-dev.ts
+│   │   └── tests/          test-api/social/attachments/profiles/messages.ps1, test-games/legends/stats.mjs
 │   ├── docker-compose.yml      Production (VPS) : LiveKit + API + Caddy (HTTPS)
 │   ├── docker-compose.dev.yml  Développement local (avec DEV_TOOLS et compte de test)
 │   ├── livekit.yaml, Caddyfile, .env.example
-└── docs/ARCHITECTURE.md, docs/HEBERGEMENT.md (déploiement VPS pas à pas)
+├── .github/workflows/installateurs.yml   Installateurs Windows + Mac + latest.json à chaque tag v*
+└── docs/ARCHITECTURE.md, HEBERGEMENT.md (déploiement VPS), PUBLIER-UNE-VERSION.md (sortir une version)
 ```
 
-**Flux** : le client parle à l'API en REST (jeton d'accès JWT 15 min + jeton de renouvellement à rotation) et reçoit les événements en **WebSocket** (`/ws?token=`). Pour entrer dans un salon ou un appel, l'API signe un **jeton LiveKit** ; l'audio/vidéo passe par **LiveKit** (SFU WebRTC auto-hébergé).
+**Flux** : REST (jeton d'accès JWT 15 min + jeton de renouvellement à rotation) + **WebSocket** (`/ws?token=`). Pour entrer dans une pièce, l'API signe un **jeton LiveKit** (avec `canUpdateOwnMetadata` pour les attributs). L'audio/vidéo passe par **LiveKit** (SFU auto-hébergé).
 
-**Modèle** : une *instance* (= un VPS) héberge des comptes et des serveurs. Rôles par serveur : `owner` (créateur) / `admin` / `member` ; les **invités** ont un jeton limité à un serveur. Aucun serveur par défaut.
+**Modèle** : une *instance* (= un VPS) héberge des comptes et des serveurs. Rôles par serveur : `owner` / `admin` / `member` ; les **invités** ont un jeton limité à un serveur.
 
 Points techniques notables :
-- Toutes les voix passent par un **AudioContext** (`webAudioMix` de LiveKit). Chaîne par voix (`setWebAudioPlugins`, en ligne droite) : **volume uniformisé** (`leveler.ts` : gain auto + compresseur + limiteur + correction du « makeup gain » du navigateur) puis **audio spatial** (`PannerNode` HRTF) si activé. Seul le **micro** est traité, jamais le son d'un partage d'écran.
-- « Qui parle » : mesuré localement toutes les 40 ms (`speaking.ts`), pas l'info lissée du serveur LiveKit (qui arrivait ~0,5 s en retard).
-- Positions spatiales échangées sur le **canal de données LiveKit**, sujet `pos` (~10/s). Sources `map` et `game` ne se mélangent jamais (repli : voix au centre, plein volume).
-- Clips : `AudioWorklet` → tampon circulaire 60 s en mémoire → WAV ; envoi binaire à Rust (`invoke` avec `Uint8Array`). Attribut LiveKit `clips=1` visible par les autres.
-- « Rester connecté » : jeton de renouvellement dans le **Gestionnaire d'identification Windows** (crate `keyring`).
+- **Chaîne par voix reçue** (`setWebAudioPlugins`, en ligne droite) : volume uniformisé puis audio spatial. **Micro** : RNNoise + porte de bruit via `setProcessor` (`denoise.ts`), suivent les réglages en direct.
+- « Qui parle » : mesuré localement toutes les 40 ms (`speaking.ts`).
+- **Attributs LiveKit** du participant : `clips=1`, `cc=1` (sous-titres), `coach=all` (annotations ouvertes), `lang` (fr/en, langue de transcription). Toujours les écrire avec `{ ...attributes, clé: valeur }`.
+- **Canaux de données LiveKit** : `pos` (positions spatiales, ~10/s), `coach` (annotations).
+- **Jeux** : Rust `running_programs` (crate `sysinfo`, noms des programmes seulement) → `games.ts` (liste connue + jeux ajoutés) → WebSocket `{type:"game"}` → serveur en mémoire (`gameOf`, respecte `show_game`).
+- **Sous-titres** : Transformers.js 3.7 dans un Web Worker ; modèles `onnx-community/whisper-*` et `Xenova/opus-mt-fr-en` / `en-fr` téléchargés depuis Hugging Face au premier usage ; WebGPU si dispo.
+- **Overlay** : fenêtre Tauri `overlay` créée depuis le JS (`overlay.ts`), transparente, `setIgnoreCursorEvents(true)`, état envoyé par `emitTo("overlay", "overlay:state")` toutes les 200 ms. `macOSPrivateApi` activé (transparence sur Mac).
+- **Mise à jour** : plugin `updater` + `process` ; endpoint `releases/latest/download/latest.json` ; téléchargement en arrière-plan, installation au clic « Redémarrer ». Clé publique dans `tauri.conf.json`, **clé privée** dans `C:\Users\Kameron\.tauri\tomo-updater.key` (jamais dans le dépôt ; secret GitHub `TAURI_SIGNING_PRIVATE_KEY`).
+- **Langues** : `t("texte français")` + `i18n-en.ts` ; changer de langue recharge la fenêtre ; les erreurs du serveur passent aussi par `t()` dans `errorMessage`.
+- Clips : `AudioWorklet` → tampon circulaire → WAV écrit par Rust ; « Mettre au mur » l'envoie comme pièce jointe (type `audio/wav`).
+- « Rester connecté » : jeton de renouvellement dans le coffre-fort du système (crate `keyring`).
 
 ---
 
@@ -96,7 +112,7 @@ docker compose -f docker-compose.dev.yml up -d --build
 client\scripts\dev.cmd
 ```
 - L'API de dev écoute sur `http://localhost:3000`, LiveKit sur `ws://localhost:7880`.
-- `client\scripts\dev.cmd` lance `npm run tauri dev` (rechargement à chaud). Version web seule : `npm run dev` dans `client/` → http://localhost:1420 (une session par onglet, pratique pour simuler plusieurs joueurs).
+- `client\scripts\dev.cmd` lance `npm run tauri dev`. Version web seule : `npm run dev` dans `client/` → http://localhost:1420 (une session par onglet).
 - **Compte de test** : identifiants dans `server/docker-compose.dev.yml` (`DEV_USERNAME` / `DEV_PASSWORD`). Il donne accès au panneau 🧪 Outils de test.
 - Simulateur de jeu : `client\scripts\mumble-sim.cmd`.
 
@@ -110,42 +126,37 @@ cd server/api && npx tsc --noEmit
 ```bash
 powershell -ExecutionPolicy Bypass -File server\api\tests\test-api.ps1
 ```
+(idem `test-social`, `test-attachments`, `test-profiles`, `test-messages`)
 ```bash
-powershell -ExecutionPolicy Bypass -File server\api\tests\test-social.ps1
+node server/api/tests/test-games.mjs
 ```
+(idem `test-legends.mjs`, `test-stats.mjs`)
 ```bash
-powershell -ExecutionPolicy Bypass -File server\api\tests\test-attachments.ps1
-```
-```bash
-cd client/src-tauri && cargo test --lib mumble
+cd client/src-tauri && cargo test --lib
 ```
 Après une modification de l'API : `docker compose -f docker-compose.dev.yml up -d --build api` (dans `server/`).
 
-Build de l'exécutable : `npm run tauri build` dans `client/` (installateur dans `src-tauri/target/release/bundle/`).
+**Publier une version** (installateurs + mise à jour automatique) : voir [docs/PUBLIER-UNE-VERSION.md](docs/PUBLIER-UNE-VERSION.md). En bref : même numéro dans `tauri.conf.json`, `Cargo.toml`, `package.json`, puis `git tag vX.Y.Z` et `git push origin vX.Y.Z`. La Release est **publiée directement** (plus de brouillon) avec `latest.json`. Il faut que le secret GitHub `TAURI_SIGNING_PRIVATE_KEY` existe.
 
-**Installateurs Windows + Mac** : `.github/workflows/installateurs.yml`. Pousser un tag (`git tag v0.6.0` puis `git push origin v0.6.0`) crée une Release brouillon sur GitHub avec le `.exe`, le `.msi` et le `.dmg` universel. L'app Mac n'est pas signée par Apple (compte payant) : premier lancement par clic droit > Ouvrir. `client/src-tauri/Info.plist` contient la phrase d'autorisation du micro, obligatoire sur Mac.
-
-**GIF** : recherche via **Klipy** (Tenor a fermé son API le 30 juin 2026). Clé gratuite dans `server/.env` → `KLIPY_API_KEY=…` (dev et prod). Le serveur fait la recherche et télécharge le GIF choisi comme pièce jointe (`server/api/src/gifs.ts`) ; seules les adresses `*.klipy.com` sont acceptées.
-
-**Profils / statuts / confidentialité** : `server/api/src/profiles.ts` (profil, `PATCH /me/status`, `/me/privacy`, `/users/:id/profile`, `/servers/:id/people`, blocages) ; présence dans `realtime.ts` (`presenceOf` : l'invisible apparaît hors ligne, « inactif » envoyé par le client après 10 min). Messages hors amis : `canMessage()` + table `dm_state` (demande acceptée / ignorée). Photo et bannière = pièces jointes « réservées » (`message_id = 'profile:<id>'`). Côté client, annuaire partagé `lib/people.ts` (`UserAvatar`, `useDisplayName`) ; les adresses `/files/…` sont complétées par `Api.absolutize`. Tests : `test-profiles.ps1` (35).
-
-**Notifications / démarrage** : plugins Tauri `notification` et `autostart` (`lib/desktop.ts`) ; « Démarrer réduit » lit l'argument `--autostart` (commande Rust `launched_at_login`).
-
-**Pièces jointes** : `server/api/src/attachments.ts` (type déduit des octets, adresses signées, nettoyage auto des fichiers orphelins), fichiers dans `DATA_DIR/uploads`.
+**Clés facultatives** dans `server/.env` (dev et prod) : `KLIPY_API_KEY` (GIF), `STEAM_API_KEY` (stats Steam), `RIOT_API_KEY` (Riot / LoL ; la clé « development » expire toutes les 24 h).
 
 ---
 
 ## 5. Pièges déjà rencontrés (à connaître)
 
-- **Windows PowerShell 5.1** : pas de `&&` (utiliser `;` ou des commandes séparées) ; l'**exécution de scripts .ps1 est bloquée** sur le PC → passer par les `.cmd` (`powershell -ExecutionPolicy Bypass -File …`), ne pas modifier la politique système.
-- **Chemin du projet trop long** → erreur `LNK1104` à l'édition de liens Rust : définir `CARGO_TARGET_DIR` vers un chemin court (les scripts le font). Mieux : cloner le dépôt dans un dossier court (`C:\dev\tomo`).
-- **PowerShell** : les noms de variables sont **insensibles à la casse** (`$a` = `$A`) ; dans `@( 'a' + "b", 'c' )` la **virgule passe avant le `+`** ; dans une chaîne `"…"`, `${…}` et `` ` `` sont interprétés (casse les template literals TypeScript) → pour éditer du code, préférer l'outil d'édition de fichiers aux remplacements PowerShell.
-- **CORS** : `@fastify/cors` n'autorise que GET/HEAD/POST par défaut → `methods` est explicitement configuré (PATCH/DELETE).
-- **Requêtes POST sans corps** envoyées par PowerShell : l'API a un parseur « * » qui les accepte.
-- **Limitation anti-force brute** : 10 essais/min/IP sur `/auth/*` → lancer les tests à la suite peut donner des 429 (les scripts attendent et réessaient).
-- **Même compte = même identité LiveKit** : se connecter en vocal au même salon avec le même compte depuis deux endroits éjecte l'autre. Pour tester dans le navigateur pendant que le propriétaire utilise l'appli, prendre un autre salon ou un autre compte.
+- **Windows PowerShell 5.1** : pas de `&&` ; l'**exécution de scripts .ps1 est bloquée** → passer par les `.cmd` (`powershell -ExecutionPolicy Bypass -File …`), ne pas modifier la politique système.
+- **PowerShell et fichiers** : `[IO.File]` utilise un autre dossier courant que `cd` → toujours des chemins absolus (`"$PWD\…"`) ; les fichiers sources sont en fins de ligne LF : un remplacement de texte sur plusieurs lignes depuis PowerShell échoue → préférer l'outil d'édition. `Set-Content -Encoding utf8` ajoute un BOM (gênant dans un message de commit) → `[IO.File]::WriteAllText`.
+- Message de commit avec guillemets ou accents → l'écrire dans un fichier et `git commit -F fichier`.
+- **Chemin du projet trop long** → `LNK1104` : définir `CARGO_TARGET_DIR` vers un chemin court (`C:\t\tomo`).
+- **PowerShell** : variables insensibles à la casse ; dans `"…"`, `${…}` et `` ` `` sont interprétés.
+- **CORS** : `methods` explicitement configuré (PATCH/DELETE).
+- **Limitation anti-force brute** : 10 essais/min/IP sur `/auth/*` → les tests attendent une minute et réessaient en cas de 429.
+- **Même compte = même identité LiveKit** : deux connexions au même salon avec le même compte s'éjectent.
+- **Attributs LiveKit** : il faut `canUpdateOwnMetadata` dans le jeton (sinon `setAttributes` échoue en silence) — y compris pour les bots de test.
+- **Vite** : installer une nouvelle dépendance recharge la page en dev (pré-bundle) ; le worker des sous-titres impose `worker.format = "es"` dans `vite.config.ts`.
+- **Overlay** : un jeu en **plein écran exclusif** passe par-dessus toutes les fenêtres → plein écran fenêtré / sans bordure.
 - L'**overlay de performances NVIDIA** (Alt + R) peut s'afficher sur la fenêtre : ce n'est pas tomo.
-- Le navigateur intégré de Claude bloque le micro et la capture d'écran : tester ces parties dans l'appli de bureau (le propriétaire teste lui-même).
+- Le navigateur intégré de Claude bloque le micro et la capture d'écran : tester ces parties dans l'appli de bureau (le propriétaire teste lui-même). Pour simuler, utiliser les bots (`lib/dev.ts`) depuis la console.
 
 ---
 
@@ -153,27 +164,31 @@ Build de l'exécutable : `npm run tauri build` dans `client/` (installateur dans
 
 - Fond graphite `#0E1014`, panneaux `#13161C`, cartes `#161920`, texte `#ECEEF3`.
 - **Turquoise signal `#2DD4BF`** (actions, « qui parle »), **ambre écho `#FFB020`** (accents, statuts), rouge `#E5484D` (quitter, erreurs).
-- Polices : **Space Grotesk** (titres), **Inter** (texte). Icônes en traits fins (composant `Icon` dans `Brand.tsx`), jamais d'emoji dans l'interface.
+- Polices : **Space Grotesk** (titres), **Inter** (texte). Icônes en traits fins (composant `Icon` dans `Brand.tsx`), jamais d'emoji dans l'interface (sauf les réactions choisies par les gens).
 - Logo : deux bulles qui se répondent (turquoise avec onde sonore, ambre) — composant `Logo`, icônes générées depuis `client/app-icon.svg` (`npx tauri icon app-icon.svg`).
-- Maquettes de référence (privées) : https://claude.ai/artifact/ULPkHanxgN7nAbgsNQRk1X (les écrans Connexion / Créer un compte y montrent encore l'ancien parcours : l'appli fait foi).
+- Maquettes de référence : https://claude.ai/artifact/ULPkHanxgN7nAbgsNQRk1X (v0.2–v0.6) et https://claude.ai/artifact/HVWgLBMvzvko38Gyi7npGU (v0.7–v0.8). L'appli fait foi.
 
 ---
 
 ## 7. Sécurité (règles à respecter)
 
 - Mots de passe : scrypt (N=32768), 12 caractères min, comparaison à temps constant, hash factice si le pseudo n'existe pas.
-- Jetons de renouvellement stockés **hachés** (SHA-256), rotation à chaque usage ; changement de mot de passe = toutes les sessions révoquées.
+- Jetons de renouvellement stockés **hachés**, rotation à chaque usage ; changement de mot de passe = toutes les sessions révoquées.
 - Droits vérifiés **côté serveur** à chaque route (`access.ts`).
-- **`DEV_TOOLS=1` uniquement en dev** : sans lui, les routes `/dev` n'existent pas et le compte de test n'est pas créé. Ne jamais le mettre dans le `.env` du VPS.
-- Ne jamais committer `.env` ni de secret. Les identifiants de test ne sont que dans `docker-compose.dev.yml`.
+- **`DEV_TOOLS=1` uniquement en dev**. Ne jamais le mettre dans le `.env` du VPS.
+- Ne jamais committer `.env`, ni la **clé privée de mise à jour** (`~/.tauri/tomo-updater.key`), ni aucun secret.
 - Clips : rien n'est enregistré sans action de l'utilisateur, fichiers en local, icône visible par les autres.
+- Jeux détectés : seuls les **noms** des programmes sont lus ; rien n'est envoyé si « Montrer à quoi je joue » est coupé ou si le jeu est masqué.
+- Sous-titres, traduction, suppression de bruit : calculés sur le PC, rien n'est envoyé (seuls les modèles sont téléchargés une fois).
+- Liaison Steam : réponse OpenID revérifiée auprès de Steam, état à usage unique.
 
 ---
 
 ## 8. Où en est-on / suite logique
 
 Prochaines étapes possibles (à valider avec le propriétaire) :
-1. **Déployer sur le VPS** de son ami (guide `docs/HEBERGEMENT.md`) pour tester à plusieurs, chacun chez soi — pas encore fait.
-2. Grosses fonctionnalités restantes (ROADMAP V2/V3) : détection du jeu lancé + statut « joue à… », mode focus/ranked, mode radio (plusieurs salons), callouts vocaux (Piper), overlay en jeu, annotation sur partage d'écran (mode coach), « qui est dispo ce soir », stats Steam/Riot, sous-titres/traduction locaux.
-3. Petites améliorations listées dans la ROADMAP (raccourcis globaux + push-to-talk, notifications Windows, profil/pseudo, édition de messages, etc.).
-4. Mettre en place GitHub Actions (tests + build de l'installateur) et l'auto-update via GitHub Releases.
+1. **Publier la v0.8.0** (secret `TAURI_SIGNING_PRIVATE_KEY` à créer une fois, puis tag) et **déployer sur le VPS** de son ami (guide `docs/HEBERGEMENT.md`) pour tester à plusieurs.
+2. Tester en vrai ce qui n'a pas pu l'être ici : overlay par-dessus un jeu, sous-titres à plusieurs, mode coach à plusieurs, liaison Steam, clé Riot, mise à jour d'une version à la suivante.
+3. Push-to-talk et raccourcis globaux (dont Ctrl+Maj+O pour l'overlay), mode radio, callouts, « qui est dispo ce soir ».
+4. Paris : en attente d'une décision sur l'usage des points.
+5. Petites améliorations listées dans la ROADMAP.

@@ -3,39 +3,53 @@
 > Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, léger.
 > *(anciennement Talk2Mates / T2M)*
 
-**tomo** (« ami » en japonais) est une application de chat vocal pour les groupes d'amis qui jouent ensemble. C'est une alternative à Discord, avec des fonctionnalités en plus : audio spatial activable, invités d'un soir sans compte, clip audio des 60 dernières secondes, mode focus…
+**tomo** (« ami » en japonais) est une application de chat vocal pour les groupes d'amis qui jouent ensemble. Une alternative à Discord, avec des choses en plus : audio spatial (y compris la position lue dans le jeu), invités d'un soir sans compte, clips des dernières secondes, sous-titres et traduction calculés sur le PC, overlay en jeu, mode coach, mur des légendes…
 
 Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout tourne sur votre propre serveur.
 
 ---
 
-## ✨ Ce qui marche déjà (v0.6)
+## ⬇️ Installer tomo
 
-- **Nouveau design « Pièces & bulles »** : serveurs rangés en dossiers, pièces vocales en cartes, vocal en cours toujours visible.
-- **Pièces jointes, messages vocaux et GIF** dans toutes les discussions.
-- **Volume uniformisé** : tout le monde s'entend au même niveau, sans rien régler.
-- **Installateurs Windows et Mac** (page Releases du dépôt).
+👉 **[Télécharger la dernière version](https://github.com/kameronramah/tomo/releases/latest)**
 
-- **Partage d'écran haute qualité** : jusqu'à 1080p 60 i/s (jeux) ou 4K (texte, détails), son du PC, plein écran, versions allégées automatiques pour les petites connexions.
+- **Windows** : `tomo_…_x64-setup.exe`, double-clic (pas besoin d'être administrateur).
+- **Mac** (Intel et Apple) : `tomo_…_universal.dmg`, glisser tomo dans Applications. Premier lancement : clic droit › Ouvrir (l'app n'est pas signée par Apple).
 
-- **Audio spatial** : carte du salon où chacun déplace son avatar, voix en 3D selon la distance et la direction, et **position lue directement dans le jeu** (Mumble Link : Minecraft avec mod, Guild Wars 2, Arma…).
-- **Clip des 60 dernières secondes** : un clic ou Ctrl+Maj+C, le fichier arrive dans Musique\tomo Clips.
+Ensuite, tomo **se met à jour tout seul** (Paramètres › À propos). Au premier lancement, indique l'adresse de ton instance tomo (le serveur de ton groupe).
 
-- **Messagerie** : salons textuels dans chaque serveur, chat dans chaque salon vocal, **amis** et **messages privés**, en temps réel.
-- **Appels privés** entre amis, avec sonnerie.
-- **Sons d'interface** (rejoindre, quitter, micro coupé, message, sonnerie) et **ping / qualité réseau** toujours visibles.
-- **Espace Paramètres** : compte, audio et micro, sons, apparence, raccourcis, réseau.
+---
 
+## ✨ Ce que fait tomo (v0.8)
 
-- **Comptes sécurisés** : pseudo + mot de passe, session gardée dans le coffre-fort de Windows (« rester connecté »).
-- **Serveurs créés par les utilisateurs**. Aucun serveur n'existe au départ : celui qui crée un serveur en est l'**admin**.
-- **Gestion complète par l'admin** : salons (créer, renommer, supprimer), membres (nommer admin, exclure), invitations, nom du serveur, suppression.
-- **Invitations** :
-  - **code membre** : un ami avec un compte rejoint le serveur ;
-  - **code invité** : quelqu'un **sans compte** rejoint le temps d'une soirée (1 à 24 h), puis son accès s'arrête tout seul.
-- **Salons vocaux** : qui parle, volume par personne, couper micro et son, choix micro et sortie, test du micro avant d'entrer.
-- **Changement de serveur et de salon en un clic** (et Ctrl + 1…9), sans quitter son vocal pour parcourir un autre serveur.
-- **Interrupteur d'audio spatial** par salon, synchronisé pour tout le monde (le rendu 3D arrive en V2).
+**Vocal**
+- Pièces vocales : qui parle (mesuré en direct), volume par personne, couper micro / son, choix du micro et de la sortie.
+- **Volume uniformisé** : tout le monde au même niveau, sans rien régler.
+- **Suppression de bruit avancée** (RNNoise, calculée sur ton PC) + porte de bruit, avec test « s'écouter » avant / après.
+- **Audio spatial** : carte de la pièce ou **position lue dans le jeu** (Mumble Link : Minecraft avec mod, Guild Wars 2, Arma… ; Valheim devrait marcher avec le mod PositionalAudio, pas encore testé).
+- **Clips** des 30 s / 1 min / 2 min passées, en un clic (Ctrl+Maj+C).
+- **Partage d'écran** jusqu'en 4K, son du PC, plein écran, et **mode coach** : tes potes annotent ton écran (crayon, flèche, ping), capture envoyée dans le chat.
+- **Sous-titres en direct + traduction** français ⇄ anglais, calculés sur ton PC (Whisper, Opus-MT).
+- **Overlay en jeu** : qui parle, chat de la pièce et sous-titres par-dessus ton jeu (les clics le traversent).
+
+**Jeux**
+- **Jeu détecté** : « joue à … » sur ton profil, dans la liste des membres et sur la carte des pièces (désactivable).
+- Paramètres par jeu : audio spatial, overlay, **pièce automatique**, **mode focus** (notifications coupées sauf coéquipiers), masquer.
+- Proposition de rejoindre tes potes quand tu lances le même jeu qu'eux.
+- **Stats** : Steam (heures jouées) et League of Legends (rang, dernières parties) sur la fiche profil.
+
+**Social**
+- Serveurs créés par les utilisateurs, rangés en **dossiers**, invitations membre ou **invité d'un soir sans compte**.
+- Fils de discussion, chat de chaque pièce, amis, messages privés (et demandes de message hors amis), **appels privés**.
+- Messages : pièces jointes, messages vocaux, GIF (Klipy), **modifier**, **réactions**, **mentions** @pseudo / @vocal / @tous.
+- **Mur des légendes** : citations cultes, captures et clips épinglés.
+- **Défis à points** : on se lance un défi, les participants valident le gagnant, classement du mois (pas d'argent, pas de mise).
+- Profils (photo, bannière, phrase, couleur), statuts (en ligne, inactif, ne pas déranger, invisible + statut perso), confidentialité, blocage.
+
+**Appli**
+- Notifications Windows / Mac, pastilles de non-lus, heures calmes, lancement avec l'ordinateur.
+- **Français ou anglais** (Paramètres › Apparence).
+- Mise à jour automatique, installateurs Windows et Mac.
 
 👉 La suite est dans la [ROADMAP](ROADMAP.md).
 
@@ -45,12 +59,13 @@ Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout 
 
 | Partie | Technologie |
 |---|---|
-| Client de bureau | [Tauri 2](https://tauri.app) (Rust) + React + TypeScript |
+| Client de bureau | [Tauri 2](https://tauri.app) (Rust) + React 19 + TypeScript + Vite |
 | Audio / vidéo temps réel | [LiveKit](https://livekit.io), auto-hébergé (WebRTC, SFU) |
-| API (comptes, serveurs, salons, invitations) | Node.js 24 + TypeScript ([Fastify](https://fastify.dev)) + SQLite intégré (`node:sqlite`) |
-| Sécurité | scrypt (mots de passe), JWT 15 min + jetons de renouvellement à rotation, limitation des tentatives |
-| HTTPS / reverse proxy | [Caddy](https://caddyserver.com) (certificats Let's Encrypt automatiques) |
-| Distribution | GitHub Releases |
+| API | Node.js 24 + TypeScript ([Fastify](https://fastify.dev)) + SQLite intégré (`node:sqlite`) |
+| Traitement local | RNNoise (bruit), Whisper + Opus-MT via [Transformers.js](https://huggingface.co/docs/transformers.js) (sous-titres, traduction) |
+| Sécurité | scrypt, JWT 15 min + renouvellement à rotation, limitation des tentatives |
+| HTTPS | [Caddy](https://caddyserver.com) (Let's Encrypt automatique) |
+| Distribution | GitHub Actions + Releases (installateurs signés pour la mise à jour automatique) |
 
 Plus de détails dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -60,22 +75,22 @@ Plus de détails dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```
 tomo/
-├── client/                  # Application de bureau tomo (Tauri + React)
+├── client/                     # Application de bureau tomo (Tauri + React)
 ├── server/
-│   ├── api/                 # API Node/TypeScript
-│   ├── docker-compose.yml   # Production (VPS)
+│   ├── api/                    # API Node/TypeScript (+ tests dans api/tests)
+│   ├── docker-compose.yml      # Production (VPS)
 │   ├── docker-compose.dev.yml  # Développement local
-│   ├── livekit.yaml
-│   ├── Caddyfile
-│   └── .env.example
+│   ├── livekit.yaml, Caddyfile, .env.example
+├── .github/workflows/          # Installateurs Windows + Mac à chaque version
 └── docs/
     ├── ARCHITECTURE.md
-    └── HEBERGEMENT.md       # Déployer sur un VPS
+    ├── HEBERGEMENT.md          # Déployer sur un VPS
+    └── PUBLIER-UNE-VERSION.md  # Sortir une version (installateurs + mise à jour auto)
 ```
 
 ---
 
-## 🚀 Démarrage rapide
+## 🚀 Démarrage rapide (développeurs)
 
 **En local** (Docker requis) :
 ```bash
@@ -90,7 +105,7 @@ Puis lancer le client (voir [client/README.md](client/README.md)), créer un com
 
 ## 💸 Coût
 
-**0 €.** Uniquement des outils open source auto-hébergés et des offres gratuites. Les fonctionnalités qui demanderaient de payer sont listées à part dans la [ROADMAP](ROADMAP.md#-mis-de-côté).
+**0 €.** Uniquement des outils open source auto-hébergés et des offres gratuites (clés Klipy, Steam et Riot gratuites, modèles d'IA ouverts calculés sur le PC). Les fonctionnalités qui demanderaient de payer sont listées à part dans la [ROADMAP](ROADMAP.md#️-mis-de-côté).
 
 ## 📄 Licence
 
