@@ -11,10 +11,72 @@ type Props = {
   onToggleMic: () => void;
   onToggleDeafen: () => void;
   onLeave: () => void;
+  /** island : flottante en bas de l'écran · panel : en bas du plan du serveur · mini : plan réduit */
+  variant?: "island" | "panel" | "mini";
 };
 
-/** Le vocal en cours suit partout : petite île flottante en bas de l'écran. */
+/** Le vocal en cours suit partout (île flottante, ou en bas du plan du serveur). */
 export default function VoiceIsland(p: Props) {
+  const variant = p.variant ?? "island";
+  const mic = (
+    <button
+      className={`island-btn${p.micOn ? " mic-on" : " off"}`}
+      onClick={p.onToggleMic}
+      aria-label={p.micOn ? "Couper le micro" : "Activer le micro"}
+      title={p.micOn ? "Couper le micro (Ctrl+Maj+M)" : "Activer le micro (Ctrl+Maj+M)"}
+    >
+      <Icon name={p.micOn ? "mic" : "micOff"} size={variant === "island" ? 18 : 16} />
+    </button>
+  );
+  const deaf = (
+    <button
+      className={`island-btn${p.deafened ? " off" : ""}`}
+      onClick={p.onToggleDeafen}
+      aria-label={p.deafened ? "Rétablir le son" : "Couper le son"}
+      title={p.deafened ? "Rétablir le son (Ctrl+Maj+D)" : "Couper le son (Ctrl+Maj+D)"}
+    >
+      <Icon name={p.deafened ? "headphonesOff" : "headphones"} size={variant === "island" ? 18 : 16} />
+    </button>
+  );
+
+  if (variant === "mini") {
+    return (
+      <div className="voice-mini" role="region" aria-label="Vocal en cours">
+        <button className="island-btn" onClick={p.onOpen} title={`Revenir à ${p.label}`} aria-label={`Revenir à ${p.label}`}>
+          <span className="island-dot" aria-hidden="true" />
+        </button>
+        {mic}
+        {deaf}
+        <button className="island-btn leave" onClick={p.onLeave} aria-label={p.isCall ? "Raccrocher" : "Quitter"} title={p.isCall ? "Raccrocher" : "Quitter"}>
+          <Icon name={p.isCall ? "phoneOff" : "leave"} size={16} />
+        </button>
+      </div>
+    );
+  }
+
+  if (variant === "panel") {
+    return (
+      <div className="voice-panel" role="region" aria-label="Vocal en cours">
+        <button className="voice-panel-info" onClick={p.onOpen} title="Revenir à la pièce">
+          <span className="island-dot" aria-hidden="true" />
+          <span className="col gap-2 grow left" style={{ minWidth: 0 }}>
+            <strong className="ellipsis">En vocal · {p.label}</strong>
+            <span className="muted small row gap-6">
+              <NetworkBadge room={p.room} />
+            </span>
+          </span>
+        </button>
+        <div className="row gap-6">
+          {mic}
+          {deaf}
+          <button className="voice-panel-leave" onClick={p.onLeave}>
+            {p.isCall ? "Raccrocher" : "Quitter"}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="island-wrap">
       <div className="island" role="region" aria-label="Vocal en cours">
@@ -23,22 +85,8 @@ export default function VoiceIsland(p: Props) {
           <span className="strong ellipsis">{p.label}</span>
           <NetworkBadge room={p.room} />
         </button>
-        <button
-          className={`island-btn${p.micOn ? "" : " off"}`}
-          onClick={p.onToggleMic}
-          aria-label={p.micOn ? "Couper le micro" : "Activer le micro"}
-          title={p.micOn ? "Couper le micro (Ctrl+Maj+M)" : "Activer le micro (Ctrl+Maj+M)"}
-        >
-          <Icon name={p.micOn ? "mic" : "micOff"} />
-        </button>
-        <button
-          className={`island-btn${p.deafened ? " off" : ""}`}
-          onClick={p.onToggleDeafen}
-          aria-label={p.deafened ? "Rétablir le son" : "Couper le son"}
-          title={p.deafened ? "Rétablir le son (Ctrl+Maj+D)" : "Couper le son (Ctrl+Maj+D)"}
-        >
-          <Icon name={p.deafened ? "headphonesOff" : "headphones"} />
-        </button>
+        {mic}
+        {deaf}
         <button className="island-leave" onClick={p.onLeave}>
           {p.isCall ? "Raccrocher" : "Quitter"}
         </button>

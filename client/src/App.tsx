@@ -20,6 +20,7 @@ import { clipFileName, clipsSupported, encodeWav, openClipsFolder, saveClip } fr
 import { playSound, setQuietMode, startRinging } from "./lib/sounds";
 import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
 import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
+import { flashIcon, setAppBadge } from "./lib/badge";
 import ProfileCard from "./components/ProfileCard";
 import { speakingDetector } from "./lib/speaking";
 import { errorMessage } from "./lib/ui";
@@ -29,6 +30,7 @@ import ServerRail, { type Mode } from "./components/ServerRail";
 import MessagesView, { RequestsView, type DmView } from "./components/MessagesView";
 import DmPanel from "./components/DmPanel";
 import MemberList from "./components/MemberList";
+import ServerPlan from "./components/ServerPlan";
 import VoiceIsland from "./components/VoiceIsland";
 import { NetworkBadge } from "./components/Brand";
 
@@ -107,6 +109,21 @@ export default function App() {
   const [devOpen, setDevOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<string | undefined>();
+  const [planCollapsed, setPlanCollapsedState] = useState(() => {
+    try {
+      return localStorage.getItem("tomo.planCollapsed") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const setPlanCollapsed = (v: boolean) => {
+    setPlanCollapsedState(v);
+    try {
+      localStorage.setItem("tomo.planCollapsed", v ? "1" : "0");
+    } catch {
+      // pas de mémoire : tant pis
+    }
+  };
 
   const voiceRef = useRef<Voice | null>(null);
   voiceRef.current = voice;
@@ -320,6 +337,21 @@ export default function App() {
   const dmRequests = useMemo(() => dms.filter((d) => d.request && !d.ignored), [dms]);
   useEffect(() => putPeople(dms.flatMap((d) => (d.profile ? [d.profile] : []))), [dms]);
 
+  /** Ce qui t'attend vraiment : messages privés non lus + demandes (ami, message). */
+  const messagesBadge =
+    dmOrder.reduce((n, id) => n + (unread[`dm:${id}`] ?? 0), 0) +
+    friends.filter((f) => f.status === "incoming").length +
+    dmRequests.length;
+  useEffect(() => void setAppBadge(messagesBadge), [messagesBadge]);
+
+  /** Serveur de chaque clé de non-lus (pour le point gris sur la colonne des serveurs). */
+  const keyServerRef = useRef<Record<string, string>>({});
+  const serverDots = useMemo(() => {
+    const s = new Set<string>();
+    for (const [key, n] of Object.entries(unread)) if (n > 0 && keyServerRef.current[key]) s.add(keyServerRef.current[key]);
+    return s;
+  }, [unread]);
+
   // ---- Ce que l'utilisateur regarde (pour les non-lus) ---------------------------
   const stageVisible =
     !!voice &&
@@ -358,10 +390,12 @@ export default function App() {
               return [{ ...prev, userId: other, lastMessageAt: m.createdAt }, ...list.filter((d) => d.userId !== other)];
             });
           }
+          if (typeof e.serverId === "string") keyServerRef.current[key] = e.serverId;
           if (viewingRef.current === key && document.hasFocus()) return;
           if (viewingRef.current !== key) setUnread((u) => ({ ...u, [key]: (u[key] ?? 0) + 1 }));
           if (m.scope === "dm") {
             playSound("message");
+            void flashIcon();
             const known = dmsRef.current.find((d) => d.userId === key.slice(3));
             if (known?.request) void notify(`Demande de message de ${m.authorName}`, "Ouvre Tomo pour lire et accepter.");
             else void notify(m.authorName, m.content || (m.attachments?.length ? "a envoyé un fichier" : ""));
@@ -707,6 +741,8 @@ export default function App() {
   const openInvite = () => active && setDialog({ kind: "invite", server: active, guests: isManager });
   const openChannel = serverView.type === "channel" ? detail?.channels.find((c) => c.id === serverView.id) : undefined;
   const dmFriend = dmView.type === "dm" ? friends.find((f) => f.id === dmView.userId) : undefined;
+  // Plan du serveur : visible dans une pièce vocale ou un fil (pas sur l'accueil, qui montre déjà tout)
+  const planVisible = mode === "servers" && !!detail && ((stageVisible && voice?.kind === "room") || !!openChannel);
 
   // ---- Zone principale ----
   let main: React.ReactNode;
@@ -883,10 +919,6 @@ export default function App() {
     );
   }
 
-  const messagesBadge =
-    dmOrder.reduce((n, id) => n + (unread[`dm:${id}`] ?? 0), 0) +
-    friends.filter((f) => f.status === "incoming").length +
-    dmRequests.length;
 
   return (
     <div className="app">
@@ -903,6 +935,7 @@ export default function App() {
         activeId={active?.id ?? null}
         voiceServerId={voice?.kind === "room" ? voice.serverId : null}
         messagesBadge={messagesBadge}
+        serverDots={serverDots}
         onSelectServer={selectServer}
         onCreateServer={() => setDialog({ kind: "createServer" })}
         onJoinServer={() => setDialog({ kind: "joinServer" })}
@@ -927,9 +960,54 @@ export default function App() {
         />
       )}
 
-      <div className={`content-wrap${voice && !stageVisible ? " with-island" : ""}`}>
-        <main className="content">{main}</main>
-        {voice && !stageVisible && (
+      <div className={`content-wrap${voice && !stageVisible && !planVisible ? " with-island" : ""}`}>
+        {planVisible && detail ? (
+          <div className="with-plan">
+            <ServerPlan
+              detail={detail}
+              isManager={isManager}
+              isGuest={isGuest}
+              voice={
+                voice?.kind === "room" && voice.serverId === detail.id
+                  ? { roomId: voice.roomId, identity: voice.room.localParticipant.identity }
+                  : null
+              }
+              myName={me?.displayName ?? displayName}
+              speaking={speaking}
+              unread={unread}
+              openRoomId={stageVisible && voice?.kind === "room" ? voice.roomId : undefined}
+              openChannelId={openChannel?.id}
+              joiningRoomId={joiningRoomId}
+              collapsed={planCollapsed}
+              onToggleCollapsed={() => setPlanCollapsed(!planCollapsed)}
+              onOpenHome={() => setServerView({ type: "home" })}
+              onJoinRoom={enterRoom}
+              onOpenChannel={(c) => setServerView({ type: "channel", id: c.id })}
+              onAddRoom={() => setDialog({ kind: "addRoom", serverId: detail.id })}
+              onManage={() => active && setDialog({ kind: "manage", server: active })}
+              footer={
+                voice && !stageVisible ? (
+                  <VoiceIsland
+                    variant={planCollapsed ? "mini" : "panel"}
+                    room={voice.room}
+                    label={voice.kind === "call" ? `Appel · ${voice.roomLabel}` : (voiceRoomInfo?.label ?? voice.roomLabel)}
+                    isCall={voice.kind === "call"}
+                    micOn={micOn}
+                    deafened={deafened}
+                    onOpen={goToVoice}
+                    onToggleMic={toggleMic}
+                    onToggleDeafen={toggleDeafen}
+                    onLeave={leaveVoice}
+                  />
+                ) : undefined
+              }
+            />
+            <main className="content">{main}</main>
+          </div>
+        ) : (
+          <main className="content">{main}</main>
+        )}
+        {voice && !stageVisible && !planVisible && (
           <VoiceIsland
             room={voice.room}
             label={voice.kind === "call" ? `Appel · ${voice.roomLabel}` : (voiceRoomInfo?.label ?? voice.roomLabel)}

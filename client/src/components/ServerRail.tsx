@@ -18,6 +18,8 @@ type Props = {
   /** Serveur où je suis en vocal */
   voiceServerId: string | null;
   messagesBadge: number;
+  /** Serveurs avec des nouveaux messages non lus (point gris) */
+  serverDots: Set<string>;
   onSelectServer: (id: string) => void;
   onCreateServer: () => void;
   onJoinServer: () => void;
@@ -185,7 +187,7 @@ export default function ServerRail(props: Props) {
   function serverRow(s: ServerSummary, nested: boolean) {
     const active = mode === "servers" && s.id === activeId;
     const here = props.voiceServerId === s.id;
-    const sub = here ? `${s.inVoice} en vocal · tu y es` : s.inVoice > 0 ? `${s.inVoice} en vocal` : "";
+    const sub = here ? (s.inVoice > 0 ? `${s.inVoice} en vocal · tu y es` : "tu y es") : s.inVoice > 0 ? `${s.inVoice} en vocal` : "";
     return (
       <button
         key={s.id}
@@ -198,7 +200,11 @@ export default function ServerRail(props: Props) {
       >
         <span className="rail-badge">
           <ServerBadge name={s.name} size={nested ? 30 : 34} />
-          {collapsed && s.inVoice > 0 && <span className={`rail-dot ${here ? "teal" : "amber"}`} />}
+          {props.serverDots.has(s.id) && !active ? (
+            <span className="new-dot" title="Nouveaux messages" />
+          ) : (
+            collapsed && s.inVoice > 0 && <span className={`rail-dot ${here ? "teal" : "amber"}`} />
+          )}
         </span>
         {!collapsed && (
           <span className="grow col left rail-text">
@@ -306,14 +312,9 @@ export default function ServerRail(props: Props) {
             <span className="rail-icon">
               <Icon name="chat" size={17} />
             </span>
-            {collapsed && props.messagesBadge > 0 && <span className="rail-count">{props.messagesBadge}</span>}
+            {props.messagesBadge > 0 && <span className="count red">{props.messagesBadge > 99 ? "99+" : props.messagesBadge}</span>}
           </span>
-          {!collapsed && (
-            <>
-              <span className="grow left">Messages</span>
-              {props.messagesBadge > 0 && <span className="badge amber-badge-fill">{props.messagesBadge}</span>}
-            </>
-          )}
+          {!collapsed && <span className="grow left">Messages</span>}
         </button>
       )}
 
