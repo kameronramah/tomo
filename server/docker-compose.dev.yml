@@ -23,6 +23,9 @@ services:
       LIVEKIT_API_SECRET: secret
       # Recherche de GIF : mets KLIPY_API_KEY=… dans server/.env (jamais dans ce fichier, il est sur GitHub)
       KLIPY_API_KEY: ${KLIPY_API_KEY:-}
+      # Stats de jeu (facultatif) : STEAM_API_KEY=… et RIOT_API_KEY=… dans server/.env
+      STEAM_API_KEY: ${STEAM_API_KEY:-}
+      RIOT_API_KEY: ${RIOT_API_KEY:-}
       # Outils de test + compte de test (dev uniquement, jamais dans le docker-compose.yml de prod)
       DEV_TOOLS: "1"
       DEV_USERNAME: testeur

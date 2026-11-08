@@ -5,6 +5,7 @@ import { STATUS_LABEL, putPeople } from "../lib/people";
 import { setParticipantVolume, volumeMemory } from "../lib/voice";
 import { errorMessage, initials } from "../lib/ui";
 import { sinceLabel } from "../lib/games";
+import { StatsBlock } from "./GameStats";
 import { Avatar, Icon } from "./Brand";
 import { locale, t } from "../lib/i18n";
 
@@ -129,6 +130,7 @@ export default function ProfileCard(props: Props) {
           </p>
         ) : (
           <ProfileView p={p}>
+            <StatsBlock api={api} userId={p.id} />
             {participant && (
               <label className="setting-row" style={{ gap: 12 }}>
                 <Icon name="volume" size={18} />

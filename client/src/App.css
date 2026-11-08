@@ -1267,3 +1267,12 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .rank-n { width: 18px; text-align: center; color: var(--muted); font-weight: 600; }
 @media (max-width: 900px) { .challenges-body { flex-direction: column; } .leaderboard { width: 100%; position: static; } }
 .pin-clip { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-3, var(--surface-2)); }
+
+/* ---- v0.8 - Stats de jeu ---- */
+.stats-block { display: flex; flex-direction: column; gap: 10px; }
+.stat-card { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
+.stat-line { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.stat-line.match { padding-left: 8px; border-left: 3px solid var(--line); }
+.stat-line.match.win { border-left-color: var(--teal, #2DD4BF); }
+.stat-line.match.loss { border-left-color: var(--red, #E5484D); }
+.link-row { display: flex; align-items: center; gap: 12px; }

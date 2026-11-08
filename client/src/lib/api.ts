@@ -96,6 +96,33 @@ export type MyProfile = FullProfile & {
   customStatusUntil: number | null;
   privacy: Privacy;
 };
+export type GameLinks = {
+  steam: { steamId: string } | null;
+  riot: { riotId: string; region: string } | null;
+  visibility: "everyone" | "servers" | "nobody";
+  showRank: boolean;
+  available: { steam: boolean; riot: boolean };
+  regions: { id: string; label: string }[];
+};
+export type SteamStats = {
+  linked: true;
+  error?: string;
+  name?: string | null;
+  profileUrl?: string | null;
+  private?: boolean;
+  minutes2w?: number;
+  games?: { name: string; appId: number; minutes2w: number }[];
+};
+export type RiotStats = {
+  linked: true;
+  error?: string;
+  riotId: string | null;
+  region?: string;
+  level?: number | null;
+  ranks?: { queue: string; tier: string; division: string; lp: number; winRate: number | null }[];
+  matches?: { win: boolean; champion: string; kills: number; deaths: number; assists: number; endedAt: number; mode: string }[];
+};
+export type UserStats = { steam: SteamStats | null; riot: RiotStats | null; hidden?: boolean };
 export type Legend = {
   id: string;
   kind: "clip" | "quote" | "image";
@@ -408,6 +435,15 @@ export class Api {
   deleteMessage = (id: string) => this.request("DELETE", `/messages/${id}`);
   editMessage = (id: string, content: string) => this.request<Message>("PATCH", `/messages/${id}`, { content });
   react = (id: string, emoji: string) => this.request<{ reactions: Reaction[] }>("POST", `/messages/${id}/reactions`, { emoji });
+
+  // ---- Comptes de jeu et stats -------------------------------------------------
+  links = () => this.request<GameLinks>("GET", "/me/links");
+  setLinks = (p: { visibility?: GameLinks["visibility"]; showRank?: boolean }) => this.request("PATCH", "/me/links", p);
+  steamLinkStart = () => this.request<{ url: string }>("POST", "/me/links/steam/start");
+  unlinkSteam = () => this.request("DELETE", "/me/links/steam");
+  linkRiot = (riotId: string, region: string) => this.request<{ riotId: string; region: string }>("POST", "/me/links/riot", { riotId, region });
+  unlinkRiot = () => this.request("DELETE", "/me/links/riot");
+  stats = (userId: string) => this.request<UserStats>("GET", `/users/${userId}/stats`);
 
   // ---- Mur des légendes et défis ---------------------------------------------
   legends = (serverId: string) => this.request<Legend[]>("GET", `/servers/${serverId}/legends`);

@@ -8,6 +8,7 @@ import { errorMessage } from "../lib/ui";
 import { Icon, NetworkBadge, UserAvatar, type IconName } from "./Brand";
 import { MyProfileSection, PrivacySection } from "./SettingsProfile";
 import SettingsGames from "./SettingsGames";
+import { GameAccountsSection } from "./GameStats";
 import { autostartEnabled, inTauri, setAutostart } from "../lib/desktop";
 import { MicTester } from "./Home";
 import { CLIP_CHOICES, clipBlob, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
@@ -25,6 +26,7 @@ type Section =
   | "clips"
   | "screen"
   | "games"
+  | "accounts"
   | "sounds"
   | "appearance"
   | "startup"
@@ -39,6 +41,7 @@ const GROUPS: { title: string; items: { id: Section; label: string; icon: IconNa
       { id: "profile", label: t("Mon profil"), icon: "user" },
       { id: "account", label: t("Compte et sécurité"), icon: "lock" },
       { id: "privacy", label: t("Confidentialité"), icon: "shield" },
+      { id: "accounts", label: t("Comptes de jeu"), icon: "gamepad" },
     ],
   },
   {
@@ -152,6 +155,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           {section === "clips" && <Clips s={s} api={api} />}
           {section === "screen" && <ScreenSettings s={s} />}
           {section === "games" && <SettingsGames api={api} />}
+          {section === "accounts" && <GameAccountsSection api={api} realtime={realtime} />}
           {section === "sounds" && <Sounds s={s} />}
           {section === "appearance" && <Appearance s={s} />}
           {section === "startup" && <Startup s={s} />}

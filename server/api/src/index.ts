@@ -12,6 +12,7 @@ import gifRoutes from "./gifs.js";
 import profileRoutes from "./profiles.js";
 import legendRoutes from "./legends.js";
 import challengeRoutes from "./challenges.js";
+import gameStatsRoutes from "./gamestats.js";
 import realtimeRoutes from "./realtime.js";
 import websocket from "@fastify/websocket";
 
@@ -40,6 +41,7 @@ await app.register(gifRoutes);
 await app.register(profileRoutes);
 await app.register(legendRoutes);
 await app.register(challengeRoutes);
+await app.register(gameStatsRoutes);
 
 // Outils de test : uniquement si DEV_TOOLS=1 (serveur de dev). Absents en production.
 if (config.devTools) {
