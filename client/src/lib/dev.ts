@@ -4,6 +4,7 @@
  */
 import { Room, Track, createLocalAudioTrack, type LocalAudioTrack } from "livekit-client";
 import type { Api } from "./api";
+import { getSpatial } from "./voice";
 
 type Bot = { name: string; room: Room; ctx: AudioContext; gain: GainNode; timer: number; talking: boolean; walk: number };
 
@@ -43,14 +44,25 @@ export async function addBot(api: Api, roomId: string) {
     name: "bot-voice",
   });
 
-  // Audio spatial : le bot tourne en rond sur la carte du salon (position publiée comme un vrai joueur).
+  // Audio spatial : le bot tourne en rond (position publiée comme un vrai joueur).
+  // Il suit ton mode : sur la carte autour du centre, ou « dans le même jeu » autour de ta position en jeu.
   const radius = 5 + Math.random() * 15;
   const speed = (0.15 + Math.random() * 0.25) * (Math.random() < 0.5 ? -1 : 1);
   let angle = Math.random() * Math.PI * 2;
   const enc = new TextEncoder();
   const walk = window.setInterval(() => {
     angle += speed * 0.15;
-    const pos = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius, yaw: 0, src: "map", ctx: "" };
+    const me = getSpatial();
+    const inGame = me?.mySource === "game";
+    const cx = inGame ? me!.me.x : 0;
+    const cy = inGame ? me!.me.y : 0;
+    const pos = {
+      x: cx + Math.cos(angle) * radius,
+      y: cy + Math.sin(angle) * radius,
+      yaw: 0,
+      src: inGame ? "game" : "map",
+      ctx: inGame ? me!.myCtx : "",
+    };
     room.localParticipant.publishData(enc.encode(JSON.stringify(pos)), { reliable: false, topic: "pos" }).catch(() => {});
   }, 150);
 

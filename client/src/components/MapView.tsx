@@ -114,10 +114,18 @@ export default function MapView({ room, engine }: Props) {
       </div>
 
       {unplaced.length > 0 && (
-        <p className="map-unplaced muted small">
-          <Icon name="info" size={14} /> Entendu{unplaced.length > 1 ? "s" : ""} normalement (pas de position) :{" "}
-          {unplaced.map((p) => p.name || p.identity).join(", ")}
-        </p>
+        <div className="map-unplaced muted small">
+          <Icon name="info" size={14} />
+          <span>
+            Entendu{unplaced.length > 1 ? "s" : ""} normalement, sans 3D :{" "}
+            {unplaced.map((p, i) => (
+              <span key={p.identity}>
+                {i > 0 && " · "}
+                <strong className="soft">{p.name || p.identity}</strong> ({engine.unplacedReason(p.identity)})
+              </span>
+            ))}
+          </span>
+        </div>
       )}
 
       <button className="link small" onClick={() => updateSettings("spatial", { showMap: false })}>

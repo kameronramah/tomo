@@ -141,13 +141,21 @@ export class SpatialEngine {
   }
 
   // ---- Positions -------------------------------------------------------------
+  /**
+   * Pourquoi une voix n'est PAS spatialisée (null si elle l'est).
+   * Les positions « carte » et « jeu » ne se mélangent jamais, ni deux jeux / serveurs de jeu différents.
+   */
+  unplacedReason(id: string): string | null {
+    const r = this.remotes.get(id);
+    if (!r || Date.now() - r.at > STALE_MS) return "pas de position";
+    if (r.src !== this.mySource) return r.src === "map" ? "est sur la carte, toi dans le jeu" : "est dans un jeu, toi sur la carte";
+    if (r.src === "game" && r.ctx !== this.myCtx) return "pas dans le même jeu ou serveur";
+    return null;
+  }
+
   /** Une voix est-elle vraiment spatialisée (position récente et compatible) ? */
   isPlaced(id: string): boolean {
-    const r = this.remotes.get(id);
-    if (!r || Date.now() - r.at > STALE_MS) return false;
-    if (r.src !== this.mySource) return false;
-    if (r.src === "game" && r.ctx !== this.myCtx) return false;
-    return true;
+    return this.unplacedReason(id) === null;
   }
 
   distanceTo(id: string): number | null {

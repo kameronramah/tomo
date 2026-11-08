@@ -175,7 +175,7 @@ export default function Stage(props: Props) {
                 </span>
               )}
               {props.spatial && engine && !isMe && (
-                <span className="tile-distance">{engine.isPlaced(p.identity) ? `${Math.round(engine.distanceTo(p.identity) ?? 0)} m` : "sans position"}</span>
+                <span className="tile-distance">{engine.isPlaced(p.identity) ? `${Math.round(engine.distanceTo(p.identity) ?? 0)} m` : (engine.unplacedReason(p.identity) ?? "")}</span>
               )}
               <Avatar name={label} size={92} speaking={p.isSpeaking} className="big" />
               <span className="tile-name">
