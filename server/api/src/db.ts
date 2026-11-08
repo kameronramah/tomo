@@ -103,6 +103,23 @@ CREATE TABLE IF NOT EXISTS friendships (
 for (const sql of [
   "ALTER TABLE users ADD COLUMN is_dev INTEGER NOT NULL DEFAULT 0", // compte de test avec outils
   "ALTER TABLE users ADD COLUMN is_test INTEGER NOT NULL DEFAULT 0", // faux membre généré
+  // --- Profil (v0.7) ---
+  "ALTER TABLE users ADD COLUMN display_name TEXT", // nom affiché (le pseudo de connexion ne change pas)
+  "ALTER TABLE users ADD COLUMN bio TEXT", // petite phrase de profil
+  "ALTER TABLE users ADD COLUMN accent TEXT", // couleur du profil (#RRGGBB)
+  "ALTER TABLE users ADD COLUMN avatar_id TEXT", // pièce jointe (image) servant de photo
+  "ALTER TABLE users ADD COLUMN banner_id TEXT", // pièce jointe (image) servant de bannière
+  // --- Statut ---
+  "ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'online'", // online | idle | dnd | invisible (choisi)
+  "ALTER TABLE users ADD COLUMN custom_status TEXT",
+  "ALTER TABLE users ADD COLUMN custom_status_until INTEGER", // null = sans fin
+  "ALTER TABLE users ADD COLUMN last_seen INTEGER",
+  // --- Confidentialité ---
+  "ALTER TABLE users ADD COLUMN dm_policy TEXT NOT NULL DEFAULT 'servers'", // friends | servers | everyone
+  "ALTER TABLE users ADD COLUMN call_policy TEXT NOT NULL DEFAULT 'friends'", // friends | servers
+  "ALTER TABLE users ADD COLUMN friend_policy TEXT NOT NULL DEFAULT 'everyone'", // everyone | servers | nobody
+  "ALTER TABLE users ADD COLUMN show_game INTEGER NOT NULL DEFAULT 1",
+  "ALTER TABLE users ADD COLUMN show_last_seen INTEGER NOT NULL DEFAULT 1",
 ]) {
   try {
     db.exec(sql);
@@ -110,6 +127,23 @@ for (const sql of [
     // colonne déjà présente
   }
 }
+
+db.exec(`
+-- Personnes bloquées : plus de messages, d'appels ni de demandes d'ami dans les deux sens.
+CREATE TABLE IF NOT EXISTS blocks (
+  blocker_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  blocked_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (blocker_id, blocked_id)
+);
+-- Conversations privées avec quelqu'un qui n'est pas ami : acceptée ou ignorée par user_id.
+CREATE TABLE IF NOT EXISTS dm_state (
+  user_id  TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  other_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  state    TEXT NOT NULL, -- accepted | ignored
+  PRIMARY KEY (user_id, other_id)
+);
+`);
 
 // Les serveurs créés avant l'arrivée des salons textuels en reçoivent un.
 for (const s of db.prepare("SELECT id FROM servers WHERE id NOT IN (SELECT server_id FROM channels)").all() as { id: string }[]) {

@@ -4,9 +4,10 @@ import { randomUUID } from "node:crypto";
 import { AccessToken } from "livekit-server-sdk";
 import { db } from "./db.js";
 import { config } from "./config.js";
-import { areFriends, pair } from "./access.js";
+import { areFriends, isBlocked, pair } from "./access.js";
 import { requireUser } from "./security.js";
-import { isOnline, sendToUser } from "./realtime.js";
+import { isOnline, presenceOf, sendToUser } from "./realtime.js";
+import { canAddFriend, canCall, canMessage, displayNameOf, dmState, lightProfile, setDmState, userRow } from "./profiles.js";
 import { createMessage, listMessages, type MessageBody } from "./routes-chat.js";
 import { closeRooms } from "./livekit.js";
 
@@ -69,13 +70,21 @@ export default async function socialRoutes(app: FastifyInstance) {
          WHERE f.user_a = ? OR f.user_b = ? ORDER BY u.username`,
       )
       .all(me.id, me.id, me.id) as (FriendRow & { other_id: string; other_name: string })[];
-    return rows.map((r) => ({
-      id: r.other_id,
-      username: r.other_name,
-      status: r.status === "accepted" ? "friend" : r.requested_by === me.id ? "outgoing" : "incoming",
-      online: r.status === "accepted" ? isOnline(r.other_id) : false,
-      since: r.created_at,
-    }));
+    return rows.map((r) => {
+      const p = lightProfile(userRow(r.other_id)!);
+      const friend = r.status === "accepted";
+      return {
+        id: r.other_id,
+        username: r.other_name,
+        displayName: p.displayName,
+        avatarUrl: p.avatarUrl,
+        status: friend ? "friend" : r.requested_by === me.id ? "outgoing" : "incoming",
+        presence: friend ? p.status : "offline",
+        customStatus: friend ? p.customStatus : null,
+        online: friend ? isOnline(r.other_id) : false,
+        since: r.created_at,
+      };
+    });
   });
 
   /** Envoyer une demande d'ami par pseudo (ou accepter si l'autre l'a déjà demandé). */
@@ -90,6 +99,10 @@ export default async function socialRoutes(app: FastifyInstance) {
       if (target.id === me.id) return reply.code(400).send({ error: "Tu ne peux pas t'ajouter toi-même 🙂" });
       const [a, b] = pair(me.id, target.id);
       const existing = db.prepare("SELECT * FROM friendships WHERE user_a = ? AND user_b = ?").get(a, b) as FriendRow | undefined;
+      // Accepter une demande reçue reste toujours possible ; sinon on respecte le réglage de l'autre.
+      if (isBlocked(me.id, target.id)) return reply.code(403).send({ error: "Impossible d'ajouter cette personne." });
+      if (!existing && !canAddFriend(me.id, target.id))
+        return reply.code(403).send({ error: "Cette personne n'accepte pas les demandes d'ami de ta part." });
       if (existing?.status === "accepted") return reply.code(409).send({ error: "Vous êtes déjà amis." });
       if (existing && existing.requested_by === me.id) return reply.code(409).send({ error: "Demande déjà envoyée." });
       if (existing) {
@@ -134,14 +147,25 @@ export default async function socialRoutes(app: FastifyInstance) {
   });
 
   // -------------------------------------------------------------------------
-  // Messages privés (entre amis uniquement)
+  // Messages privés : entre amis, ou avec des non-amis selon le réglage
+  // « Qui peut m'écrire » du destinataire. Un non-ami arrive dans les « Demandes ».
   // -------------------------------------------------------------------------
+  const dmTarget = (a: string, b: string) => pair(a, b).join(":");
+  const hasConversation = (a: string, b: string) =>
+    !!db.prepare("SELECT 1 FROM messages WHERE scope = 'dm' AND target = ? LIMIT 1").get(dmTarget(a, b));
+
+  /** La conversation est-elle une « demande » pour `me` (non-ami, pas encore acceptée) ? */
+  const isRequestFor = (me: string, other: string) => !areFriends(me, other) && dmState(me, other) !== "accepted";
+
   app.get<{ Params: { userId: string }; Querystring: { before?: string } }>("/dm/:userId/messages", async (req, reply) => {
     const me = await requireUser(req, reply);
     if (!me) return;
-    if (!areFriends(me.id, req.params.userId)) return reply.code(403).send({ error: "Vous devez être amis pour discuter." });
+    const other = req.params.userId;
+    if (isBlocked(me.id, other)) return reply.code(403).send({ error: "Conversation indisponible." });
+    if (!areFriends(me.id, other) && !hasConversation(me.id, other) && !canMessage(me.id, other))
+      return reply.code(403).send({ error: "Cette personne n'accepte pas les messages de ta part." });
     const before = req.query.before && /^\d+$/.test(req.query.before) ? Number(req.query.before) : undefined;
-    return listMessages("dm", pair(me.id, req.params.userId).join(":"), before);
+    return listMessages("dm", dmTarget(me.id, other), before);
   });
 
   app.post<{ Params: { userId: string }; Body: MessageBody }>(
@@ -150,17 +174,32 @@ export default async function socialRoutes(app: FastifyInstance) {
     async (req, reply) => {
       const me = await requireUser(req, reply);
       if (!me) return;
-      if (!areFriends(me.id, req.params.userId)) return reply.code(403).send({ error: "Vous devez être amis pour discuter." });
-      const msg = createMessage(me, "dm", pair(me.id, req.params.userId).join(":"), req.body);
+      const other = req.params.userId;
+      if (!userRow(other)) return reply.code(404).send({ error: "Compte introuvable." });
+      if (!canMessage(me.id, other)) return reply.code(403).send({ error: "Cette personne n'accepte pas les messages de ta part." });
+      // Répondre à quelqu'un vaut acceptation de sa demande.
+      if (!areFriends(me.id, other) && dmState(me.id, other) !== "accepted") setDmState(me.id, other, "accepted");
+      const msg = createMessage(me, "dm", dmTarget(me.id, other), req.body);
       if (typeof msg === "string") return reply.code(400).send({ error: msg });
       const event = { type: "message", message: msg };
-      sendToUser(req.params.userId, event);
+      // Une demande ignorée ne dérange plus : on n'envoie rien en direct au destinataire.
+      if (dmState(other, me.id) !== "ignored") sendToUser(other, event);
       sendToUser(me.id, event);
       return msg;
     },
   );
 
-  /** Dernier message de chaque conversation privée (pour la liste et les non-lus). */
+  /** Accepter / ignorer la demande de message de quelqu'un. */
+  app.post<{ Params: { userId: string; action: string } }>("/dm/:userId/:action", async (req, reply) => {
+    const me = await requireUser(req, reply);
+    if (!me) return;
+    if (req.params.action !== "accept" && req.params.action !== "ignore") return reply.code(404).send({ error: "Action inconnue." });
+    setDmState(me.id, req.params.userId, req.params.action === "accept" ? "accepted" : "ignored");
+    sendToUser(me.id, { type: "friends" });
+    return { ok: true };
+  });
+
+  /** Conversations privées : dernier message, et si c'est une demande (non-ami) ou ignorée. */
   app.get("/dm", async (req, reply) => {
     const me = await requireUser(req, reply);
     if (!me) return;
@@ -170,7 +209,24 @@ export default async function socialRoutes(app: FastifyInstance) {
          WHERE scope = 'dm' AND (target LIKE ? OR target LIKE ?) GROUP BY target`,
       )
       .all(`${me.id}:%`, `%:${me.id}`) as { target: string; last: number }[];
-    return rows.map((r) => ({ userId: r.target.split(":").find((id) => id !== me.id)!, lastMessageAt: r.last }));
+    return rows
+      .map((r) => {
+        const userId = r.target.split(":").find((id) => id !== me.id)!;
+        const u = userRow(userId);
+        if (!u || isBlocked(me.id, userId)) return null;
+        // Une demande n'existe que si l'autre m'a écrit (pas si c'est moi qui ai écrit le premier).
+        const theyWrote = !!db.prepare("SELECT 1 FROM messages WHERE scope = 'dm' AND target = ? AND author_id = ? LIMIT 1").get(r.target, userId);
+        const request = isRequestFor(me.id, userId) && theyWrote && !db.prepare("SELECT 1 FROM messages WHERE scope = 'dm' AND target = ? AND author_id = ? LIMIT 1").get(r.target, me.id);
+        return {
+          userId,
+          lastMessageAt: r.last,
+          request,
+          ignored: dmState(me.id, userId) === "ignored",
+          friend: areFriends(me.id, userId),
+          profile: lightProfile(u),
+        };
+      })
+      .filter((x) => x !== null);
   });
 
   // -------------------------------------------------------------------------
@@ -179,10 +235,17 @@ export default async function socialRoutes(app: FastifyInstance) {
   app.post<{ Params: { userId: string } }>("/calls/:userId", async (req, reply) => {
     const me = await requireUser(req, reply);
     if (!me) return;
-    if (!areFriends(me.id, req.params.userId)) return reply.code(403).send({ error: "Vous devez être amis pour vous appeler." });
-    if (!isOnline(req.params.userId)) return reply.code(409).send({ error: "Ton ami n'est pas connecté." });
+    if (!canCall(me.id, req.params.userId)) return reply.code(403).send({ error: "Cette personne n'accepte pas les appels de ta part." });
+    if (!isOnline(req.params.userId)) return reply.code(409).send({ error: "Cette personne n'est pas connectée." });
+    if (presenceOf(req.params.userId) === "dnd") return reply.code(409).send({ error: "Cette personne est en « Ne pas déranger »." });
     const other = db.prepare("SELECT id, username FROM users WHERE id = ?").get(req.params.userId) as { id: string; username: string };
-    const call: Call = { id: randomUUID(), from: { id: me.id, name: me.name }, to: { id: other.id, name: other.username }, state: "ringing" };
+    const myName = displayNameOf(me.id) ?? me.name;
+    const call: Call = {
+      id: randomUUID(),
+      from: { id: me.id, name: myName },
+      to: { id: other.id, name: displayNameOf(other.id) ?? other.username },
+      state: "ringing",
+    };
     call.timer = setTimeout(() => calls.has(call.id) && call.state === "ringing" && endCall(call, "missed"), RING_TIMEOUT_MS);
     calls.set(call.id, call);
     sendToUser(other.id, { type: "callIncoming", callId: call.id, from: call.from });

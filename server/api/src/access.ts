@@ -34,6 +34,28 @@ export function areFriends(a: string, b: string): boolean {
   return !!db.prepare("SELECT 1 FROM friendships WHERE user_a = ? AND user_b = ? AND status = 'accepted'").get(x, y);
 }
 
+/** Personnes qui partagent au moins un serveur avec userId (lui exclu). */
+export function coMemberIds(userId: string): string[] {
+  return (
+    db
+      .prepare(
+        "SELECT DISTINCT m2.user_id AS id FROM members m1 JOIN members m2 ON m2.server_id = m1.server_id WHERE m1.user_id = ? AND m2.user_id != ?",
+      )
+      .all(userId, userId) as { id: string }[]
+  ).map((r) => r.id);
+}
+
+export function shareServer(a: string, b: string): boolean {
+  return !!db
+    .prepare("SELECT 1 FROM members m1 JOIN members m2 ON m2.server_id = m1.server_id WHERE m1.user_id = ? AND m2.user_id = ? LIMIT 1")
+    .get(a, b);
+}
+
+/** L'un a bloqué l'autre (dans un sens ou dans l'autre). */
+export function isBlocked(a: string, b: string): boolean {
+  return !!db.prepare("SELECT 1 FROM blocks WHERE (blocker_id = ? AND blocked_id = ?) OR (blocker_id = ? AND blocked_id = ?)").get(a, b, b, a);
+}
+
 export function friendIds(userId: string): string[] {
   return (
     db

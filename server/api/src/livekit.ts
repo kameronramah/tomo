@@ -1,6 +1,7 @@
 import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
 import { config } from "./config.js";
 import type { Principal } from "./security.js";
+import { displayNameOf } from "./profiles.js";
 
 const roomService = new RoomServiceClient(config.livekit.httpUrl, config.livekit.apiKey, config.livekit.apiSecret);
 
@@ -35,7 +36,8 @@ export async function liveParticipants(roomIds: string[]): Promise<Map<string, L
 export async function voiceToken(principal: Principal, roomId: string): Promise<string> {
   const token = new AccessToken(config.livekit.apiKey, config.livekit.apiSecret, {
     identity: identityOf(principal),
-    name: principal.name,
+    // Nom affiché du profil s'il y en a un (le pseudo sinon)
+    name: (principal.kind === "user" && displayNameOf(principal.id)) || principal.name,
     ttl: "6h",
     metadata: JSON.stringify({ guest: principal.kind === "guest" }),
   });
