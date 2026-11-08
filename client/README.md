@@ -25,12 +25,11 @@ winget install Microsoft.VisualStudio.2022.BuildTools --override "--wait --passi
    cd server
    docker compose -f docker-compose.dev.yml up --build
    ```
-2. Lancer le client :
+2. Lancer le client (Windows) :
    ```bash
-   cd client
-   npm install
-   npm run tauri dev
+   client\scripts\dev.cmd
    ```
+   Le script recharge le PATH, vérifie que l'API de dev répond, installe les dépendances si besoin, puis lance `npm run tauri dev`. Il passe par un `.cmd` pour ne pas dépendre de la politique d'exécution des scripts PowerShell. Sur un autre système : `cd client && npm install && npm run tauri dev`.
 3. L'appli pointe par défaut sur l'instance `http://localhost:3000` : crée un compte, puis un serveur.
 
 > Astuce : `npm run dev` lance seulement la partie web sur http://localhost:1420. Chaque onglet a sa propre session : pratique pour simuler plusieurs joueurs.
