@@ -50,7 +50,17 @@ export const saveLastServer = (id: string | null) => write(KEYS.lastServer, id);
 export type Settings = {
   sounds: { enabled: boolean; volume: number; voice: boolean; messages: boolean; calls: boolean };
   /** normalize : volume uniformisé (chaque voix reçue ramenée au même niveau) */
-  audio: { noiseSuppression: boolean; echoCancellation: boolean; autoGain: boolean; outputVolume: number; normalize: boolean };
+  audio: {
+    /** off : rien ; light : filtre du navigateur ; advanced : RNNoise calculé sur le PC */
+    denoise: "off" | "light" | "advanced";
+    /** Porte de bruit : le micro se coupe sous gateThreshold (dB) */
+    gate: boolean;
+    gateThreshold: number;
+    echoCancellation: boolean;
+    autoGain: boolean;
+    outputVolume: number;
+    normalize: boolean;
+  };
   appearance: { zoom: number; reducedMotion: boolean; compact: boolean };
   /**
    * desktop : notifications Windows / Mac quand tomo est en arrière-plan (messages privés, demandes, appels)
@@ -74,7 +84,7 @@ export type Settings = {
 
 export const DEFAULT_SETTINGS: Settings = {
   sounds: { enabled: true, volume: 0.5, voice: true, messages: true, calls: true },
-  audio: { noiseSuppression: true, echoCancellation: true, autoGain: true, outputVolume: 1, normalize: true },
+  audio: { denoise: "advanced", gate: false, gateThreshold: -50, echoCancellation: true, autoGain: true, outputVolume: 1, normalize: true },
   appearance: { zoom: 1, reducedMotion: false, compact: false },
   notifications: { dmSound: true, mentionsOnly: false, desktop: true, desktopPreview: true, quietEnabled: false, quietFrom: "23:00", quietTo: "08:00" },
   clips: { enabled: true, seconds: 60 },
@@ -88,7 +98,12 @@ let current: Settings = (() => {
   const saved = read<Partial<Settings>>(SETTINGS_KEY, {});
   return {
     sounds: { ...DEFAULT_SETTINGS.sounds, ...saved.sounds },
-    audio: { ...DEFAULT_SETTINGS.audio, ...saved.audio },
+    audio: {
+      ...DEFAULT_SETTINGS.audio,
+      // anciens réglages : la case « Suppression du bruit » décochée = aucune suppression
+      ...((saved.audio as { noiseSuppression?: boolean } | undefined)?.noiseSuppression === false ? { denoise: "off" as const } : {}),
+      ...saved.audio,
+    },
     appearance: { ...DEFAULT_SETTINGS.appearance, ...saved.appearance },
     notifications: { ...DEFAULT_SETTINGS.notifications, ...saved.notifications },
     clips: { ...DEFAULT_SETTINGS.clips, ...saved.clips },

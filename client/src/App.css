@@ -1201,3 +1201,7 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .mention-group.tous { background: var(--amber-bg); color: var(--amber-soft); }
 .mention-help { font-size: 11px; color: var(--faint); padding: 6px 8px 2px; }
 .composer { position: relative; }
+
+/* ---- v0.8 - Suppression de bruit ---- */
+.setting-label { font-weight: 600; font-size: 14px; margin-top: 4px; }
+

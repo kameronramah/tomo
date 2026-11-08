@@ -33,7 +33,7 @@ export class VoiceRecorder {
       audio: {
         ...(device ? { deviceId: { ideal: device } } : {}),
         echoCancellation: audio.echoCancellation,
-        noiseSuppression: audio.noiseSuppression,
+        noiseSuppression: audio.denoise !== "off",
         autoGainControl: true,
         channelCount: 1,
       },

@@ -325,12 +325,38 @@ function Audio({ s }: { s: S }) {
       </Card>
 
       <Card title="Traitement du micro">
+        <span className="setting-label">Suppression du bruit</span>
+        {DENOISE.map((d) => (
+          <label key={d.id} className={`share-option${s.audio.denoise === d.id ? " on" : ""}`}>
+            <input type="radio" name="denoise" checked={s.audio.denoise === d.id} onChange={() => updateSettings("audio", { denoise: d.id })} />
+            <span className="col gap-2 grow">
+              <strong>{d.label}</strong>
+              <span className="muted small">{d.detail}</span>
+            </span>
+          </label>
+        ))}
         <Toggle
-          label="Suppression du bruit"
-          hint="Atténue clavier, ventilateur, bruits de fond."
-          checked={s.audio.noiseSuppression}
-          onChange={(v) => updateSettings("audio", { noiseSuppression: v })}
+          label="Porte de bruit"
+          hint="Ton micro se coupe tout seul quand tu ne parles pas (souffle, respiration, clavier entre deux phrases)."
+          checked={s.audio.gate}
+          onChange={(v) => updateSettings("audio", { gate: v })}
         />
+        {s.audio.gate && (
+          <label className="setting-row">
+            <span className="grow">Seuil d'ouverture</span>
+            <input
+              type="range"
+              min={-70}
+              max={-20}
+              step={1}
+              value={s.audio.gateThreshold}
+              onChange={(e) => updateSettings("audio", { gateThreshold: Number(e.target.value) })}
+              aria-label="Seuil de la porte de bruit"
+            />
+            <span className="value">{s.audio.gateThreshold} dB</span>
+          </label>
+        )}
+        <ListenTest s={s} />
         <Toggle
           label="Annulation d'écho"
           hint="Utile sans casque : évite que tes potes s'entendent dans tes haut-parleurs."
@@ -343,9 +369,69 @@ function Audio({ s }: { s: S }) {
           checked={s.audio.autoGain}
           onChange={(v) => updateSettings("audio", { autoGain: v })}
         />
-        <span className="hint">Ces réglages s'appliquent à la prochaine connexion à un salon.</span>
+        <span className="hint">
+          La suppression de bruit et la porte s'appliquent tout de suite, même en vocal. L'écho et le volume du micro, à la prochaine
+          connexion.
+        </span>
       </Card>
     </>
+  );
+}
+
+const DENOISE: { id: S["audio"]["denoise"]; label: string; detail: string }[] = [
+  { id: "off", label: "Aucune", detail: "Ton micro tel quel. Pour un micro de studio dans une pièce calme." },
+  { id: "light", label: "Légère", detail: "Le filtre du navigateur : enlève le souffle et le ventilateur." },
+  { id: "advanced", label: "Avancée (recommandée)", detail: "Une petite IA calculée sur ton PC : efface clavier, souris, chien, aspirateur. Rien ne sort de ton PC." },
+];
+
+/** « S'écouter » : renvoie le micro dans le casque, avec ou sans le traitement, pour comparer. */
+function ListenTest({ s }: { s: S }) {
+  const [mode, setMode] = useState<"off" | "raw" | "clean">("off");
+  useEffect(() => {
+    if (mode === "off") return;
+    let stop = () => {};
+    let cancelled = false;
+    (async () => {
+      const { buildChain } = await import("../lib/denoise");
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { deviceId: loadDevices().input, echoCancellation: false, noiseSuppression: mode === "clean" && s.audio.denoise === "light", autoGainControl: false },
+      });
+      const ctx = new AudioContext({ sampleRate: 48000 });
+      const src = ctx.createMediaStreamSource(stream);
+      const chain = mode === "clean" ? await buildChain(ctx, s.audio) : null;
+      if (chain) {
+        src.connect(chain.input);
+        chain.output.connect(ctx.destination);
+      } else src.connect(ctx.destination);
+      stop = () => {
+        chain?.dispose();
+        src.disconnect();
+        stream.getTracks().forEach((t) => t.stop());
+        void ctx.close();
+      };
+      if (cancelled) stop();
+    })().catch(() => setMode("off"));
+    return () => {
+      cancelled = true;
+      stop();
+    };
+  }, [mode, s.audio]);
+
+  return (
+    <div className="setting-row">
+      <span className="grow col gap-2">
+        <span>S'écouter</span>
+        <span className="muted small">Mets un casque, tape sur ton clavier en parlant, et compare.</span>
+      </span>
+      <div className="segmented" role="group" aria-label="S'écouter">
+        <button className={mode === "raw" ? "on" : ""} onClick={() => setMode(mode === "raw" ? "off" : "raw")}>
+          Sans
+        </button>
+        <button className={mode === "clean" ? "on" : ""} onClick={() => setMode(mode === "clean" ? "off" : "clean")}>
+          Avec
+        </button>
+      </div>
+    </div>
   );
 }
 

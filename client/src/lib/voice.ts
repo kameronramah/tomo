@@ -5,6 +5,7 @@ import { SpatialEngine, type Pose } from "./spatial";
 import { ClipRecorder } from "./clips";
 import { VoiceLeveler } from "./leveler";
 import { onGameLink } from "./gameLink";
+import { applyMicProcessing, watchMicProcessing } from "./denoise";
 
 /** Volumes choisis par personne (par pseudo), gardés le temps de la session. */
 export const volumeMemory = new Map<string, number>();
@@ -159,11 +160,13 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
     audioCaptureDefaults: {
       deviceId: devices.input,
       echoCancellation: audio.echoCancellation,
-      noiseSuppression: audio.noiseSuppression,
+      noiseSuppression: audio.denoise === "light",
       autoGainControl: audio.autoGain,
     },
     audioOutput: devices.output ? { deviceId: devices.output } : undefined,
   });
+  // Suppression de bruit avancée / porte de bruit : suit les réglages en direct.
+  const stopWatch = watchMicProcessing(room);
 
   room
     .on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
@@ -175,7 +178,11 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
     .on(RoomEvent.TrackUnsubscribed, (track) => {
       track.detach().forEach((el) => el.remove());
     })
+    .on(RoomEvent.LocalTrackPublished, (pub) => {
+      if (pub.source === Track.Source.Microphone) void applyMicProcessing(room);
+    })
     .on(RoomEvent.Disconnected, () => {
+      stopWatch();
       if (activeRoom === room) activeRoom = null;
       void stopExtras(room);
     });
