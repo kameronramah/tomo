@@ -53,7 +53,7 @@ export type Settings = {
   audio: { noiseSuppression: boolean; echoCancellation: boolean; autoGain: boolean; outputVolume: number; normalize: boolean };
   appearance: { zoom: number; reducedMotion: boolean; compact: boolean };
   /**
-   * desktop : notifications Windows / Mac quand Tomo est en arrière-plan (messages privés, demandes, appels)
+   * desktop : notifications Windows / Mac quand tomo est en arrière-plan (messages privés, demandes, appels)
    * quiet* : heures calmes (pas de sons ni de notifications sur ce créneau, comme « Ne pas déranger »)
    */
   notifications: {
@@ -66,7 +66,7 @@ export type Settings = {
     quietTo: string;
   };
   clips: { enabled: boolean; seconds: 30 | 60 | 120 };
-  /** Lancement : réduit quand Tomo démarre avec l'ordinateur ; fermer = réduire */
+  /** Lancement : réduit quand tomo démarre avec l'ordinateur ; fermer = réduire */
   startup: { minimized: boolean };
   spatial: { range: number; showMap: boolean };
   screen: { preset: "game" | "sharp" | "max" | "eco"; audio: boolean };

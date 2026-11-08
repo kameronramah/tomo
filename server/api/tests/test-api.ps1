@@ -1,4 +1,4 @@
-﻿# Tests de bout en bout de l'API Tomo (serveur de dev lancé : docker compose -f server/docker-compose.dev.yml up -d)
+﻿# Tests de bout en bout de l'API tomo (serveur de dev lancé : docker compose -f server/docker-compose.dev.yml up -d)
 # Lancer : powershell -ExecutionPolicy Bypass -File server\api\tests\test-api.ps1
 $ErrorActionPreference = "Stop"
 $base = "http://localhost:3000"

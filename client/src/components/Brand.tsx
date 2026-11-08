@@ -69,7 +69,7 @@ export function NetworkBadge({ room, showLabel = false }: { room: Room | null; s
   );
 }
 
-/** Logo Tomo : deux bulles qui se répondent. `cut` = couleur du fond (découpe entre les bulles). */
+/** Logo tomo : deux bulles qui se répondent. `cut` = couleur du fond (découpe entre les bulles). */
 export function Logo({ size = 28, cut = "var(--panel)" }: { size?: number; cut?: string }) {
   return (
     <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">

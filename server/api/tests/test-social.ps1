@@ -1,4 +1,4 @@
-﻿# Tests de bout en bout de l'API Tomo (serveur de dev lancé : docker compose -f server/docker-compose.dev.yml up -d)
+﻿# Tests de bout en bout de l'API tomo (serveur de dev lancé : docker compose -f server/docker-compose.dev.yml up -d)
 # Lancer : powershell -ExecutionPolicy Bypass -File server\api\tests\test-social.ps1
 $base = "http://localhost:3000"; $s = Get-Random -Maximum 99999
 function Call($method, $path, $body = $null, $token = $null) {

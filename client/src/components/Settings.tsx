@@ -195,7 +195,7 @@ function Account({ api, user, onLogoutAll }: { api: Api; user: User; onLogoutAll
         <div className="col gap-4">
           <strong className="title-sm">{user.username}</strong>
           <span className="muted small">
-            Pseudo de connexion · {user.isDev ? "compte de test, outils de test activés" : "compte Tomo"}
+            Pseudo de connexion · {user.isDev ? "compte de test, outils de test activés" : "compte tomo"}
           </span>
         </div>
       </div>
@@ -393,8 +393,8 @@ function Sounds({ s }: { s: S }) {
       </Card>
       <Card title="Notifications du système">
         <Toggle
-          label="Notifications quand Tomo est en arrière-plan"
-          hint="Messages privés, demandes de message et d'ami, appels entrants. Rien quand Tomo est au premier plan."
+          label="Notifications quand tomo est en arrière-plan"
+          hint="Messages privés, demandes de message et d'ami, appels entrants. Rien quand tomo est au premier plan."
           checked={s.notifications.desktop}
           onChange={(v) => updateSettings("notifications", { desktop: v })}
         />
@@ -490,8 +490,8 @@ function Startup({ s }: { s: S }) {
       <h1 className="title">Démarrage</h1>
       <Card title="Au démarrage de l'ordinateur">
         <Toggle
-          label="Lancer Tomo avec Windows / macOS"
-          hint="Tomo s'ouvre tout seul quand tu allumes ton PC : tes potes te voient en ligne."
+          label="Lancer tomo avec Windows / macOS"
+          hint="tomo s'ouvre tout seul quand tu allumes ton PC : tes potes te voient en ligne."
           checked={!!auto}
           onChange={async (v) => {
             setError(undefined);
@@ -505,7 +505,7 @@ function Startup({ s }: { s: S }) {
         />
         <Toggle
           label="Démarrer réduit"
-          hint="Quand Tomo se lance avec l'ordinateur, la fenêtre reste dans la barre des tâches."
+          hint="Quand tomo se lance avec l'ordinateur, la fenêtre reste dans la barre des tâches."
           checked={s.startup.minimized}
           onChange={(v) => updateSettings("startup", { minimized: v })}
         />
@@ -570,7 +570,7 @@ function Network({ api, realtime, voiceRoom }: { api: Api; realtime: Realtime | 
       <Card title="Connexion">
         <ul className="list">
           <li>
-            <span className="grow">Instance Tomo</span>
+            <span className="grow">Instance tomo</span>
             <span className="muted">{api.baseUrl.replace(/^https?:\/\//, "")}</span>
           </li>
           <li>
@@ -596,7 +596,7 @@ function About() {
   return (
     <>
       <h1 className="title">À propos</h1>
-      <Card title="Tomo">
+      <Card title="tomo">
         <p className="text">Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, open source (licence MIT).</p>
         <ul className="list">
           <li>
@@ -605,8 +605,8 @@ function About() {
           </li>
           <li>
             <span className="grow">Code source</span>
-            <a href="https://github.com/kameronramah/Tomo" target="_blank" rel="noreferrer">
-              github.com/kameronramah/Tomo
+            <a href="https://github.com/kameronramah/tomo" target="_blank" rel="noreferrer">
+              github.com/kameronramah/tomo
             </a>
           </li>
         </ul>
@@ -689,7 +689,7 @@ function Clips({ s }: { s: S }) {
       <Card title={`Garder les ${s.clips.seconds} dernières secondes`}>
         <Toggle
           label="Activer les clips"
-          hint={`Tomo garde en mémoire les ${s.clips.seconds} dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C.`}
+          hint={`tomo garde en mémoire les ${s.clips.seconds} dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C.`}
           checked={s.clips.enabled}
           onChange={(v) => updateSettings("clips", { enabled: v })}
         />
@@ -708,7 +708,7 @@ function Clips({ s }: { s: S }) {
         </label>
         <span className="hint">
           Par respect pour tes potes, une petite icône ⏪ s'affiche sur ta tuile tant que les clips sont activés. Les clips restent
-          sur ton PC (dossier Musique\Tomo Clips).
+          sur ton PC (dossier Musique\tomo Clips).
         </span>
       </Card>
       <Card title={`Mes clips · ${clips.length}`}>

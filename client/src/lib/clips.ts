@@ -1,7 +1,7 @@
 /**
  * Clip « après coup » : garde en mémoire les 60 dernières secondes du salon
  * (toutes les voix + ton micro), et les enregistre en .wav sur demande.
- * Rien ne quitte ton PC : le tampon est en mémoire, le fichier va dans Musique\Tomo Clips.
+ * Rien ne quitte ton PC : le tampon est en mémoire, le fichier va dans Musique\tomo Clips.
  */
 import { invoke } from "@tauri-apps/api/core";
 import { Room, RoomEvent, Track, type LocalTrackPublication, type RemoteTrack } from "livekit-client";
@@ -160,11 +160,11 @@ export function clipFileName(label: string) {
   const d = new Date();
   const pad = (n: number) => String(n).padStart(2, "0");
   const safe = label.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9 _-]/g, "").trim().slice(0, 40) || "salon";
-  return `Tomo ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}h${pad(d.getMinutes())}m${pad(d.getSeconds())} - ${safe}.wav`;
+  return `tomo ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}h${pad(d.getMinutes())}m${pad(d.getSeconds())} - ${safe}.wav`;
 }
 
 // ---------------------------------------------------------------------------
-// Fichiers de clips (appli de bureau : dossier Musique\Tomo Clips)
+// Fichiers de clips (appli de bureau : dossier Musique\tomo Clips)
 // ---------------------------------------------------------------------------
 export type ClipFile = { name: string; size: number; modified: number };
 

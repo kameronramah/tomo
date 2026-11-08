@@ -1,9 +1,9 @@
 //! Connecteur de jeu « Mumble Link ».
 //!
 //! Beaucoup de jeux (ou leurs mods) écrivent la position du joueur dans une mémoire
-//! partagée Windows nommée `MumbleLink` (format historique de Mumble). Tomo la lit
+//! partagée Windows nommée `MumbleLink` (format historique de Mumble). tomo la lit
 //! 20 fois par seconde et envoie l'événement `mumble-link` à l'interface.
-//! Lecture seule : Tomo ne modifie jamais le jeu.
+//! Lecture seule : tomo ne modifie jamais le jeu.
 
 use serde::Serialize;
 use std::time::{Duration, Instant};
@@ -150,7 +150,7 @@ mod tests {
             mem.context[..3].copy_from_slice(b"abc");
             mem.context_len = 3;
 
-            // Tomo la lit
+            // tomo la lit
             let (tick, link) = read().expect("Mumble Link devrait être lu");
             assert_eq!(tick, 42);
             assert!(link.active);

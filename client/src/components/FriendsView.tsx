@@ -64,7 +64,7 @@ export default function FriendsView({ api, friends, onChanged, onMessage, onCall
         {tab === "add" ? (
           <div className="add-friend">
             <h2 className="title-sm">Ajouter un ami</h2>
-            <p className="muted">Tape le pseudo exact de ton ami sur Tomo. Il recevra une demande à accepter.</p>
+            <p className="muted">Tape le pseudo exact de ton ami sur tomo. Il recevra une demande à accepter.</p>
             <form
               className="row gap-8"
               onSubmit={(e) => {
@@ -93,7 +93,7 @@ export default function FriendsView({ api, friends, onChanged, onMessage, onCall
               <Icon name="users" size={22} />
             </span>
             <p className="muted">
-              {tab === "online" ? "Aucun ami en ligne pour l'instant." : tab === "all" ? "Tu n'as pas encore d'amis sur Tomo." : "Aucune demande en attente."}
+              {tab === "online" ? "Aucun ami en ligne pour l'instant." : tab === "all" ? "Tu n'as pas encore d'amis sur tomo." : "Aucune demande en attente."}
             </p>
             {tab !== "pending" && (
               <button className="btn" onClick={() => setTab("add")}>

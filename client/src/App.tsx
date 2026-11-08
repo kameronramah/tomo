@@ -397,7 +397,7 @@ export default function App() {
             playSound("message");
             void flashIcon();
             const known = dmsRef.current.find((d) => d.userId === key.slice(3));
-            if (known?.request) void notify(`Demande de message de ${m.authorName}`, "Ouvre Tomo pour lire et accepter.");
+            if (known?.request) void notify(`Demande de message de ${m.authorName}`, "Ouvre tomo pour lire et accepter.");
             else void notify(m.authorName, m.content || (m.attachments?.length ? "a envoyé un fichier" : ""));
           }
           return;

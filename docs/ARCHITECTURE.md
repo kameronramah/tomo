@@ -5,7 +5,7 @@
 ```
         PC des joueurs                                   VPS
 ┌──────────────────────────┐              ┌────────────────────────────────┐
-│  Client Tomo (Tauri)     │   HTTPS      │  Caddy (443)                   │
+│  Client tomo (Tauri)     │   HTTPS      │  Caddy (443)                   │
 │  ├─ UI React             │ ───────────▶ │   ├─ api.<domaine>  → API :3000│
 │  ├─ livekit-client (JS)  │              │   └─ rtc.<domaine>  → LiveKit  │
 │  ├─ Web Audio (volume,   │   WebRTC     │                       :7880    │
@@ -23,7 +23,7 @@
 
 ## Modèle de données
 
-Une **instance Tomo** (= un VPS) héberge des **comptes** et des **serveurs** créés par les utilisateurs.
+Une **instance tomo** (= un VPS) héberge des **comptes** et des **serveurs** créés par les utilisateurs.
 
 | Table | Contenu |
 |---|---|

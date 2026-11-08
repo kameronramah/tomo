@@ -1,9 +1,9 @@
-# Tomo
+# tomo
 
 > Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, léger.
 > *(anciennement Talk2Mates / T2M)*
 
-**Tomo** (« ami » en japonais) est une application de chat vocal pour les groupes d'amis qui jouent ensemble. C'est une alternative à Discord, avec des fonctionnalités en plus : audio spatial activable, invités d'un soir sans compte, clip audio des 60 dernières secondes, mode focus…
+**tomo** (« ami » en japonais) est une application de chat vocal pour les groupes d'amis qui jouent ensemble. C'est une alternative à Discord, avec des fonctionnalités en plus : audio spatial activable, invités d'un soir sans compte, clip audio des 60 dernières secondes, mode focus…
 
 Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout tourne sur votre propre serveur.
 
@@ -19,7 +19,7 @@ Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout 
 - **Partage d'écran haute qualité** : jusqu'à 1080p 60 i/s (jeux) ou 4K (texte, détails), son du PC, plein écran, versions allégées automatiques pour les petites connexions.
 
 - **Audio spatial** : carte du salon où chacun déplace son avatar, voix en 3D selon la distance et la direction, et **position lue directement dans le jeu** (Mumble Link : Minecraft avec mod, Guild Wars 2, Arma…).
-- **Clip des 60 dernières secondes** : un clic ou Ctrl+Maj+C, le fichier arrive dans Musique\Tomo Clips.
+- **Clip des 60 dernières secondes** : un clic ou Ctrl+Maj+C, le fichier arrive dans Musique\tomo Clips.
 
 - **Messagerie** : salons textuels dans chaque serveur, chat dans chaque salon vocal, **amis** et **messages privés**, en temps réel.
 - **Appels privés** entre amis, avec sonnerie.
@@ -59,8 +59,8 @@ Plus de détails dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## 📁 Structure du dépôt
 
 ```
-Tomo/
-├── client/                  # Application de bureau Tomo (Tauri + React)
+tomo/
+├── client/                  # Application de bureau tomo (Tauri + React)
 ├── server/
 │   ├── api/                 # API Node/TypeScript
 │   ├── docker-compose.yml   # Production (VPS)

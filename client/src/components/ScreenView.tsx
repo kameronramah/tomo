@@ -32,7 +32,7 @@ export default function ScreenView({ room, shares, onStopMine }: Props) {
     const el = videoRef.current;
     if (!el || !track) return;
     track.attach(el);
-    el.muted = true; // le son passe par le moteur audio de Tomo, pas par l'élément vidéo
+    el.muted = true; // le son passe par le moteur audio de tomo, pas par l'élément vidéo
     // Images par seconde réellement affichées
     let frames = 0;
     let last = performance.now();

@@ -1,4 +1,4 @@
-# 🖥️ Héberger Tomo sur un VPS
+# 🖥️ Héberger tomo sur un VPS
 
 ## Ce qu'il faut demander au propriétaire du VPS
 
@@ -52,8 +52,8 @@ Si le VPS a déjà un domaine, on peut aussi utiliser des sous-domaines de celui
 curl -fsSL https://get.docker.com | sh
 
 # 2. Récupérer le projet
-git clone https://github.com/kameronramah/Tomo.git
-cd Tomo/server
+git clone https://github.com/kameronramah/tomo.git
+cd tomo/server
 
 # 3. Configurer
 cp .env.example .env
@@ -69,7 +69,7 @@ docker compose logs -f
 
 ### Vérifier que ça marche
 - `https://<API_DOMAIN>/health` doit répondre `{"ok":true}`.
-- Dans l'appli Tomo : sur l'écran de connexion, « Instance : … modifier » → `https://<API_DOMAIN>`, puis crée ton compte et ton serveur.
+- Dans l'appli tomo : sur l'écran de connexion, « Instance : … modifier » → `https://<API_DOMAIN>`, puis crée ton compte et ton serveur.
 - Une fois tes potes inscrits, tu peux fermer les inscriptions avec `REGISTRATION=closed` dans `.env` (puis `docker compose up -d`).
 
 ## VPS partagé (ports 80/443 déjà pris)
@@ -81,7 +81,7 @@ Si le VPS a déjà un nginx ou un Caddy :
 
 ## Mises à jour
 ```bash
-cd Tomo && git pull
+cd tomo && git pull
 cd server && docker compose up -d --build
 ```
 

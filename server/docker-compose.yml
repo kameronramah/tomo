@@ -11,7 +11,7 @@ services:
     volumes:
       - ./livekit.yaml:/etc/livekit.yaml:ro
 
-  # API Tomo : comptes, serveurs, salons, invitations, jetons LiveKit. Base SQLite dans le volume api-data.
+  # API tomo : comptes, serveurs, salons, invitations, jetons LiveKit. Base SQLite dans le volume api-data.
   api:
     build: ./api
     restart: unless-stopped

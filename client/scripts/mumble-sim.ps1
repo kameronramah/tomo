@@ -1,4 +1,4 @@
-# Lance le simulateur Mumble Link (fait croire à Tomo qu'un jeu compatible tourne).
+# Lance le simulateur Mumble Link (fait croire à tomo qu'un jeu compatible tourne).
 # Usage (depuis n'importe où) :  client\scripts\mumble-sim.cmd   — Ctrl+C pour arrêter
 param(
   # Dossier de compilation Rust (à préciser si le chemin du projet est très long : erreur LNK1104)

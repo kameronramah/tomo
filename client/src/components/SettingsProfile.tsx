@@ -209,7 +209,7 @@ export function MyProfileSection({ api, onChanged }: { api: Api; onChanged: () =
 const DM_OPTIONS: { id: Privacy["dm"]; label: string; hint: string }[] = [
   { id: "friends", label: "Mes amis seulement", hint: "Personne d'autre ne peut t'écrire." },
   { id: "servers", label: "Mes amis + les membres de mes serveurs", hint: "Un non-ami arrive dans « Demandes de message » : rien ne s'affiche tant que tu n'acceptes pas." },
-  { id: "everyone", label: "Tout le monde sur ce serveur Tomo", hint: "Passe aussi par « Demandes de message » la première fois." },
+  { id: "everyone", label: "Tout le monde sur ce serveur tomo", hint: "Passe aussi par « Demandes de message » la première fois." },
 ];
 
 export function PrivacySection({ api }: { api: Api }) {

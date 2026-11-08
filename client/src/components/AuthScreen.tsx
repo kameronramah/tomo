@@ -252,7 +252,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
           <div className="instance">
             {editInstance ? (
               <span className="row gap-8">
-                <input value={instance} onChange={(e) => setInstance(e.target.value)} aria-label="Adresse de l'instance Tomo" />
+                <input value={instance} onChange={(e) => setInstance(e.target.value)} aria-label="Adresse de l'instance tomo" />
                 <button
                   type="button"
                   className="btn small"

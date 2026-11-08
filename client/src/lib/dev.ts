@@ -116,7 +116,7 @@ export async function addScreenBot(api: Api, roomId: string) {
     // Textes (netteté)
     g.fillStyle = "#eceef3";
     g.font = "bold 64px Inter, sans-serif";
-    g.fillText("Tomo · partage de test", 80, 130);
+    g.fillText("tomo · partage de test", 80, 130);
     g.font = "28px Inter, sans-serif";
     g.fillText(`Image n° ${frame} · ${t.toFixed(2)} s · 1920 × 1080 · 60 i/s visés`, 80, 190);
     g.font = "14px Consolas, monospace";

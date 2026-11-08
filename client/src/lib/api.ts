@@ -140,7 +140,7 @@ export class ApiError extends Error {
 type AuthResult = { accessToken: string; refreshToken: string; user: User };
 
 /**
- * Client de l'API Tomo.
+ * Client de l'API tomo.
  * - Jeton d'accès (15 min) gardé en mémoire uniquement.
  * - Jeton de renouvellement : en mémoire, et dans le coffre-fort si « rester connecté ».
  * - Sur une réponse 401, renouvelle la session une fois puis rejoue la requête.
@@ -171,7 +171,7 @@ export class Api {
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
     } catch {
-      throw new ApiError("Serveur Tomo injoignable. Vérifie ta connexion.", 0);
+      throw new ApiError("Serveur tomo injoignable. Vérifie ta connexion.", 0);
     }
     if (res.status === 401 && retry && this.refresh && !path.startsWith("/auth/")) {
       if (await this.renew()) return this.request<T>(method, path, body, false);

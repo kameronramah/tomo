@@ -1,4 +1,4 @@
-# Lance Tomo en mode développement (rechargement à chaud de l'interface).
+# Lance tomo en mode développement (rechargement à chaud de l'interface).
 # Usage (depuis le dossier client) :  .\scripts\dev.ps1
 # Prérequis : le serveur de dev tourne (cd server ; docker compose -f docker-compose.dev.yml up -d)
 param(

@@ -1,4 +1,4 @@
-//! Partie native de Tomo.
+//! Partie native de tomo.
 //!
 //! Le jeton de session « rester connecté » est rangé dans le coffre-fort du système
 //! (Gestionnaire d'identification Windows, Trousseau macOS, Secret Service Linux),
@@ -46,7 +46,7 @@ fn secret_delete(key: String) -> Result<(), String> {
     }
 }
 
-/// Tomo a-t-il été lancé automatiquement au démarrage de l'ordinateur ?
+/// tomo a-t-il été lancé automatiquement au démarrage de l'ordinateur ?
 /// (l'appli peut alors se réduire toute seule si l'option « Démarrer réduit » est cochée)
 #[tauri::command]
 fn launched_at_login() -> bool {

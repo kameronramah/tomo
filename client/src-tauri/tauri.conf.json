@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Tomo",
+  "productName": "tomo",
   "version": "0.6.0",
   "identifier": "com.tomo.app",
   "build": {
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Tomo",
+        "title": "tomo",
         "width": 1240,
         "height": 800,
         "minWidth": 720,
@@ -30,7 +30,7 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "publisher": "Tomo",
+    "publisher": "tomo",
     "shortDescription": "Le vocal pour jouer entre potes",
     "windows": {
       "nsis": { "languages": ["French"], "displayLanguageSelector": false, "installMode": "currentUser" }

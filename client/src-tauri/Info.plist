@@ -4,8 +4,8 @@
 <plist version="1.0">
 <dict>
   <key>NSMicrophoneUsageDescription</key>
-  <string>Tomo utilise ton micro pour le chat vocal et les messages vocaux.</string>
+  <string>tomo utilise ton micro pour le chat vocal et les messages vocaux.</string>
   <key>NSCameraUsageDescription</key>
-  <string>Tomo n'utilise pas la caméra pour l'instant.</string>
+  <string>tomo n'utilise pas la caméra pour l'instant.</string>
 </dict>
 </plist>

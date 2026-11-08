@@ -1,20 +1,20 @@
-# CLAUDE.md — Contexte du projet Tomo
+# CLAUDE.md — Contexte du projet tomo
 
 > Fichier lu automatiquement par Claude Code. Il résume tout ce qu'il faut savoir pour reprendre le projet.
-> Dépôt : https://github.com/kameronramah/Tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.6.0**.
-> Copie locale du propriétaire : `C:\Users\Kameron\Documents\Tomo`.
+> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.6.0**.
+> Copie locale du propriétaire : `C:\Users\Kameron\Documents\tomo`.
 
 ---
 
 ## 1. Le projet en bref
 
-**Tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire).
+**tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire).
 
 Ce qui existe déjà (v0.6) — en plus : nouveau design « Pièces & bulles » (dossiers de serveurs), pièces jointes, messages vocaux, GIF (Klipy), volume uniformisé, installateurs Windows + Mac :
 - Comptes sécurisés, serveurs créés par les utilisateurs (créateur = admin), salons vocaux et textuels, invitations (code membre + **code invité d'un soir sans compte**).
 - Messagerie temps réel : salons textuels, chat de chaque salon vocal, amis, messages privés, **appels privés** avec sonnerie.
 - **Audio spatial** : carte du salon (chacun déplace son avatar) + position lue dans le jeu via **Mumble Link**.
-- **Clip des 60 dernières secondes** (fichier .wav dans Musique\Tomo Clips).
+- **Clip des 60 dernières secondes** (fichier .wav dans Musique\tomo Clips).
 - **Partage d'écran haute qualité** (1080p60 H.264, 1440p/4K VP9, son du PC, plein écran).
 - Sons d'interface, ping et qualité réseau visibles, espace **Paramètres** complet, barre de titre intégrée, interface adaptative (720 px → 4K).
 - **Compte de test + outils de test** (bots qui parlent/bougent/partagent un écran, coupures réseau simulées…) — uniquement en dev.
@@ -28,7 +28,7 @@ La feuille de route complète est dans [ROADMAP.md](ROADMAP.md) (avec une sectio
 - **Toujours répondre en français**, en tutoyant, avec un ton simple et concret. Il n'est pas forcément technique : expliquer le « pourquoi » sans jargon.
 - **Gratuit avant tout** : ne jamais proposer de service payant ; s'il en faut un, le mettre dans « Mis de côté » de la ROADMAP.
 - **Maquettes d'abord** pour les gros changements d'interface (il les valide avant le code). La charte graphique est validée (voir §6).
-- **Ne pas copier le style de Discord** : il veut une identité propre à Tomo, moderne et sobre.
+- **Ne pas copier le style de Discord** : il veut une identité propre à tomo, moderne et sobre.
 - **Noter les petites améliorations repérées** dans la section « Petites améliorations » de la ROADMAP (il l'a demandé explicitement). Les raccourcis globaux et le push-to-talk y sont rangés volontairement.
 - **Il aime qu'on pousse sur GitHub** une fois une étape testée (`git push origin main`).
 - **Git** : l'identité des commits doit être l'adresse anonyme GitHub `72966920+kameronramah@users.noreply.github.com` (nom `kameronramah`). **Ne jamais utiliser son adresse e-mail professionnelle** (projet personnel).
@@ -39,7 +39,7 @@ La feuille de route complète est dans [ROADMAP.md](ROADMAP.md) (avec une sectio
 ## 3. Architecture
 
 ```
-Tomo/
+tomo/
 ├── client/                 Appli de bureau Tauri 2 (Rust) + React 19 + TypeScript + Vite
 │   ├── src/
 │   │   ├── App.tsx         Chef d'orchestre : session, serveurs, vocal, appels, messagerie, fenêtres
@@ -138,13 +138,13 @@ Build de l'exécutable : `npm run tauri build` dans `client/` (installateur dans
 ## 5. Pièges déjà rencontrés (à connaître)
 
 - **Windows PowerShell 5.1** : pas de `&&` (utiliser `;` ou des commandes séparées) ; l'**exécution de scripts .ps1 est bloquée** sur le PC → passer par les `.cmd` (`powershell -ExecutionPolicy Bypass -File …`), ne pas modifier la politique système.
-- **Chemin du projet trop long** → erreur `LNK1104` à l'édition de liens Rust : définir `CARGO_TARGET_DIR` vers un chemin court (les scripts le font). Mieux : cloner le dépôt dans un dossier court (`C:\dev\Tomo`).
+- **Chemin du projet trop long** → erreur `LNK1104` à l'édition de liens Rust : définir `CARGO_TARGET_DIR` vers un chemin court (les scripts le font). Mieux : cloner le dépôt dans un dossier court (`C:\dev\tomo`).
 - **PowerShell** : les noms de variables sont **insensibles à la casse** (`$a` = `$A`) ; dans `@( 'a' + "b", 'c' )` la **virgule passe avant le `+`** ; dans une chaîne `"…"`, `${…}` et `` ` `` sont interprétés (casse les template literals TypeScript) → pour éditer du code, préférer l'outil d'édition de fichiers aux remplacements PowerShell.
 - **CORS** : `@fastify/cors` n'autorise que GET/HEAD/POST par défaut → `methods` est explicitement configuré (PATCH/DELETE).
 - **Requêtes POST sans corps** envoyées par PowerShell : l'API a un parseur « * » qui les accepte.
 - **Limitation anti-force brute** : 10 essais/min/IP sur `/auth/*` → lancer les tests à la suite peut donner des 429 (les scripts attendent et réessaient).
 - **Même compte = même identité LiveKit** : se connecter en vocal au même salon avec le même compte depuis deux endroits éjecte l'autre. Pour tester dans le navigateur pendant que le propriétaire utilise l'appli, prendre un autre salon ou un autre compte.
-- L'**overlay de performances NVIDIA** (Alt + R) peut s'afficher sur la fenêtre : ce n'est pas Tomo.
+- L'**overlay de performances NVIDIA** (Alt + R) peut s'afficher sur la fenêtre : ce n'est pas tomo.
 - Le navigateur intégré de Claude bloque le micro et la capture d'écran : tester ces parties dans l'appli de bureau (le propriétaire teste lui-même).
 
 ---

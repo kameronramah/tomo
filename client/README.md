@@ -1,6 +1,6 @@
-# Client Tomo (Tauri + React)
+# Client tomo (Tauri + React)
 
-Application de bureau Tomo :
+Application de bureau tomo :
 - **connexion / création de compte / entrée comme invité** avec un code ;
 - **sélecteur de serveur** (menu + accès rapide + Ctrl 1…9), création d'un serveur, rejoindre avec un code ;
 - **salons en cartes** avec qui est dedans, passage d'un salon à l'autre en un clic ;
@@ -53,12 +53,12 @@ Le serveur de dev crée automatiquement un **compte de test** : son pseudo et so
 ### Tester l'audio spatial sans jeu
 
 - **Carte** : active « Audio spatial » dans un salon, puis ajoute des bots (outils de test) : ils tournent autour de toi, et leur bip se déplace dans ton casque.
-- **Connecteur de jeu** : lance le simulateur Mumble Link, qui fait croire à Tomo qu'un jeu compatible tourne :
+- **Connecteur de jeu** : lance le simulateur Mumble Link, qui fait croire à tomo qu'un jeu compatible tourne :
   ```bash
   client\scripts\mumble-sim.cmd
   ```
   (à lancer depuis le dossier du projet ; le script règle le PATH et le dossier de compilation. Sur un autre système : `cd client/src-tauri` puis `cargo run --example mumble_sim`.)
-  La carte passe en « Position du jeu : Simulateur Tomo » et suit le joueur simulé. Ctrl+C pour arrêter : Tomo repasse sur la carte au bout de 2 s.
+  La carte passe en « Position du jeu : Simulateur tomo » et suit le joueur simulé. Ctrl+C pour arrêter : tomo repasse sur la carte au bout de 2 s.
 - Test automatique de la lecture Mumble Link : `cargo test --lib mumble`.
 
 L'adresse de l'instance par défaut peut être fixée à la compilation : `VITE_TOMO_INSTANCE=https://tomo-api.duckdns.org npm run tauri build`.
@@ -69,13 +69,13 @@ npm run tauri build
 ```
 L'installateur se trouve ensuite dans `src-tauri/target/release/bundle/`.
 
-> Si l'édition de liens échoue avec `LNK1104` : le chemin du projet est trop long pour Windows. Place le projet dans un dossier court (ex. `C:\dev\Tomo`) ou définis `CARGO_TARGET_DIR` vers un chemin court.
+> Si l'édition de liens échoue avec `LNK1104` : le chemin du projet est trop long pour Windows. Place le projet dans un dossier court (ex. `C:\dev\tomo`) ou définis `CARGO_TARGET_DIR` vers un chemin court.
 
 ## Structure
 ```
 src/
 ├── App.tsx                  # état global : session, serveurs, vocal, fenêtres
-├── App.css                  # charte Tomo (graphite, turquoise, ambre)
+├── App.css                  # charte tomo (graphite, turquoise, ambre)
 ├── components/
 │   ├── AuthScreen.tsx       # connexion, inscription, invité
 │   ├── Sidebar.tsx          # sélecteur de serveur, salons, profil

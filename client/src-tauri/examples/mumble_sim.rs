@@ -1,4 +1,4 @@
-//! Simulateur Mumble Link : fait croire à Tomo qu'un jeu compatible tourne.
+//! Simulateur Mumble Link : fait croire à tomo qu'un jeu compatible tourne.
 //! Le « joueur » marche en rond (rayon 10 m) pendant que le programme tourne.
 //!
 //!   cargo run --example mumble_sim            (Ctrl+C pour arrêter)
@@ -50,12 +50,12 @@ fn main() {
         let view = MapViewOfFile(handle, FILE_MAP_ALL_ACCESS, 0, 0, size);
         let mem = &mut *(view.Value as *mut LinkedMem);
         mem.ui_version = 2;
-        put(&mut mem.name, "Simulateur Tomo");
+        put(&mut mem.name, "Simulateur tomo");
         put(&mut mem.identity, "joueur-simule");
         let ctx = b"serveur-de-test";
         mem.context[..ctx.len()].copy_from_slice(ctx);
         mem.context_len = ctx.len() as u32;
-        put(&mut mem.description, "Position simulée pour tester l'audio spatial de Tomo");
+        put(&mut mem.description, "Position simulée pour tester l'audio spatial de tomo");
 
         println!("Simulateur Mumble Link actif : le joueur marche en rond autour de ({cx}, {cz}). Ctrl+C pour arrêter.");
         let start = Instant::now();

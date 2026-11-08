@@ -10,8 +10,8 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] Choix du micro et de la sortie audio, volume par personne, indicateur « qui parle »
 - [x] Test avec un vrai micro
 
-## V0.2 — Tomo : comptes, serveurs, nouvelle interface ✅
-- [x] Nouveau nom (**Tomo**), logo et charte, interface selon les maquettes validées
+## V0.2 — tomo : comptes, serveurs, nouvelle interface ✅
+- [x] Nouveau nom (**tomo**), logo et charte, interface selon les maquettes validées
 - [x] Comptes sécurisés : scrypt, sessions 15 min + renouvellement à rotation, blocage après 5 échecs, limitation par IP
 - [x] « Rester connecté » via le coffre-fort de Windows
 - [x] Serveurs créés par les utilisateurs (créateur = admin), aucun serveur par défaut
@@ -55,7 +55,7 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] **Volume uniformisé automatiquement** : chaque voix reçue ramenée au même niveau (mesure pendant la parole, gain −12/+18 dB, compresseur + limiteur), activé par défaut, interrupteur dans Paramètres > Audio
 - [x] **Nouveau design « Pièces & bulles »** : colonne des serveurs avec **dossiers** (glisser un serveur sur un autre), pièces vocales en cartes, fils, bulle « Ce soir », scène en bulles, discussions en bulles, vocal en cours dans une île flottante
 - [ ] Suppression de bruit (RNNoise ou celle du navigateur)
-- [x] **Clip audio après coup** : tampon de 60 s en mémoire, bouton du dock ou Ctrl+Maj+C → fichier `.wav` dans Musique\Tomo Clips, liste et écoute dans Paramètres > Clips, icône visible par les autres quand les clips sont activés
+- [x] **Clip audio après coup** : tampon de 60 s en mémoire, bouton du dock ou Ctrl+Maj+C → fichier `.wav` dans Musique\tomo Clips, liste et écoute dans Paramètres > Clips, icône visible par les autres quand les clips sont activés
 - [x] Chat texte par salon (salons textuels + chat des salons vocaux)
 - [ ] Mise à jour automatique du client via GitHub Releases
 
@@ -126,7 +126,7 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Carte spatiale : montrer qui parle avec une onde autour de l'avatar
 
 ### Messagerie et appels
-- [ ] Notifications Windows (toast) pour les messages privés quand Tomo est en arrière-plan
+- [ ] Notifications Windows (toast) pour les messages privés quand tomo est en arrière-plan
 - [ ] Appel manqué affiché dans la conversation privée
 - [ ] Appels de groupe entre amis (plus de 2 personnes)
 - [ ] Les appels en train de sonner sont perdus si l'API redémarre (gardés en mémoire)
