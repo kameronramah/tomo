@@ -82,8 +82,8 @@ export function MicTester() {
       <span className="feature-icon amber">
         <Icon name="mic" />
       </span>
-      <span className="grow col gap-2">
-        <strong>{running ? label || "Micro actif" : "Tester mon micro"}</strong>
+      <span className="grow col gap-2" style={{ minWidth: 0 }}>
+        <strong className="ellipsis" title={label}>{running ? label || "Micro actif" : "Tester mon micro"}</strong>
         <span className="muted small">{error ?? (running ? "Parle : les barres doivent bouger." : "Vérifie ton niveau avant d'entrer.")}</span>
       </span>
       {running && (
@@ -282,7 +282,6 @@ export function ServerHome(p: HomeProps) {
             ))
           )}
         </div>
-        <MicTester />
       </aside>
     </div>
   );

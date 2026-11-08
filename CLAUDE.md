@@ -1,7 +1,7 @@
 # CLAUDE.md — Contexte du projet Tomo
 
 > Fichier lu automatiquement par Claude Code. Il résume tout ce qu'il faut savoir pour reprendre le projet.
-> Dépôt : https://github.com/kameronramah/Tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.5.0**.
+> Dépôt : https://github.com/kameronramah/Tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.6.0**.
 > Copie locale du propriétaire : `C:\Users\Kameron\Documents\Tomo`.
 
 ---
@@ -10,7 +10,7 @@
 
 **Tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire).
 
-Ce qui existe déjà (v0.5) :
+Ce qui existe déjà (v0.6) — en plus : nouveau design « Pièces & bulles » (dossiers de serveurs), pièces jointes, messages vocaux, GIF (Klipy), volume uniformisé, installateurs Windows + Mac :
 - Comptes sécurisés, serveurs créés par les utilisateurs (créateur = admin), salons vocaux et textuels, invitations (code membre + **code invité d'un soir sans compte**).
 - Messagerie temps réel : salons textuels, chat de chaque salon vocal, amis, messages privés, **appels privés** avec sonnerie.
 - **Audio spatial** : carte du salon (chacun déplace son avatar) + position lue dans le jeu via **Mumble Link**.

@@ -685,9 +685,11 @@ input[type="range"] { height: auto; padding: 0; border: none; background: none; 
 /* Paramètres */
 .settings { position: absolute; inset: 0; z-index: 45; display: flex; background: var(--bg); }
 .settings-nav {
-  width: clamp(220px, 22vw, 300px); flex-shrink: 0; background: var(--panel); border-right: 1px solid var(--line);
-  padding: 32px 12px 16px max(12px, calc((22vw - 240px))); display: flex; flex-direction: column; gap: 2px; overflow-y: auto;
+  /* Sur grand écran la colonne s'élargit vers la gauche, mais le menu garde toujours 240 px utiles */
+  width: max(264px, 22vw); flex-shrink: 0; background: var(--panel); border-right: none;
+  padding: 32px 12px 16px max(12px, calc(22vw - 252px)); display: flex; flex-direction: column; gap: 2px; overflow-y: auto;
 }
+.settings-nav .nav-item { white-space: nowrap; width: 100%; max-width: 252px; }
 .settings-body { flex: 1; min-width: 0; position: relative; overflow-y: auto; }
 .settings-content { max-width: 760px; padding: 40px clamp(20px, 3vw, 48px) 60px; display: flex; flex-direction: column; gap: 18px; }
 .settings-close {

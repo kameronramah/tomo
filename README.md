@@ -9,7 +9,12 @@ Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout 
 
 ---
 
-## ✨ Ce qui marche déjà (v0.5)
+## ✨ Ce qui marche déjà (v0.6)
+
+- **Nouveau design « Pièces & bulles »** : serveurs rangés en dossiers, pièces vocales en cartes, vocal en cours toujours visible.
+- **Pièces jointes, messages vocaux et GIF** dans toutes les discussions.
+- **Volume uniformisé** : tout le monde s'entend au même niveau, sans rien régler.
+- **Installateurs Windows et Mac** (page Releases du dépôt).
 
 - **Partage d'écran haute qualité** : jusqu'à 1080p 60 i/s (jeux) ou 4K (texte, détails), son du PC, plein écran, versions allégées automatiques pour les petites connexions.
 
