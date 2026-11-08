@@ -5,6 +5,10 @@ import { config } from "./config.js";
 import "./db.js";
 import authRoutes from "./routes-auth.js";
 import serverRoutes from "./routes-servers.js";
+import chatRoutes from "./routes-chat.js";
+import socialRoutes from "./routes-social.js";
+import realtimeRoutes from "./realtime.js";
+import websocket from "@fastify/websocket";
 
 const app = Fastify({ logger: true, trustProxy: config.trustProxy, bodyLimit: 64 * 1024 });
 
@@ -20,8 +24,12 @@ app.addContentTypeParser("*", (_req, _payload, done) => done(null, undefined));
 
 app.get("/health", async () => ({ ok: true }));
 
+await app.register(websocket, { options: { maxPayload: 4096 } });
+await app.register(realtimeRoutes);
 await app.register(authRoutes);
 await app.register(serverRoutes);
+await app.register(chatRoutes);
+await app.register(socialRoutes);
 
 // Outils de test : uniquement si DEV_TOOLS=1 (serveur de dev). Absents en production.
 if (config.devTools) {

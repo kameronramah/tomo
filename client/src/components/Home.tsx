@@ -34,7 +34,7 @@ export function Welcome({ name, onCreate, onJoin }: { name: string; onCreate: ()
 }
 
 /** Test du micro avant d'entrer dans un salon. */
-function MicTester() {
+export function MicTester() {
   const [level, setLevel] = useState(0);
   const [running, setRunning] = useState(false);
   const [label, setLabel] = useState<string>();

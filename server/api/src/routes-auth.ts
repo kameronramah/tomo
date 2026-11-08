@@ -144,6 +144,29 @@ export default async function authRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  /** Changer son mot de passe : déconnecte tous les autres appareils et renvoie une nouvelle session. */
+  app.post<{ Body: { current?: unknown; next?: unknown } }>("/me/password", strict, async (req, reply) => {
+    const me = await requireUser(req, reply);
+    if (!me) return;
+    const row = db.prepare("SELECT id, username, password_hash, is_dev FROM users WHERE id = ?").get(me.id) as UserRow | undefined;
+    if (!row || typeof req.body?.current !== "string" || !(await verifyPassword(req.body.current, row.password_hash)))
+      return reply.code(401).send({ error: "Mot de passe actuel incorrect." });
+    const pwError = checkPassword(req.body?.next);
+    if (pwError) return reply.code(400).send({ error: pwError });
+    db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(await hashPassword(req.body!.next as string), me.id);
+    db.prepare("DELETE FROM sessions WHERE user_id = ?").run(me.id);
+    return openSession({ id: row.id, username: row.username, isDev: devFlag(row.is_dev) }, req.headers["user-agent"]);
+  });
+
+  /** Nombre de sessions ouvertes (appareils connectés). */
+  app.get("/me/sessions", async (req, reply) => {
+    const me = await requireUser(req, reply);
+    if (!me) return;
+    return db
+      .prepare("SELECT created_at AS createdAt, expires_at AS expiresAt, user_agent AS userAgent FROM sessions WHERE user_id = ? ORDER BY created_at DESC")
+      .all(me.id);
+  });
+
   app.get("/me", async (req, reply) => {
     const me = await requireUser(req, reply);
     if (!me) return;

@@ -20,7 +20,22 @@ export type Session = { kind: "user"; user: User } | { kind: "guest"; guest: Gue
 export type ServerSummary = { id: string; name: string; role: Role; inVoice: number };
 export type Participant = { identity: string; name: string; guest: boolean };
 export type RoomInfo = { id: string; label: string; spatial: boolean; participants: Participant[] };
-export type ServerDetail = { id: string; name: string; role: Role; rooms: RoomInfo[] };
+export type Channel = { id: string; name: string };
+export type ServerDetail = { id: string; name: string; role: Role; rooms: RoomInfo[]; channels: Channel[] };
+export type Message = {
+  id: string;
+  scope: "channel" | "room" | "dm";
+  target: string;
+  authorId: string;
+  authorName: string;
+  guest: boolean;
+  content: string;
+  createdAt: number;
+};
+export type Friend = { id: string; username: string; status: "friend" | "incoming" | "outgoing"; online: boolean; since: number };
+export type DmSummary = { userId: string; lastMessageAt: number };
+export type CallInfo = { callId: string; url: string; token: string; with: { id: string; name: string } };
+export type SessionInfo = { createdAt: number; expiresAt: number; userAgent: string | null };
 export type Member = { id: string; username: string; role: Role; joinedAt: number };
 export type Invite = {
   code: string;
@@ -193,6 +208,46 @@ export class Api {
   revokeInvite = (code: string) => this.request("DELETE", `/invites/${encodeURIComponent(code)}`);
   acceptInvite = (code: string) =>
     this.request<ServerSummary>("POST", `/invites/${encodeURIComponent(code.trim().toUpperCase())}/accept`, {});
+
+  // ---- Compte -------------------------------------------------------------
+  async changePassword(current: string, next: string) {
+    const r = await this.request<AuthResult>("POST", "/me/password", { current, next });
+    await this.setTokens(r);
+  }
+  sessions = () => this.request<SessionInfo[]>("GET", "/me/sessions");
+
+  /** Jeton d'accès valide (renouvelé si besoin), pour la connexion temps réel. */
+  async freshAccessToken(): Promise<string | null> {
+    if (this.refresh) await this.request("GET", "/me").catch(() => {});
+    return this.access;
+  }
+
+  // ---- Salons textuels et messages ----------------------------------------
+  createChannel = (serverId: string, name: string) => this.request<Channel>("POST", `/servers/${serverId}/channels`, { name });
+  renameChannel = (channelId: string, name: string) => this.request("PATCH", `/channels/${channelId}`, { name });
+  deleteChannel = (channelId: string) => this.request("DELETE", `/channels/${channelId}`);
+
+  /** Messages d'un salon textuel, du chat d'un salon vocal ou d'une conversation privée. */
+  messages(scope: Message["scope"], target: string, before?: number) {
+    const base = scope === "channel" ? `/channels/${target}` : scope === "room" ? `/rooms/${target}` : `/dm/${target}`;
+    return this.request<Message[]>("GET", `${base}/messages${before ? `?before=${before}` : ""}`);
+  }
+  sendMessage(scope: Message["scope"], target: string, content: string) {
+    const base = scope === "channel" ? `/channels/${target}` : scope === "room" ? `/rooms/${target}` : `/dm/${target}`;
+    return this.request<Message>("POST", `${base}/messages`, { content });
+  }
+  deleteMessage = (id: string) => this.request("DELETE", `/messages/${id}`);
+
+  // ---- Amis, messages privés, appels ---------------------------------------
+  friends = () => this.request<Friend[]>("GET", "/friends");
+  addFriend = (username: string) => this.request<{ status: string }>("POST", "/friends", { username });
+  acceptFriend = (userId: string) => this.request("POST", `/friends/${userId}/accept`, {});
+  removeFriend = (userId: string) => this.request("DELETE", `/friends/${userId}`);
+  dmList = () => this.request<DmSummary[]>("GET", "/dm");
+  startCall = (userId: string) => this.request<CallInfo>("POST", `/calls/${userId}`, {});
+  acceptCall = (callId: string) => this.request<CallInfo>("POST", `/calls/${callId}/accept`, {});
+  declineCall = (callId: string) => this.request("POST", `/calls/${callId}/decline`, {});
+  endCall = (callId: string) => this.request("POST", `/calls/${callId}/end`, {});
 
   // ---- Outils de test (compte de test, serveur en mode dev uniquement) ----
   devBotToken = (roomId: string, name: string) =>

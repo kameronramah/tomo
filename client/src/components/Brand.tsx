@@ -1,4 +1,29 @@
+import { useEffect, useReducer } from "react";
+import type { Room } from "livekit-client";
 import { colorFor, initials } from "../lib/ui";
+import { networkInfo } from "../lib/voice";
+
+/** Barres de signal + ping (ms), mis à jour toutes les 2 s. */
+export function NetworkBadge({ room, showLabel = false }: { room: Room | null; showLabel?: boolean }) {
+  const [, tick] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const t = setInterval(tick, 2000);
+    return () => clearInterval(t);
+  }, []);
+  const n = networkInfo(room);
+  const cls = n.level >= 2 ? "good" : n.level === 1 ? "poor" : "unknown";
+  return (
+    <span className={`net ${cls}`} title={`Qualité réseau ${n.label}${n.rtt !== null ? ` · ping ${n.rtt} ms` : ""}`}>
+      <span className="net-bars" aria-hidden="true">
+        {[1, 2, 3].map((i) => (
+          <span key={i} className={i <= n.level ? "on" : ""} style={{ height: 3 + i * 3 }} />
+        ))}
+      </span>
+      <span className="net-ms">{n.rtt !== null ? `${n.rtt} ms` : "— ms"}</span>
+      {showLabel && <span className="net-label">· connexion {n.label}</span>}
+    </span>
+  );
+}
 
 /** Logo Tomo : deux bulles qui se répondent. `cut` = couleur du fond (découpe entre les bulles). */
 export function Logo({ size = 28, cut = "var(--panel)" }: { size?: number; cut?: string }) {
@@ -57,6 +82,19 @@ const PATHS: Record<string, string[]> = {
   users: ["M9 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8z", "M2 21a7 7 0 0 1 14 0", "M17 4a4 4 0 0 1 0 8", "M22 21a7 7 0 0 0-4-6.3"],
   key: ["M15 3a6 6 0 1 1-5.2 9L3 18.8V21h3v-2h2v-2h2l1.2-1.2A6 6 0 0 1 15 3z", "M16.5 7.5h.01"],
   x: ["M6 6l12 12M18 6L6 18"],
+  send: ["M22 2L11 13", "M22 2l-7 20-4-9-9-4z"],
+  hash: ["M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"],
+  chat: ["M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"],
+  phone: ["M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"],
+  phoneOff: ["M10.7 13.3a16 16 0 0 0 3.4 2.6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2v3a2 2 0 0 1-2.2 2A19.8 19.8 0 0 1 3 4.2 2 2 0 0 1 5 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L9 9.8", "M22 2L2 22"],
+  userCheck: ["M9 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8z", "M2 21a7 7 0 0 1 14 0", "M16 11l2 2 4-4"],
+  bell: ["M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9", "M13.7 21a2 2 0 0 1-3.4 0"],
+  monitor: ["M3 4h18v12H3z", "M8 20h8M12 16v4"],
+  keyboard: ["M2 6h20v12H2z", "M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"],
+  info: ["M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20z", "M12 16v-4M12 8h.01"],
+  signal: ["M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4"],
+  user: ["M12 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8z", "M4 21a8 8 0 0 1 16 0"],
+  volume: ["M11 5L6 9H3v6h3l5 4V5z", "M15.5 8.5a5 5 0 0 1 0 7", "M18.5 5.5a9 9 0 0 1 0 13"],
   flask: ["M9 3h6", "M10 3v6L4.5 18.5A1.7 1.7 0 0 0 6 21h12a1.7 1.7 0 0 0 1.5-2.5L14 9V3", "M7 15h10"],
   login: ["M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3", "M10 17l5-5-5-5", "M15 12H3"],
 };

@@ -43,3 +43,45 @@ export const saveDevices = (d: Devices) => write(KEYS.devices, d);
 
 export const loadLastServer = () => read<string | null>(KEYS.lastServer, null);
 export const saveLastServer = (id: string | null) => write(KEYS.lastServer, id);
+
+// ---------------------------------------------------------------------------
+// Réglages de l'utilisateur (espace Paramètres)
+// ---------------------------------------------------------------------------
+export type Settings = {
+  sounds: { enabled: boolean; volume: number; voice: boolean; messages: boolean; calls: boolean };
+  audio: { noiseSuppression: boolean; echoCancellation: boolean; autoGain: boolean; outputVolume: number };
+  appearance: { zoom: number; reducedMotion: boolean; compact: boolean };
+  notifications: { dmSound: boolean; mentionsOnly: boolean };
+};
+
+export const DEFAULT_SETTINGS: Settings = {
+  sounds: { enabled: true, volume: 0.5, voice: true, messages: true, calls: true },
+  audio: { noiseSuppression: true, echoCancellation: true, autoGain: true, outputVolume: 1 },
+  appearance: { zoom: 1, reducedMotion: false, compact: false },
+  notifications: { dmSound: true, mentionsOnly: false },
+};
+
+const SETTINGS_KEY = "tomo.settings";
+let current: Settings = (() => {
+  const saved = read<Partial<Settings>>(SETTINGS_KEY, {});
+  return {
+    sounds: { ...DEFAULT_SETTINGS.sounds, ...saved.sounds },
+    audio: { ...DEFAULT_SETTINGS.audio, ...saved.audio },
+    appearance: { ...DEFAULT_SETTINGS.appearance, ...saved.appearance },
+    notifications: { ...DEFAULT_SETTINGS.notifications, ...saved.notifications },
+  };
+})();
+const settingsListeners = new Set<(s: Settings) => void>();
+
+export const getSettings = () => current;
+
+export function updateSettings<K extends keyof Settings>(section: K, patch: Partial<Settings[K]>) {
+  current = { ...current, [section]: { ...current[section], ...patch } };
+  write(SETTINGS_KEY, current);
+  settingsListeners.forEach((l) => l(current));
+}
+
+export function onSettingsChange(fn: (s: Settings) => void) {
+  settingsListeners.add(fn);
+  return () => void settingsListeners.delete(fn);
+}

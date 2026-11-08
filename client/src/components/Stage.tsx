@@ -1,6 +1,5 @@
-import { useEffect, useReducer, useState } from "react";
+import { useEffect, useReducer, useState, type ReactNode } from "react";
 import {
-  ConnectionQuality,
   ConnectionState,
   Room,
   RoomEvent,
@@ -9,7 +8,7 @@ import {
 } from "livekit-client";
 import { loadDevices, saveDevices } from "../lib/prefs";
 import { setParticipantVolume, volumeMemory } from "../lib/voice";
-import { Avatar, Icon, SpeakingBars } from "./Brand";
+import { Avatar, Icon, NetworkBadge, SpeakingBars } from "./Brand";
 
 const REFRESH_EVENTS = [
   RoomEvent.ParticipantConnected,
@@ -40,14 +39,14 @@ type Props = {
   onToggleSpatial: () => void;
   onInvite: () => void;
   onLeave: () => void;
+  /** Appel privé : pas d'audio spatial ni d'invitation. */
+  isCall?: boolean;
+  /** Chat du salon (affiché à droite quand il est ouvert). */
+  chat?: ReactNode;
+  chatUnread?: number;
+  chatOpen?: boolean;
+  onToggleChat?: () => void;
 };
-
-function qualityLabel(q: ConnectionQuality) {
-  if (q === ConnectionQuality.Excellent) return { text: "connexion excellente", cls: "teal" };
-  if (q === ConnectionQuality.Good) return { text: "bonne connexion", cls: "teal" };
-  if (q === ConnectionQuality.Poor) return { text: "connexion faible", cls: "amber" };
-  return { text: "connexion…", cls: "muted" };
-}
 
 export default function Stage(props: Props) {
   const { room } = props;
@@ -85,23 +84,31 @@ export default function Stage(props: Props) {
 
   const me = room.localParticipant;
   const participants: Participant[] = [me, ...room.remoteParticipants.values()];
-  const quality = qualityLabel(me.connectionQuality);
 
   return (
-    <section className="stage">
+    <section className={`stage${props.chatOpen && props.chat ? " with-chat" : ""}`}>
+      <div className="stage-main">
       <header className="stage-header">
         <div className="col gap-4">
           <h1 className="title">{props.roomLabel}</h1>
           <span className="muted small">
             {props.serverName} · {participants.length} participant{participants.length > 1 ? "s" : ""} ·{" "}
-            {room.state === ConnectionState.Reconnecting ? (
-              <span className="amber">reconnexion…</span>
-            ) : (
-              <span className={quality.cls}>{quality.text}</span>
-            )}
+            {room.state === ConnectionState.Reconnecting ? <span className="amber">reconnexion…</span> : <NetworkBadge room={room} showLabel />}
           </span>
         </div>
         <div className="row gap-8">
+          {props.chat && (
+            <button
+              className={`btn pill${props.chatOpen ? " active" : ""}`}
+              onClick={props.onToggleChat}
+              aria-pressed={!!props.chatOpen}
+              aria-label="Chat du salon"
+            >
+              <Icon name="chat" size={16} /> <span className="pill-label">Chat</span>
+              {!props.chatOpen && !!props.chatUnread && <span className="badge">{props.chatUnread}</span>}
+            </button>
+          )}
+          {!props.isCall && (
           <button
             className={`btn pill${props.spatial ? " active" : ""}`}
             onClick={props.onToggleSpatial}
@@ -116,6 +123,7 @@ export default function Stage(props: Props) {
               <span />
             </span>
           </button>
+          )}
           {props.canInvite && (
             <button className="btn pill" onClick={props.onInvite} aria-label="Inviter">
               <Icon name="userPlus" size={16} /> <span className="pill-label">Inviter</span>
@@ -235,11 +243,14 @@ export default function Stage(props: Props) {
             )}
           </div>
           <span className="dock-sep" />
-          <button className="dock-btn wide leave" onClick={props.onLeave} aria-label="Quitter le salon">
-            <Icon name="leave" size={20} /> <span className="dock-label">Quitter</span>
+          <button className="dock-btn wide leave" onClick={props.onLeave} aria-label={props.isCall ? "Raccrocher" : "Quitter le salon"}>
+            <Icon name={props.isCall ? "phoneOff" : "leave"} size={20} />{" "}
+            <span className="dock-label">{props.isCall ? "Raccrocher" : "Quitter"}</span>
           </button>
         </div>
       </div>
+      </div>
+      {props.chatOpen && props.chat && <aside className="stage-chat">{props.chat}</aside>}
     </section>
   );
 }

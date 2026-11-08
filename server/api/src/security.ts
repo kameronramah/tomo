@@ -84,7 +84,7 @@ export function signGuestToken(guest: { id: string; name: string; serverId: stri
     .sign(config.jwtSecret);
 }
 
-async function verifyAccessToken(token: string): Promise<Principal | null> {
+export async function verifyAccessToken(token: string): Promise<Principal | null> {
   try {
     const { payload } = await jwtVerify(token, config.jwtSecret, { algorithms: ["HS256"] });
     if (typeof payload.sub !== "string" || typeof payload.name !== "string") return null;

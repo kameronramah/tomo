@@ -23,10 +23,25 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [ ] Serveur déployé sur le VPS (LiveKit + Caddy + API)
 - [ ] Test à plusieurs, chacun chez soi
 
+## V0.3 — Messagerie, appels, paramètres ✅
+- [x] Temps réel (WebSocket) : messages, présence, appels
+- [x] Salons textuels par serveur (créer / renommer / supprimer par les admins)
+- [x] Chat de chaque salon vocal (panneau à droite de la scène)
+- [x] Amis : demande par pseudo, accepter / refuser, en ligne / hors ligne
+- [x] Messages privés entre amis, non-lus et notifications
+- [x] Appels privés entre amis : sonnerie, accepter / refuser, raccrocher
+- [x] Sons d'interface (rejoindre, quitter, arrivées, micro, messages, sonnerie), réglables
+- [x] Ping et qualité réseau visibles (bloc « En vocal », scène, Paramètres > Réseau)
+- [x] Espace Paramètres : compte (mot de passe, appareils), audio, sons, apparence (zoom, compact, animations), raccourcis, réseau
+- [x] Raccourcis Ctrl+Maj+M (micro), Ctrl+Maj+D (son), Ctrl+, (paramètres)
+- [x] Compte de test et outils de test (serveur de dev uniquement)
+
 ## V1 — MVP « on lâche Discord »
 > Objectif : utilisable tous les soirs par le groupe.
 
-- [ ] Changer son mot de passe, voir et révoquer ses appareils connectés
+- [x] Changer son mot de passe, voir ses appareils connectés
+- [ ] Changer son pseudo, photo de profil
+- [ ] Modifier un message, réactions, mentions @pseudo, envoi d'images
 - [ ] **Push-to-talk** avec raccourci global (qui marche quand le jeu est au premier plan)
 - [ ] Réordonner les salons par glisser-déposer
 - [ ] **Volume normalisé automatiquement** (compresseur / AGC sur chaque voix reçue)

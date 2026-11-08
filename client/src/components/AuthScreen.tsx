@@ -105,7 +105,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
           </ul>
         </div>
 
-        <span className="muted small">Tomo v0.2 · open source</span>
+        <span className="muted small">Tomo v0.3 · open source</span>
       </section>
 
       <section className="auth-form-wrap">

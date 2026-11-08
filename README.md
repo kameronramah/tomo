@@ -9,7 +9,13 @@ Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout 
 
 ---
 
-## ✨ Ce qui marche déjà (v0.2)
+## ✨ Ce qui marche déjà (v0.3)
+
+- **Messagerie** : salons textuels dans chaque serveur, chat dans chaque salon vocal, **amis** et **messages privés**, en temps réel.
+- **Appels privés** entre amis, avec sonnerie.
+- **Sons d'interface** (rejoindre, quitter, micro coupé, message, sonnerie) et **ping / qualité réseau** toujours visibles.
+- **Espace Paramètres** : compte, audio et micro, sons, apparence, raccourcis, réseau.
+
 
 - **Comptes sécurisés** : pseudo + mot de passe, session gardée dans le coffre-fort de Windows (« rester connecté »).
 - **Serveurs créés par les utilisateurs**. Aucun serveur n'existe au départ : celui qui crée un serveur en est l'**admin**.

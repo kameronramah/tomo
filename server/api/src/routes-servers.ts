@@ -97,6 +97,10 @@ export default async function serverRoutes(app: FastifyInstance) {
         randomUUID(),
         server.id,
       );
+      db.prepare("INSERT INTO channels (id, server_id, name, position) VALUES (?, ?, 'général', 0)").run(
+        randomUUID(),
+        server.id,
+      );
     });
     return server;
   });
@@ -114,6 +118,7 @@ export default async function serverRoutes(app: FastifyInstance) {
       ...server,
       role,
       rooms: rooms.map((r) => ({ id: r.id, label: r.label, spatial: !!r.spatial, participants: live.get(r.id) ?? [] })),
+      channels: db.prepare("SELECT id, name FROM channels WHERE server_id = ? ORDER BY position, rowid").all(server.id),
     };
   });
 
