@@ -1,0 +1,42 @@
+services:
+  # Serveur média WebRTC (SFU). En mode "host" pour la plage de ports UDP.
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --config /etc/livekit.yaml
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      # Format attendu par LiveKit : "cle: secret"
+      LIVEKIT_KEYS: "${LIVEKIT_API_KEY}: ${LIVEKIT_API_SECRET}"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml:ro
+
+  # API Talk2Mates : vérifie le code d'invitation et signe les tokens LiveKit.
+  api:
+    build: ./api
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      PORT: 3000
+      DATA_DIR: /data
+    ports:
+      - "127.0.0.1:3000:3000"   # accessible uniquement via Caddy
+    volumes:
+      - api-data:/data
+
+  # Reverse proxy + HTTPS automatique (Let's Encrypt).
+  # À retirer si le VPS a déjà un nginx/Caddy (voir docs/HEBERGEMENT.md).
+  caddy:
+    image: caddy:2
+    network_mode: host
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  api-data:
+  caddy-data:
+  caddy-config:

@@ -1,0 +1,13 @@
+{
+	email {$ACME_EMAIL}
+}
+
+# API Talk2Mates
+{$API_DOMAIN} {
+	reverse_proxy 127.0.0.1:3000
+}
+
+# Signalisation LiveKit (WebSocket)
+{$LIVEKIT_DOMAIN} {
+	reverse_proxy 127.0.0.1:7880
+}
