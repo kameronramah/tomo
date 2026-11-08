@@ -14,12 +14,16 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] Client : rejoindre un salon vocal et entendre les autres
 - [x] Choix du micro et de la sortie audio
 - [x] Bonus : volume par personne + indicateur « qui parle »
+- [x] Interface façon Discord : serveurs mémorisés dans une barre à gauche, passage d'un serveur à l'autre en un clic
+- [x] Liste des salons du serveur (configurée par l'hébergeur) avec les personnes connectées dans chacun
+- [x] Passage d'un salon à l'autre en un clic (on garde l'état du micro, les périphériques et les volumes)
 - [ ] Test à plusieurs avec de vrais micros
 
 ## V1 — MVP « on lâche Discord »
 > Objectif : utilisable tous les soirs par le groupe.
 
-- [ ] Liste des salons + qui est connecté où
+- [ ] Créer / renommer / supprimer des salons depuis l'appli (aujourd'hui : variable `ROOMS` du serveur)
+- [ ] Vrais comptes à la place du code d'invitation partagé
 - [ ] **Push-to-talk** avec raccourci global (qui marche quand le jeu est au premier plan)
 - [ ] Indicateur « qui parle »
 - [ ] Réglage du volume par personne + mute individuel

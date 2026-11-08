@@ -57,7 +57,7 @@ cd T2M/server
 
 # 3. Configurer
 cp .env.example .env
-nano .env   # domaines, clés LiveKit, code d'invitation
+nano .env   # domaines, clés LiveKit, code d'invitation, nom du serveur, salons (ROOMS)
 
 # 4. Générer une paire de clés LiveKit et la coller dans .env
 docker run --rm livekit/livekit-server generate-keys

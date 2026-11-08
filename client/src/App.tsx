@@ -1,83 +1,195 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { Room } from "livekit-client";
-import { joinRoom, loadSettings, saveSettings, type Settings } from "./lib/voice";
-import RoomView from "./components/RoomView";
+import { joinRoom, type RoomInfo } from "./lib/voice";
+import {
+  loadActiveServerId,
+  loadProfileName,
+  loadServers,
+  saveActiveServerId,
+  saveProfileName,
+  saveServers,
+  type SavedServer,
+} from "./lib/storage";
+import ServerRail from "./components/ServerRail";
+import ChannelSidebar from "./components/ChannelSidebar";
+import VoicePanel from "./components/VoicePanel";
+import { AddServerDialog, ProfileDialog } from "./components/Dialogs";
 import "./App.css";
 
+type Voice = {
+  server: SavedServer;
+  roomId: string;
+  roomLabel: string;
+  room: Room;
+  warning?: string;
+};
+
 export default function App() {
-  const [settings, setSettings] = useState<Settings>(loadSettings);
-  const [room, setRoom] = useState<Room | null>(null);
-  const [warning, setWarning] = useState<string>();
+  const [profileName, setProfileName] = useState(loadProfileName);
+  const [servers, setServers] = useState<SavedServer[]>(loadServers);
+  const [activeId, setActiveId] = useState<string | undefined>(
+    () => loadActiveServerId() ?? loadServers()[0]?.id,
+  );
+  const [voice, setVoice] = useState<Voice | null>(null);
+  const [micEnabled, setMicEnabled] = useState(true);
+  const [joiningRoomId, setJoiningRoomId] = useState<string>();
   const [error, setError] = useState<string>();
-  const [busy, setBusy] = useState(false);
+  const [dialog, setDialog] = useState<"add" | "profile" | null>(null);
 
-  const update = (key: keyof Settings) => (e: React.ChangeEvent<HTMLInputElement>) =>
-    setSettings({ ...settings, [key]: e.target.value });
+  useEffect(() => saveServers(servers), [servers]);
+  useEffect(() => saveActiveServerId(activeId ?? null), [activeId]);
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  const activeServer = servers.find((s) => s.id === activeId) ?? servers[0];
+
+  // ---- Serveurs ----------------------------------------------------------
+  function addServer(data: Omit<SavedServer, "id">) {
+    const existing = servers.find((s) => s.apiUrl === data.apiUrl);
+    if (existing) {
+      setServers(servers.map((s) => (s.id === existing.id ? { ...s, ...data } : s)));
+      setActiveId(existing.id);
+    } else {
+      const server = { ...data, id: crypto.randomUUID() };
+      setServers([...servers, server]);
+      setActiveId(server.id);
+    }
+    setDialog(null);
+  }
+
+  async function removeServer(id: string) {
+    if (voice?.server.id === id) await leaveVoice();
+    const rest = servers.filter((s) => s.id !== id);
+    setServers(rest);
+    if (activeId === id) setActiveId(rest[0]?.id);
+  }
+
+  function renameServer(id: string, name: string) {
+    setServers((list) => list.map((s) => (s.id === id ? { ...s, name } : s)));
+  }
+
+  // ---- Vocal -------------------------------------------------------------
+  async function joinChannel(server: SavedServer, info: RoomInfo) {
+    if (voice?.server.id === server.id && voice.roomId === info.id) return;
     setError(undefined);
-    setBusy(true);
-    const s = { ...settings, name: settings.name.trim(), room: settings.room.trim().toLowerCase() };
-    saveSettings(s);
+    setJoiningRoomId(info.id);
     try {
-      const joined = await joinRoom(s);
-      setWarning(joined.warning);
-      setRoom(joined.room);
+      // On quitte l'ancien salon avant d'entrer dans le nouveau (un seul vocal à la fois).
+      if (voice) {
+        const previous = voice.room;
+        setVoice(null);
+        await previous.disconnect();
+      }
+      const joined = await joinRoom(server, profileName, info.id, { micEnabled });
+      setVoice({ server, roomId: info.id, roomLabel: info.label, room: joined.room, warning: joined.warning });
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      setBusy(false);
+      setJoiningRoomId(undefined);
     }
   }
 
-  async function onLeave() {
-    await room?.disconnect();
-    setRoom(null);
-    setWarning(undefined);
+  async function leaveVoice() {
+    const current = voice;
+    setVoice(null);
+    await current?.room.disconnect();
   }
 
-  if (room) return <RoomView room={room} warning={warning} onLeave={onLeave} />;
+  /** Déconnexion subie (réseau, serveur) : on ne réagit que si c'est le salon actuel. */
+  function onRoomDisconnected(room: Room) {
+    setVoice((v) => (v?.room === room ? null : v));
+  }
+
+  // ---- Rendu -------------------------------------------------------------
+  if (!profileName) {
+    return (
+      <ProfileDialog
+        initial=""
+        onSave={(name) => {
+          saveProfileName(name);
+          setProfileName(name);
+        }}
+      />
+    );
+  }
 
   return (
-    <main className="login">
-      <h1>
-        Talk2Mates <span className="tag">T2M</span>
-      </h1>
-      <p className="muted">Le vocal pensé pour jouer entre potes.</p>
+    <div className="app">
+      <ServerRail
+        servers={servers}
+        activeId={activeServer?.id}
+        voiceServerId={voice?.server.id}
+        onSelect={setActiveId}
+        onAdd={() => setDialog("add")}
+      />
 
-      <form onSubmit={onSubmit} className="card">
-        <label>
-          Pseudo
-          <input value={settings.name} onChange={update("name")} maxLength={32} required autoFocus />
-        </label>
-        <label>
-          Salon
-          <input
-            value={settings.room}
-            onChange={update("room")}
-            pattern="[a-zA-Z0-9_\-]{1,32}"
-            title="Lettres, chiffres, - et _"
-            required
+      <ChannelSidebar
+        server={activeServer}
+        voice={
+          voice
+            ? {
+                serverId: voice.server.id,
+                serverName: voice.server.name,
+                roomId: voice.roomId,
+                roomLabel: voice.roomLabel,
+                identity: voice.room.localParticipant.identity,
+              }
+            : undefined
+        }
+        joiningRoomId={joiningRoomId}
+        profileName={profileName}
+        onJoin={(info) => activeServer && joinChannel(activeServer, info)}
+        onLeaveVoice={leaveVoice}
+        onRenameServer={renameServer}
+        onRemoveServer={removeServer}
+        onEditProfile={() => setDialog("profile")}
+      />
+
+      <main className="content">
+        {error && (
+          <p className="error banner" onClick={() => setError(undefined)}>
+            {error}
+          </p>
+        )}
+        {voice ? (
+          <VoicePanel
+            key={voice.room.name + voice.server.id}
+            room={voice.room}
+            roomLabel={voice.roomLabel}
+            serverName={voice.server.name}
+            warning={voice.warning}
+            onLeave={leaveVoice}
+            onMicChange={setMicEnabled}
+            onDisconnected={onRoomDisconnected}
           />
-        </label>
-        <label>
-          Code d'invitation
-          <input type="password" value={settings.invite} onChange={update("invite")} required />
-        </label>
-        <details>
-          <summary>Serveur</summary>
-          <label>
-            Adresse de l'API
-            <input value={settings.apiUrl} onChange={update("apiUrl")} required />
-          </label>
-        </details>
+        ) : (
+          <div className="empty">
+            {servers.length === 0 ? (
+              <>
+                <h2>Aucun serveur pour l'instant</h2>
+                <p className="muted">Rejoins le serveur de tes amis avec son adresse et son code d'invitation.</p>
+                <button onClick={() => setDialog("add")}>Rejoindre un serveur</button>
+              </>
+            ) : (
+              <>
+                <h2>Pas encore en vocal</h2>
+                <p className="muted">Clique sur un salon à gauche pour le rejoindre.</p>
+              </>
+            )}
+          </div>
+        )}
+      </main>
 
-        {error && <p className="error">{error}</p>}
-        <button type="submit" disabled={busy}>
-          {busy ? "Connexion…" : "Rejoindre"}
-        </button>
-      </form>
-    </main>
+      {dialog === "add" && <AddServerDialog onAdd={addServer} onClose={() => setDialog(null)} />}
+      {dialog === "profile" && (
+        <ProfileDialog
+          initial={profileName}
+          onSave={(name) => {
+            saveProfileName(name);
+            setProfileName(name);
+            setDialog(null);
+          }}
+          onClose={() => setDialog(null)}
+        />
+      )}
+    </div>
   );
 }

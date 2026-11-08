@@ -20,6 +20,8 @@ services:
       LIVEKIT_API_KEY: devkey
       LIVEKIT_API_SECRET: secret
       INVITE_CODE: test
+      SERVER_NAME: Serveur de test
+      ROOMS: "general:Général,jeux:Jeux,valorant:Valorant,minecraft:Minecraft,afk:AFK"
     ports:
       - "3000:3000"
     depends_on:
