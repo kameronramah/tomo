@@ -15,7 +15,8 @@ export type SoundName =
   | "undeafen"
   | "message" // nouveau message (privé ou salon)
   | "ring" // appel entrant
-  | "callEnd";
+  | "callEnd"
+  | "clip"; // clip enregistré
 
 type Note = { f: number; t: number; d: number; type?: OscillatorType; g?: number };
 
@@ -50,6 +51,10 @@ const SOUNDS: Record<SoundName, Note[]> = {
     { f: 659.25, t: 0.4, d: 0.18 },
     { f: 830.61, t: 0.6, d: 0.28 },
   ],
+  clip: [
+    { f: 1567.98, t: 0, d: 0.05, type: "triangle", g: 0.6 },
+    { f: 2093, t: 0.05, d: 0.12, type: "triangle", g: 0.5 },
+  ],
   callEnd: [
     { f: 523.25, t: 0, d: 0.12 },
     { f: 392, t: 0.12, d: 0.12 },
@@ -69,6 +74,7 @@ const CATEGORY: Record<SoundName, "voice" | "messages" | "calls"> = {
   message: "messages",
   ring: "calls",
   callEnd: "calls",
+  clip: "voice",
 };
 
 let ctx: AudioContext | null = null;

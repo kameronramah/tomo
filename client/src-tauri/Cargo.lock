@@ -3866,7 +3866,7 @@ checksum = "009dbb7700f11c55ef83aebbe4c0e9cf1f1ac0844bd8d6f00dc38f302026e13a"
 
 [[package]]
 name = "tomo"
-version = "0.2.0"
+version = "0.3.0"
 dependencies = [
  "keyring",
  "serde",
@@ -3874,6 +3874,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-opener",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]

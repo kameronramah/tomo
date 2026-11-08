@@ -34,7 +34,7 @@ async function callToken(callId: string, user: { id: string; name: string }) {
     name: user.name,
     ttl: "6h",
   });
-  token.addGrant({ room: callRoom(callId), roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true });
+  token.addGrant({ room: callRoom(callId), roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true, canUpdateOwnMetadata: true });
   return token.toJwt();
 }
 

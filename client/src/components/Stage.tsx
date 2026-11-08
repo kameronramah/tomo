@@ -6,9 +6,10 @@ import {
   type Participant,
   type RemoteParticipant,
 } from "livekit-client";
-import { loadDevices, saveDevices } from "../lib/prefs";
-import { setParticipantVolume, volumeMemory } from "../lib/voice";
+import { getSettings, loadDevices, onSettingsChange, saveDevices, updateSettings } from "../lib/prefs";
+import { getRecorder, getSpatial, onExtrasChange, setParticipantVolume, volumeMemory } from "../lib/voice";
 import { Avatar, Icon, NetworkBadge, SpeakingBars } from "./Brand";
+import MapView from "./MapView";
 
 const REFRESH_EVENTS = [
   RoomEvent.ParticipantConnected,
@@ -22,6 +23,7 @@ const REFRESH_EVENTS = [
   RoomEvent.LocalTrackUnpublished,
   RoomEvent.ConnectionStateChanged,
   RoomEvent.ConnectionQualityChanged,
+  RoomEvent.ParticipantAttributesChanged,
 ] as const;
 
 type Props = {
@@ -46,6 +48,8 @@ type Props = {
   chatUnread?: number;
   chatOpen?: boolean;
   onToggleChat?: () => void;
+  /** Enregistrer les 60 dernières secondes. */
+  onClip?: () => void;
 };
 
 export default function Stage(props: Props) {
@@ -64,7 +68,11 @@ export default function Stage(props: Props) {
     };
     loadDeviceList();
     room.on(RoomEvent.MediaDevicesChanged, loadDeviceList);
+    const offExtras = onExtrasChange(refresh);
+    const offSettings = onSettingsChange(refresh);
     return () => {
+      offExtras();
+      offSettings();
       REFRESH_EVENTS.forEach((ev) => room.off(ev, refresh));
       room.off(RoomEvent.MediaDevicesChanged, loadDeviceList);
     };
@@ -84,6 +92,9 @@ export default function Stage(props: Props) {
 
   const me = room.localParticipant;
   const participants: Participant[] = [me, ...room.remoteParticipants.values()];
+  const engine = getSpatial();
+  const showMap = props.spatial && !props.isCall && !!engine && getSettings().spatial.showMap;
+  const clipsReady = !!getRecorder();
 
   return (
     <section className={`stage${props.chatOpen && props.chat ? " with-chat" : ""}`}>
@@ -134,7 +145,15 @@ export default function Stage(props: Props) {
 
       {props.warning && <p className="warning banner">{props.warning}</p>}
 
+      {showMap && engine ? (
+        <MapView room={room} engine={engine} />
+      ) : (
       <div className="tiles">
+        {props.spatial && !props.isCall && !getSettings().spatial.showMap && (
+          <button className="link small tiles-map-link" onClick={() => updateSettings("spatial", { showMap: true })}>
+            Afficher la carte de l'audio spatial
+          </button>
+        )}
         {participants.map((p) => {
           const isMe = p === me;
           const label = p.name || p.identity;
@@ -150,6 +169,14 @@ export default function Stage(props: Props) {
               )}
               {guest && !muted && <span className="tile-badge">Invité</span>}
               {bot && !muted && <span className="tile-badge">Bot de test</span>}
+              {p.attributes?.clips === "1" && (
+                <span className="tile-clip" title="Clips activés : cette personne peut enregistrer les 60 dernières secondes">
+                  <Icon name="rewind" size={12} label="Clips activés" />
+                </span>
+              )}
+              {props.spatial && engine && !isMe && (
+                <span className="tile-distance">{engine.isPlaced(p.identity) ? `${Math.round(engine.distanceTo(p.identity) ?? 0)} m` : "sans position"}</span>
+              )}
               <Avatar name={label} size={92} speaking={p.isSpeaking} className="big" />
               <span className="tile-name">
                 {label}
@@ -177,6 +204,7 @@ export default function Stage(props: Props) {
           );
         })}
       </div>
+      )}
 
       {/* ---- Dock ---- */}
       <div className="dock-wrap">
@@ -197,7 +225,13 @@ export default function Stage(props: Props) {
           >
             <Icon name={props.deafened ? "headphonesOff" : "headphones"} size={22} />
           </button>
-          <button className="dock-btn wide" disabled title="Bientôt : garder les 60 dernières secondes" aria-label="Clip 60 secondes (bientôt)">
+          <button
+            className="dock-btn wide"
+            onClick={props.onClip}
+            disabled={!clipsReady || !props.onClip}
+            title={clipsReady ? "Enregistrer les 60 dernières secondes (Ctrl+Maj+C)" : "Clips désactivés (Paramètres > Clips)"}
+            aria-label="Enregistrer les 60 dernières secondes"
+          >
             <span className="amber">
               <Icon name="rewind" size={20} />
             </span>

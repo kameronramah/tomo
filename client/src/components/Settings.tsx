@@ -7,12 +7,16 @@ import { playSound, type SoundName } from "../lib/sounds";
 import { errorMessage } from "../lib/ui";
 import { Avatar, Icon, NetworkBadge, type IconName } from "./Brand";
 import { MicTester } from "./Home";
+import { CLIP_SECONDS, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
+import { gameLinkSupported, onGameLink, type GameLink } from "../lib/gameLink";
 
-type Section = "account" | "audio" | "sounds" | "appearance" | "shortcuts" | "network" | "about";
+type Section = "account" | "audio" | "spatial" | "clips" | "sounds" | "appearance" | "shortcuts" | "network" | "about";
 
 const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
   { id: "account", label: "Mon compte", icon: "user" },
   { id: "audio", label: "Audio et micro", icon: "mic" },
+  { id: "spatial", label: "Audio spatial", icon: "orbit" },
+  { id: "clips", label: "Clips", icon: "rewind" },
   { id: "sounds", label: "Sons et notifications", icon: "bell" },
   { id: "appearance", label: "Apparence", icon: "monitor" },
   { id: "shortcuts", label: "Raccourcis clavier", icon: "keyboard" },
@@ -92,6 +96,8 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
         <div className="settings-content">
           {section === "account" && <Account api={api} user={user} onLogoutAll={onLogoutAll} />}
           {section === "audio" && <Audio s={s} />}
+          {section === "spatial" && <Spatial s={s} />}
+          {section === "clips" && <Clips s={s} />}
           {section === "sounds" && <Sounds s={s} />}
           {section === "appearance" && <Appearance s={s} />}
           {section === "shortcuts" && <Shortcuts />}
@@ -389,6 +395,7 @@ const SHORTCUTS: [string, string][] = [
   ["Ctrl + 1 … 9", "Aller au serveur n°1 à 9"],
   ["Ctrl + Maj + M", "Couper / activer le micro"],
   ["Ctrl + Maj + D", "Couper / rétablir le son"],
+  ["Ctrl + Maj + C", "Enregistrer les 60 dernières secondes (clip)"],
   ["Ctrl + ,", "Ouvrir les paramètres"],
   ["Entrée", "Envoyer un message"],
   ["Maj + Entrée", "Retour à la ligne dans un message"],
@@ -463,7 +470,7 @@ function About() {
         <ul className="list">
           <li>
             <span className="grow">Version</span>
-            <span className="muted">0.3.0</span>
+            <span className="muted">0.4.0</span>
           </li>
           <li>
             <span className="grow">Code source</span>
@@ -472,6 +479,146 @@ function About() {
             </a>
           </li>
         </ul>
+      </Card>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+function Spatial({ s }: { s: S }) {
+  const [game, setGame] = useState<GameLink | null>(null);
+  useEffect(() => onGameLink(setGame), []);
+  return (
+    <>
+      <h1 className="title">Audio spatial</h1>
+      <p className="muted text">
+        Quand un salon a l'audio spatial activé, chaque voix vient de la direction de la personne et baisse avec la distance. Un casque
+        est fortement conseillé.
+      </p>
+      <Card title="Portée">
+        <label className="setting-row">
+          <span className="grow">Distance maximale d'écoute</span>
+          <input
+            type="range"
+            min={8}
+            max={60}
+            step={1}
+            value={s.spatial.range}
+            onChange={(e) => updateSettings("spatial", { range: Number(e.target.value) })}
+            aria-label="Portée d'écoute en mètres"
+          />
+          <span className="value">{s.spatial.range} m</span>
+        </label>
+        <Toggle
+          label="Afficher la carte du salon"
+          hint="Sinon, les tuiles habituelles restent affichées (avec la distance de chacun)."
+          checked={s.spatial.showMap}
+          onChange={(v) => updateSettings("spatial", { showMap: v })}
+        />
+      </Card>
+      <Card title="Position dans le jeu (Mumble Link)">
+        {!gameLinkSupported ? (
+          <p className="muted">Disponible dans l'application de bureau.</p>
+        ) : game ? (
+          <p className="ok">
+            Jeu détecté : <strong>{game.game || "jeu compatible"}</strong> — ta position en jeu est utilisée automatiquement.
+          </p>
+        ) : (
+          <p className="muted">Aucun jeu compatible détecté pour l'instant. Sans jeu, la carte du salon est utilisée.</p>
+        )}
+        <span className="hint">
+          Compatibles : Minecraft (avec un mod « MumbleLink »), Guild Wars 2, Arma 3, Star Citizen, et tous les jeux ou mods qui
+          prennent en charge Mumble Link. Pour que deux joueurs s'entendent en 3D, ils doivent être dans le même jeu et sur le même
+          serveur de jeu.
+        </span>
+      </Card>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+function Clips({ s }: { s: S }) {
+  const [clips, setClips] = useState<ClipFile[]>([]);
+  const [playing, setPlaying] = useState<{ name: string; url: string } | null>(null);
+  const [error, setError] = useState<string>();
+  const reload = () => listClips().then(setClips).catch((e) => setError(errorMessage(e)));
+  useEffect(() => {
+    reload();
+  }, []);
+  useEffect(
+    () => () => {
+      if (playing) URL.revokeObjectURL(playing.url);
+    },
+    [playing],
+  );
+
+  return (
+    <>
+      <h1 className="title">Clips</h1>
+      <Card title={`Garder les ${CLIP_SECONDS} dernières secondes`}>
+        <Toggle
+          label="Activer les clips"
+          hint="Tomo garde en mémoire les 60 dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C."
+          checked={s.clips.enabled}
+          onChange={(v) => updateSettings("clips", { enabled: v })}
+        />
+        <span className="hint">
+          Par respect pour tes potes, une petite icône ⏪ s'affiche sur ta tuile tant que les clips sont activés. Les clips restent
+          sur ton PC (dossier Musique\Tomo Clips).
+        </span>
+      </Card>
+      <Card title={`Mes clips · ${clips.length}`}>
+        {!clipsSupported ? (
+          <p className="muted">Dans le navigateur, les clips sont téléchargés directement. La liste est disponible dans l'application de bureau.</p>
+        ) : clips.length === 0 ? (
+          <p className="muted">Aucun clip pour l'instant. En vocal, clique sur « Clip 60 s » dans le dock.</p>
+        ) : (
+          <ul className="list">
+            {clips.map((c) => (
+              <li key={c.name}>
+                <button
+                  className="icon-btn round"
+                  aria-label={`Écouter ${c.name}`}
+                  onClick={async () => {
+                    try {
+                      setPlaying({ name: c.name, url: await clipUrl(c.name) });
+                    } catch (e) {
+                      setError(errorMessage(e));
+                    }
+                  }}
+                >
+                  <Icon name="volume" />
+                </button>
+                <span className="grow col gap-2">
+                  <span className="ellipsis">{c.name.replace(/\.wav$/, "")}</span>
+                  <span className="muted small">{(c.size / 1024 / 1024).toFixed(1)} Mo</span>
+                </span>
+                <button
+                  className="icon-btn danger"
+                  aria-label={`Supprimer ${c.name}`}
+                  title="Supprimer"
+                  onClick={() => deleteClip(c.name).then(reload).catch((e) => setError(errorMessage(e)))}
+                >
+                  <Icon name="trash" size={16} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {playing && (
+          <div className="col gap-4">
+            <span className="small muted">{playing.name}</span>
+            <audio src={playing.url} controls autoPlay className="clip-player" />
+          </div>
+        )}
+        {error && <p className="error">{error}</p>}
+        {clipsSupported && (
+          <div>
+            <button className="btn" onClick={() => openClipsFolder().catch((e) => setError(errorMessage(e)))}>
+              Ouvrir le dossier des clips
+            </button>
+          </div>
+        )}
       </Card>
     </>
   );

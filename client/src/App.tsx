@@ -13,7 +13,8 @@ import {
 } from "./lib/api";
 import { Realtime, type RealtimeEvent } from "./lib/realtime";
 import { getSettings, loadInstance, loadLastServer, normalizeInstance, onSettingsChange, saveInstance, saveLastServer } from "./lib/prefs";
-import { connectVoice, joinRoom, setDeafened as applyDeafen } from "./lib/voice";
+import { connectVoice, getRecorder, getSpatial, joinRoom, setDeafened as applyDeafen } from "./lib/voice";
+import { clipFileName, clipsSupported, encodeWav, openClipsFolder, saveClip } from "./lib/clips";
 import { playSound, startRinging } from "./lib/sounds";
 import { errorMessage } from "./lib/ui";
 import { removeAllBots, setLoopback } from "./lib/dev";
@@ -88,7 +89,7 @@ export default function App() {
   const [callRinging, setCallRinging] = useState(false); // appel sortant pas encore décroché
 
   const [dialog, setDialog] = useState<Dialog | null>(null);
-  const [toast, setToast] = useState<{ text: string; ok?: boolean }>();
+  const [toast, setToast] = useState<{ text: string; ok?: boolean; action?: { label: string; run: () => void } }>();
   const [devOpen, setDevOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -100,7 +101,7 @@ export default function App() {
   const showError = useCallback((err: unknown) => setToast({ text: errorMessage(err) }), []);
   useEffect(() => {
     if (!toast) return;
-    const t = setTimeout(() => setToast(undefined), 5000);
+    const t = setTimeout(() => setToast(undefined), toast.action ? 9000 : 5000);
     return () => clearTimeout(t);
   }, [toast]);
 
@@ -359,6 +360,38 @@ export default function App() {
     return realtime.on(handleEvent);
   }, [realtime, handleEvent]);
 
+  // ---- Audio spatial : suit l'interrupteur du salon ---------------------------------
+  const spatialFlag = voice?.kind === "room" ? !!detail?.rooms.find((r) => r.id === voice.roomId)?.spatial : false;
+  useEffect(() => {
+    getSpatial()?.setEnabled(spatialFlag);
+  }, [voice, spatialFlag]);
+
+  // ---- Clip des 60 dernières secondes ---------------------------------------------
+  async function takeClip() {
+    const rec = getRecorder();
+    if (!rec) {
+      setToast({ text: "Les clips sont désactivés. Active-les dans Paramètres > Clips." });
+      return;
+    }
+    if (rec.seconds < 1) {
+      setToast({ text: "Rien à enregistrer pour l'instant : attends quelques secondes." });
+      return;
+    }
+    const seconds = Math.round(rec.seconds);
+    const name = clipFileName(voiceRef.current?.roomLabel ?? "salon");
+    try {
+      await saveClip(name, encodeWav(rec.snapshot()));
+      playSound("clip");
+      setToast({
+        text: `Clip enregistré : ${seconds} s.`,
+        ok: true,
+        action: clipsSupported ? { label: "Ouvrir le dossier", run: () => openClipsFolder().catch(showError) } : undefined,
+      });
+    } catch (err) {
+      showError(err);
+    }
+  }
+
   // ---- Raccourcis clavier -------------------------------------------------------
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -366,6 +399,9 @@ export default function App() {
       if (e.shiftKey && e.key.toLowerCase() === "m" && voiceRef.current) {
         e.preventDefault();
         toggleMic();
+      } else if (e.shiftKey && e.key.toLowerCase() === "c" && voiceRef.current) {
+        e.preventDefault();
+        takeClip();
       } else if (e.shiftKey && e.key.toLowerCase() === "d" && voiceRef.current) {
         e.preventDefault();
         toggleDeafen();
@@ -623,6 +659,7 @@ export default function App() {
         onToggleSpatial={toggleSpatial}
         onInvite={openInvite}
         onLeave={leaveVoice}
+        onClip={takeClip}
         chatOpen={chatOpen}
         onToggleChat={() => setChatOpen(!chatOpen)}
         chatUnread={voice.kind === "room" ? unread[`room:${voice.roomId}`] : undefined}
@@ -832,6 +869,17 @@ export default function App() {
       {toast && (
         <div className={`toast${toast.ok ? " ok" : ""}`} role="alert" onClick={() => setToast(undefined)}>
           {toast.text}
+          {toast.action && (
+            <button
+              className="btn small"
+              onClick={(e) => {
+                e.stopPropagation();
+                toast.action!.run();
+              }}
+            >
+              {toast.action.label}
+            </button>
+          )}
         </div>
       )}
 

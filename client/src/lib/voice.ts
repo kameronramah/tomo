@@ -1,6 +1,9 @@
 import { ConnectionQuality, Room, RoomEvent, Track, type RemoteParticipant } from "livekit-client";
 import type { Api } from "./api";
 import { getSettings, loadDevices, onSettingsChange } from "./prefs";
+import { SpatialEngine, type Pose } from "./spatial";
+import { ClipRecorder } from "./clips";
+import { onGameLink } from "./gameLink";
 
 /** Volumes choisis par personne (par pseudo), gardés le temps de la session. */
 export const volumeMemory = new Map<string, number>();
@@ -40,13 +43,94 @@ function audioContainer(): HTMLElement {
   return el;
 }
 
+// ---------------------------------------------------------------------------
+// Extras de la connexion vocale en cours : audio spatial + clip
+// ---------------------------------------------------------------------------
+type Extras = { room: Room; spatial: SpatialEngine; recorder: ClipRecorder | null; ctx: AudioContext; offs: (() => void)[] };
+let extras: Extras | null = null;
+const extrasListeners = new Set<() => void>();
+
+export const getSpatial = () => extras?.spatial ?? null;
+export const getRecorder = () => extras?.recorder ?? null;
+
+// Mode développement uniquement : accès console pour déboguer l'audio (absent du build final).
+if (import.meta.env.DEV) (window as unknown as { __tomo: object }).__tomo = { getSpatial, getRecorder };
+export function onExtrasChange(fn: () => void) {
+  extrasListeners.add(fn);
+  return () => void extrasListeners.delete(fn);
+}
+
+async function setClips(ex: Extras, on: boolean) {
+  if (on && !ex.recorder) {
+    const rec = new ClipRecorder(ex.room);
+    try {
+      await rec.start();
+      ex.recorder = rec;
+    } catch {
+      ex.recorder = null;
+    }
+  } else if (!on && ex.recorder) {
+    await ex.recorder.stop();
+    ex.recorder = null;
+  }
+  // Visible par tous : « clips activés » sur ma tuile
+  ex.room.localParticipant.setAttributes({ clips: ex.recorder ? "1" : "0" }).catch(() => {});
+  extrasListeners.forEach((l) => l());
+}
+
+async function startExtras(room: Room, ctx: AudioContext) {
+  const spatial = new SpatialEngine(room, ctx);
+  const ex: Extras = { room, spatial, recorder: null, ctx, offs: [] };
+  extras = ex;
+
+  // Position du jeu (Mumble Link) prioritaire sur la carte quand un jeu compatible tourne.
+  let mapPose: Pose = spatial.me;
+  ex.offs.push(
+    onGameLink((g) => {
+      if (g) {
+        if (spatial.mySource === "map") mapPose = spatial.me;
+        const yaw = Math.atan2(g.front[0], g.front[2]);
+        spatial.setMyPose({ x: g.pos[0], y: g.pos[2], yaw }, "game", `${g.game}|${g.context}`, g.game);
+      } else if (spatial.mySource === "game") {
+        spatial.setMyPose(mapPose, "map");
+      }
+    }),
+  );
+
+  let clipsWanted = getSettings().clips.enabled;
+  ex.offs.push(
+    onSettingsChange((s) => {
+      if (s.clips.enabled !== clipsWanted) {
+        clipsWanted = s.clips.enabled;
+        setClips(ex, clipsWanted);
+      }
+    }),
+  );
+  await setClips(ex, clipsWanted);
+}
+
+async function stopExtras(room: Room) {
+  const ex = extras;
+  if (!ex || ex.room !== room) return;
+  extras = null;
+  ex.offs.forEach((f) => f());
+  ex.spatial.dispose();
+  await ex.recorder?.stop();
+  await ex.ctx.close().catch(() => {});
+  extrasListeners.forEach((l) => l());
+}
+
 /** Connexion vocale générique (salon d'un serveur ou appel privé). */
 export async function connectVoice(url: string, token: string, opts: { micEnabled: boolean }) {
   const devices = loadDevices();
   const audio = getSettings().audio;
+  // Toutes les voix passent par ce contexte audio : c'est lui qui permet l'audio spatial.
+  const ctx = new AudioContext();
+  await ctx.resume().catch(() => {});
   const room = new Room({
     adaptiveStream: true,
     dynacast: true,
+    webAudioMix: { audioContext: ctx },
     audioCaptureDefaults: {
       deviceId: devices.input,
       echoCancellation: audio.echoCancellation,
@@ -68,10 +152,12 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
     })
     .on(RoomEvent.Disconnected, () => {
       if (activeRoom === room) activeRoom = null;
+      void stopExtras(room);
     });
 
   await room.connect(url, token);
   activeRoom = room;
+  await startExtras(room, ctx);
 
   let warning: string | undefined;
   if (opts.micEnabled) {

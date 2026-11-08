@@ -54,7 +54,7 @@ export default async function devRoutes(app: FastifyInstance) {
     const name = typeof req.body?.name === "string" && req.body.name.length <= 32 ? req.body.name : "Bot";
     const identity = `bot:${randomUUID()}`;
     const token = new AccessToken(config.livekit.apiKey, config.livekit.apiSecret, { identity, name, ttl: "2h" });
-    token.addGrant({ room: roomId, roomJoin: true, canPublish: true, canSubscribe: false });
+    token.addGrant({ room: roomId, roomJoin: true, canPublish: true, canPublishData: true, canSubscribe: false });
     return { url: config.livekit.url, token: await token.toJwt(), identity };
   });
 

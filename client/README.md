@@ -50,6 +50,17 @@ Le serveur de dev crée automatiquement un **compte de test** : son pseudo et so
 
 **Sécurité :** ces outils n'existent que si l'API tourne avec `DEV_TOOLS=1` (serveur de dev). En production (`docker-compose.yml`), les routes `/dev` n'existent pas et le compte de test n'est pas créé. **Ne mets jamais `DEV_TOOLS` dans le `.env` du VPS.**
 
+### Tester l'audio spatial sans jeu
+
+- **Carte** : active « Audio spatial » dans un salon, puis ajoute des bots (outils de test) : ils tournent autour de toi, et leur bip se déplace dans ton casque.
+- **Connecteur de jeu** : lance le simulateur Mumble Link, qui fait croire à Tomo qu'un jeu compatible tourne :
+  ```bash
+  cd client/src-tauri
+  cargo run --example mumble_sim
+  ```
+  La carte passe en « Position du jeu : Simulateur Tomo » et suit le joueur simulé. Ctrl+C pour arrêter : Tomo repasse sur la carte au bout de 2 s.
+- Test automatique de la lecture Mumble Link : `cargo test --lib mumble`.
+
 L'adresse de l'instance par défaut peut être fixée à la compilation : `VITE_TOMO_INSTANCE=https://tomo-api.duckdns.org npm run tauri build`.
 
 ## Construire l'exécutable

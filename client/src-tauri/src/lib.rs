@@ -4,6 +4,9 @@
 //! (Gestionnaire d'identification Windows, Trousseau macOS, Secret Service Linux),
 //! jamais dans un fichier lisible par d'autres programmes.
 
+mod clips;
+mod mumble;
+
 const SERVICE: &str = "com.tomo.app";
 
 /// Seules ces clés peuvent être lues/écrites depuis l'interface.
@@ -47,7 +50,21 @@ fn secret_delete(key: String) -> Result<(), String> {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .invoke_handler(tauri::generate_handler![secret_get, secret_set, secret_delete])
+        .setup(|app| {
+            // Position du joueur dans son jeu (Mumble Link) pour l'audio spatial
+            mumble::spawn(app.handle().clone());
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![
+            secret_get,
+            secret_set,
+            secret_delete,
+            clips::save_clip,
+            clips::list_clips,
+            clips::read_clip,
+            clips::delete_clip,
+            clips::open_clips_folder
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

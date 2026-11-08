@@ -42,11 +42,10 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] Changer son mot de passe, voir ses appareils connectés
 - [ ] Changer son pseudo, photo de profil
 - [ ] Modifier un message, réactions, mentions @pseudo, envoi d'images
-- [ ] **Push-to-talk** avec raccourci global (qui marche quand le jeu est au premier plan)
 - [ ] Réordonner les salons par glisser-déposer
 - [ ] **Volume normalisé automatiquement** (compresseur / AGC sur chaque voix reçue)
 - [ ] Suppression de bruit (RNNoise ou celle du navigateur)
-- [ ] **Clip audio après coup** : tampon circulaire de 60 s, raccourci → fichier `.ogg`
+- [x] **Clip audio après coup** : tampon de 60 s en mémoire, bouton du dock ou Ctrl+Maj+C → fichier `.wav` dans Musique\Tomo Clips, liste et écoute dans Paramètres > Clips, icône visible par les autres quand les clips sont activés
 - [x] Chat texte par salon (salons textuels + chat des salons vocaux)
 - [ ] Mise à jour automatique du client via GitHub Releases
 
@@ -58,11 +57,15 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [ ] **Mode radio** : connecté à plusieurs salons, un push-to-talk par salon, volume par salon
 - [ ] **Audio spatial activable**
   - [x] Interrupteur ON/OFF **par salon**, synchronisé pour tout le monde
-  - [ ] Rendu 3D des voix (PannerNode HRTF) à partir des positions en jeu
+  - [x] Rendu 3D des voix (PannerNode HRTF), volume selon la distance, portée réglable
+  - [x] **Carte du salon** : chacun déplace son avatar (marche avec tous les jeux)
+  - [x] **Connecteur Mumble Link** : position lue dans le jeu (Minecraft avec mod, GW2, Arma…), prioritaire sur la carte
+  - [x] Repli automatique en audio normal si pas de position récente ou jeux / serveurs différents
+  - [x] Simulateur Mumble Link (`cargo run --example mumble_sim`) et bots de test qui se déplacent
+  - [ ] Tester avec un vrai jeu (Minecraft + mod MumbleLink)
   - [ ] Raccourci clavier pour basculer + son de confirmation
   - [ ] Profils par jeu (ON/OFF par défaut selon le jeu détecté), surchargés par l'interrupteur
-  - [ ] Repli automatique en audio normal si le jeu n'envoie pas de positions
-  - [ ] Premier connecteur de positions : mod Minecraft
+  - [ ] Occlusion (murs) et réverbération selon l'environnement du jeu
 - [ ] Overlay en jeu (qui parle, sous-titres)
 
 ## V3 — Social
@@ -94,10 +97,19 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Statuts : en ligne / absent / ne pas déranger (lié au mode focus)
 - [ ] Mettre à jour les maquettes « Connexion » et « Créer un compte » (elles montrent encore l'ancien parcours)
 
+### Raccourcis
+- [ ] **Raccourcis globaux** (qui marchent quand le jeu est au premier plan), configurables dans Paramètres > Raccourcis
+- [ ] **Push-to-talk** : choix détection de la voix / push-to-talk, touche au choix, petit son à l'appui et au relâchement
+- [ ] Raccourci global pour le clip 60 s et pour l'audio spatial
+
 ### Audio et vocal
 - [ ] Paramètres > Audio : appliquer tout de suite le changement de micro / sortie (aujourd'hui : à la prochaine connexion)
 - [ ] Idem pour suppression de bruit / annulation d'écho / gain automatique
 - [ ] Vérifier le « retour micro » des outils de test avec un vrai micro
+- [ ] Clips : choisir la durée (30 s / 60 s / 2 min) et le format (.ogg plus léger)
+- [ ] Clips : les partager directement dans un salon textuel ou un message privé
+- [ ] Carte spatiale : se déplacer aussi aux flèches du clavier
+- [ ] Carte spatiale : montrer qui parle avec une onde autour de l'avatar
 
 ### Messagerie et appels
 - [ ] Notifications Windows (toast) pour les messages privés quand Tomo est en arrière-plan

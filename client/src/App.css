@@ -651,3 +651,49 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .compact .room-main { padding: 8px 10px; }
 .compact .msg { margin-top: 4px; padding-top: 3px; padding-bottom: 3px; }
 .reduce-motion *, .reduce-motion *::before, .reduce-motion *::after { animation: none !important; transition: none !important; }
+
+/* ==========================================================================
+   v0.4 — Audio spatial (carte du salon) et clips
+   ========================================================================== */
+.map-wrap {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  padding: clamp(12px, 2vw, 28px) clamp(12px, 2vw, 32px) 120px; overflow-y: auto;
+}
+.map-toolbar { width: min(100%, 720px); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.map-source { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); padding: 5px 10px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); }
+.map-source.game { color: var(--amber-soft); border-color: #5a4313; background: var(--amber-bg); }
+.map-range { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--muted); }
+.map-range input { width: 130px; }
+.map-range span { width: 38px; text-align: right; color: var(--text-soft); }
+.map {
+  position: relative; width: min(100%, 720px, calc(100vh - 290px)); aspect-ratio: 1; min-width: 260px; min-height: 260px;
+  border-radius: 24px; overflow: hidden; touch-action: none; cursor: crosshair; user-select: none;
+  background-color: #11141a;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 8.333% 8.333%;
+  border: 1px solid var(--line-2);
+}
+.map.game { cursor: default; }
+.map-range-ring {
+  position: absolute; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(45, 212, 191, 0.10) 0%, rgba(45, 212, 191, 0.05) 60%, transparent 70%);
+  border: 1px dashed rgba(45, 212, 191, 0.35); transition: left 0.1s linear, top 0.1s linear;
+}
+.map-pin { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: 4px; pointer-events: none; transition: left 0.15s linear, top 0.15s linear, opacity 0.2s; }
+.map-pin.far { opacity: 0.35; }
+.map-pin.me .avatar { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--teal); }
+.map-pin.me .avatar.speaking { box-shadow: 0 0 0 3px var(--bg), 0 0 0 5px var(--teal), 0 0 18px var(--teal); }
+.map-label { font-size: 11px; font-weight: 600; color: var(--text); background: rgba(14, 16, 20, 0.85); padding: 2px 7px; border-radius: 999px; white-space: nowrap; display: flex; gap: 5px; }
+.map-label em { font-style: normal; color: var(--muted); font-weight: 500; }
+.map-facing { position: absolute; top: -14px; width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-bottom: 10px solid var(--amber); transform-origin: 50% 36px; }
+.map-unplaced { display: flex; align-items: center; gap: 6px; max-width: 720px; }
+.tiles-map-link { grid-column: 1 / -1; justify-self: center; }
+.tile-clip {
+  position: absolute; top: 12px; left: 12px; width: 26px; height: 26px; border-radius: 50%;
+  display: grid; place-items: center; background: var(--amber-bg); color: var(--amber);
+}
+.tile-distance { position: absolute; bottom: 12px; right: 14px; font-size: 11px; color: var(--muted); }
+.toast { display: flex; align-items: center; gap: 12px; }
+.clip-player { width: 100%; height: 36px; }

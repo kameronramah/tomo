@@ -39,7 +39,8 @@ export async function voiceToken(principal: Principal, roomId: string): Promise<
     ttl: "6h",
     metadata: JSON.stringify({ guest: principal.kind === "guest" }),
   });
-  token.addGrant({ room: roomId, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true });
+  // canUpdateOwnMetadata : afficher aux autres « clips activés » (attribut du participant)
+  token.addGrant({ room: roomId, roomJoin: true, canPublish: true, canSubscribe: true, canPublishData: true, canUpdateOwnMetadata: true });
   return token.toJwt();
 }
 

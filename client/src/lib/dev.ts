@@ -5,7 +5,7 @@
 import { Room, Track, createLocalAudioTrack, type LocalAudioTrack } from "livekit-client";
 import type { Api } from "./api";
 
-type Bot = { name: string; room: Room; ctx: AudioContext; gain: GainNode; timer: number; talking: boolean };
+type Bot = { name: string; room: Room; ctx: AudioContext; gain: GainNode; timer: number; talking: boolean; walk: number };
 
 const BOT_NAMES = ["Bot Alex", "Bot Sam", "Bot Nico", "Bot Léa", "Bot Max", "Bot Inès", "Bot Hugo", "Bot Zoé"];
 const bots: Bot[] = [];
@@ -43,7 +43,18 @@ export async function addBot(api: Api, roomId: string) {
     name: "bot-voice",
   });
 
-  const bot: Bot = { name, room, ctx, gain, timer: 0, talking: false };
+  // Audio spatial : le bot tourne en rond sur la carte du salon (position publiée comme un vrai joueur).
+  const radius = 5 + Math.random() * 15;
+  const speed = (0.15 + Math.random() * 0.25) * (Math.random() < 0.5 ? -1 : 1);
+  let angle = Math.random() * Math.PI * 2;
+  const enc = new TextEncoder();
+  const walk = window.setInterval(() => {
+    angle += speed * 0.15;
+    const pos = { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius, yaw: 0, src: "map", ctx: "" };
+    room.localParticipant.publishData(enc.encode(JSON.stringify(pos)), { reliable: false, topic: "pos" }).catch(() => {});
+  }, 150);
+
+  const bot: Bot = { name, room, ctx, gain, timer: 0, talking: false, walk };
   const loop = () => {
     bot.talking = chatty && Math.random() < 0.35;
     gain.gain.setTargetAtTime(bot.talking ? 0.06 : 0, ctx.currentTime, 0.04);
@@ -59,6 +70,7 @@ export async function removeAllBots() {
   await Promise.all(
     all.map(async (b) => {
       clearTimeout(b.timer);
+      clearInterval(b.walk);
       await b.room.disconnect();
       await b.ctx.close();
     }),
