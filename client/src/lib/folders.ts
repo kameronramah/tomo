@@ -3,6 +3,7 @@
  * Gardé sur ce PC (localStorage), par instance : chacun range ses serveurs comme il veut.
  */
 import { useEffect, useState } from "react";
+import { t } from "./i18n";
 
 export type Folder = { kind: "folder"; id: string; name: string; open: boolean; servers: string[] };
 export type Entry = { kind: "server"; id: string } | Folder;
@@ -76,7 +77,7 @@ export function useServerLayout(instance: string, serverIds: string[]) {
       const base = without(entries, dragged);
       const i = base.findIndex((e) => e.kind === "server" && e.id === target);
       if (i < 0) return;
-      const folder: Folder = { kind: "folder", id: crypto.randomUUID(), name: "Nouveau dossier", open: true, servers: [target, dragged] };
+      const folder: Folder = { kind: "folder", id: crypto.randomUUID(), name: t("Nouveau dossier"), open: true, servers: [target, dragged] };
       base.splice(i, 1, folder);
       save(base);
     },

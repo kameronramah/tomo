@@ -8,6 +8,7 @@ import { isPermissionGranted, requestPermission, sendNotification } from "@tauri
 import { disable, enable, isEnabled } from "@tauri-apps/plugin-autostart";
 import { getSettings } from "./prefs";
 import { isQuietMode } from "./sounds";
+import { t } from "./i18n";
 
 export const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -38,7 +39,7 @@ export async function notify(title: string, body: string) {
   try {
     if (permission === null) permission = await isPermissionGranted();
     if (!permission) permission = (await requestPermission()) === "granted";
-    if (permission) sendNotification({ title, body: n.desktopPreview ? body : "Nouveau message" });
+    if (permission) sendNotification({ title, body: n.desktopPreview ? body : t("Nouveau message") });
   } catch {
     // notifications indisponibles : tant pis
   }

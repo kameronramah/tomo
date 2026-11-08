@@ -47,6 +47,7 @@ import DevPanel from "./components/DevPanel";
 import { ServerHome, Welcome } from "./components/Home";
 import { ConfirmDialog, InviteDialog, ManageServerDialog, PromptDialog } from "./components/Dialogs";
 import { Icon, Logo } from "./components/Brand";
+import { t } from "./lib/i18n";
 import "./App.css";
 
 type Voice = {
@@ -365,7 +366,7 @@ export default function App() {
       serverPeople
         .filter((p) => !p.guest)
         .sort((a, b) => Number(!!b.room) - Number(!!a.room) || a.displayName.localeCompare(b.displayName))
-        .map((p) => ({ id: p.id, name: p.displayName, hint: p.room ? "en vocal" : p.status === "offline" ? "hors ligne" : undefined })),
+        .map((p) => ({ id: p.id, name: p.displayName, hint: p.room ? t("en vocal") : p.status === "offline" ? t("hors ligne") : undefined })),
     [serverPeople],
   );
 
@@ -445,11 +446,11 @@ export default function App() {
         case "friends":
           loadFriends();
           if (e.request) {
-            setToast({ text: `${e.request.from} veut être ton ami`, ok: true });
+            setToast({ text: t("{0} veut être ton ami", { 0: e.request.from }), ok: true });
             playSound("message");
             void notify("Demande d'ami", `${e.request.from} veut être ton ami`);
           }
-          if (e.accepted) setToast({ text: `${e.accepted.by} a accepté ta demande d'ami 🎉`, ok: true });
+          if (e.accepted) setToast({ text: t("{0} a accepté ta demande d'ami 🎉", { 0: e.accepted.by }), ok: true });
           return;
         case "presence":
           setFriends((list) => list.map((f) => (f.id === e.userId ? { ...f, online: e.online, presence: e.status } : f)));
@@ -480,9 +481,9 @@ export default function App() {
             v.room.disconnect();
             playSound("callEnd");
             const reason = e.reason as string;
-            if (reason === "declined") setToast({ text: `${v.peer?.name} n'a pas décroché.` });
-            else if (reason === "missed") setToast({ text: `Pas de réponse de ${v.peer?.name}.` });
-            else setToast({ text: "Appel terminé.", ok: true });
+            if (reason === "declined") setToast({ text: t("{0} n'a pas décroché.", { 0: v.peer?.name }) });
+            else if (reason === "missed") setToast({ text: t("Pas de réponse de {0}.", { 0: v.peer?.name }) });
+            else setToast({ text: t("Appel terminé."), ok: true });
             setDmView(v.peer ? { type: "dm", userId: v.peer.id } : { type: "friends" });
           } else if (e.reason === "cancelled" || e.reason === "missed") {
             playSound("callEnd");
@@ -509,11 +510,11 @@ export default function App() {
   async function takeClip() {
     const rec = getRecorder();
     if (!rec) {
-      setToast({ text: "Les clips sont désactivés. Active-les dans Paramètres > Clips." });
+      setToast({ text: t("Les clips sont désactivés. Active-les dans Paramètres > Clips.") });
       return;
     }
     if (rec.seconds < 1) {
-      setToast({ text: "Rien à enregistrer pour l'instant : attends quelques secondes." });
+      setToast({ text: t("Rien à enregistrer pour l'instant : attends quelques secondes.") });
       return;
     }
     const seconds = Math.round(rec.seconds);
@@ -522,9 +523,9 @@ export default function App() {
       await saveClip(name, encodeWav(rec.snapshot()));
       playSound("clip");
       setToast({
-        text: `Clip enregistré : ${seconds} s.`,
+        text: t("Clip enregistré : {0} s.", { 0: seconds }),
         ok: true,
-        action: clipsSupported ? { label: "Ouvrir le dossier", run: () => openClipsFolder().catch(showError) } : undefined,
+        action: clipsSupported ? { label: t("Ouvrir le dossier"), run: () => openClipsFolder().catch(showError) } : undefined,
       });
     } catch (err) {
       showError(err);
@@ -821,12 +822,12 @@ export default function App() {
               onOpenProfile={setProfileId}
               mentionables={mentionables}
               inVoiceHere
-              placeholder={`Écrire dans ${voiceRoomInfo?.label ?? voice.roomLabel}`}
-              emptyText="Le chat du salon : liens, infos de partie… Les messages restent pour les prochaines fois."
+              placeholder={t("Écrire dans {0}", { 0: voiceRoomInfo?.label ?? voice.roomLabel })}
+              emptyText={t("Le chat du salon : liens, infos de partie… Les messages restent pour les prochaines fois.")}
               compact
               header={
                 <header className="chat-header compact">
-                  <Icon name="chat" size={16} /> <strong>Chat du salon</strong>
+                  <Icon name="chat" size={16} /> <strong>{t("Chat du salon")}</strong>
                 </header>
               }
             />
@@ -907,11 +908,11 @@ export default function App() {
         onOpenProfile={setProfileId}
         mentionables={mentionables}
         inVoiceHere={voice?.kind === "room" && voice.serverId === detail.id}
-        placeholder={`Écrire dans #${openChannel.name}`}
-        emptyText={`Bienvenue dans #${openChannel.name} ! Lance la conversation.`}
+        placeholder={t("Écrire dans #{0}", { 0: openChannel.name })}
+        emptyText={t("Bienvenue dans #{0} ! Lance la conversation.", { 0: openChannel.name })}
         header={
           <header className="chat-header">
-            <button className="icon-btn" onClick={() => setServerView({ type: "home" })} aria-label="Retour aux pièces" title="Retour aux pièces">
+            <button className="icon-btn" onClick={() => setServerView({ type: "home" })} aria-label={t("Retour aux pièces")} title={t("Retour aux pièces")}>
               <Icon name="chevronLeft" size={18} />
             </button>
             <span className="fil-hash sm">#</span>
@@ -1034,7 +1035,7 @@ export default function App() {
                   <VoiceIsland
                     variant={planCollapsed ? "mini" : "panel"}
                     room={voice.room}
-                    label={voice.kind === "call" ? `Appel · ${voice.roomLabel}` : (voiceRoomInfo?.label ?? voice.roomLabel)}
+                    label={voice.kind === "call" ? t("Appel · {0}", { 0: voice.roomLabel }) : (voiceRoomInfo?.label ?? voice.roomLabel)}
                     isCall={voice.kind === "call"}
                     micOn={micOn}
                     deafened={deafened}
@@ -1054,7 +1055,7 @@ export default function App() {
         {voice && !stageVisible && !planVisible && (
           <VoiceIsland
             room={voice.room}
-            label={voice.kind === "call" ? `Appel · ${voice.roomLabel}` : (voiceRoomInfo?.label ?? voice.roomLabel)}
+            label={voice.kind === "call" ? t("Appel · {0}", { 0: voice.roomLabel }) : (voiceRoomInfo?.label ?? voice.roomLabel)}
             isCall={voice.kind === "call"}
             micOn={micOn}
             deafened={deafened}
@@ -1117,11 +1118,11 @@ export default function App() {
 
       {dialog?.kind === "createServer" && (
         <PromptDialog
-          title="Créer un serveur"
-          subtitle="Tu en seras l'admin. Un salon textuel « général » et un salon vocal « Général » sont créés pour toi."
-          label="Nom du serveur"
-          placeholder="Les potes"
-          confirmLabel="Créer"
+          title={t("Créer un serveur")}
+          subtitle={t("Tu en seras l'admin. Un salon textuel « général » et un salon vocal « Général » sont créés pour toi.")}
+          label={t("Nom du serveur")}
+          placeholder={t("Les potes")}
+          confirmLabel={t("Créer")}
           onClose={() => setDialog(null)}
           onSubmit={async (name) => {
             const s = await api.createServer(name);
@@ -1134,11 +1135,11 @@ export default function App() {
 
       {dialog?.kind === "joinServer" && (
         <PromptDialog
-          title="Rejoindre un serveur"
-          subtitle="Colle le code qu'un membre du serveur t'a envoyé."
-          label="Code d'invitation"
-          placeholder="ABCD-EFGH"
-          confirmLabel="Rejoindre"
+          title={t("Rejoindre un serveur")}
+          subtitle={t("Colle le code qu'un membre du serveur t'a envoyé.")}
+          label={t("Code d'invitation")}
+          placeholder={t("ABCD-EFGH")}
+          confirmLabel={t("Rejoindre")}
           maxLength={9}
           transform={(v) => v.toUpperCase()}
           onClose={() => setDialog(null)}
@@ -1177,10 +1178,10 @@ export default function App() {
 
       {dialog?.kind === "addRoom" && (
         <PromptDialog
-          title="Nouveau salon vocal"
-          label="Nom du salon"
-          placeholder="Valorant"
-          confirmLabel="Créer"
+          title={t("Nouveau salon vocal")}
+          label={t("Nom du salon")}
+          placeholder={t("Valorant")}
+          confirmLabel={t("Créer")}
           maxLength={32}
           onClose={() => setDialog(null)}
           onSubmit={async (label) => {
@@ -1193,10 +1194,10 @@ export default function App() {
 
       {dialog?.kind === "renameRoom" && (
         <PromptDialog
-          title="Renommer le salon"
-          label="Nom du salon"
+          title={t("Renommer le salon")}
+          label={t("Nom du salon")}
           initial={dialog.room.label}
-          confirmLabel="Enregistrer"
+          confirmLabel={t("Enregistrer")}
           maxLength={32}
           onClose={() => setDialog(null)}
           onSubmit={async (label) => {
@@ -1209,9 +1210,9 @@ export default function App() {
 
       {dialog?.kind === "deleteRoom" && (
         <ConfirmDialog
-          title={`Supprimer « ${dialog.room.label} » ?`}
-          message="Les personnes connectées dans ce salon seront déconnectées."
-          confirmLabel="Supprimer"
+          title={t("Supprimer « {0} » ?", { 0: dialog.room.label })}
+          message={t("Les personnes connectées dans ce salon seront déconnectées.")}
+          confirmLabel={t("Supprimer")}
           onClose={() => setDialog(null)}
           onConfirm={async () => {
             if (voice?.roomId === dialog.room.id) await leaveVoice();
@@ -1224,10 +1225,10 @@ export default function App() {
 
       {dialog?.kind === "addChannel" && (
         <PromptDialog
-          title="Nouveau salon textuel"
-          label="Nom du salon"
-          placeholder="mèmes"
-          confirmLabel="Créer"
+          title={t("Nouveau salon textuel")}
+          label={t("Nom du salon")}
+          placeholder={t("mèmes")}
+          confirmLabel={t("Créer")}
           maxLength={32}
           onClose={() => setDialog(null)}
           onSubmit={async (name) => {
@@ -1241,10 +1242,10 @@ export default function App() {
 
       {dialog?.kind === "renameChannel" && (
         <PromptDialog
-          title="Renommer le salon textuel"
-          label="Nom du salon"
+          title={t("Renommer le salon textuel")}
+          label={t("Nom du salon")}
           initial={dialog.channel.name}
-          confirmLabel="Enregistrer"
+          confirmLabel={t("Enregistrer")}
           maxLength={32}
           onClose={() => setDialog(null)}
           onSubmit={async (name) => {
@@ -1257,9 +1258,9 @@ export default function App() {
 
       {dialog?.kind === "deleteChannel" && (
         <ConfirmDialog
-          title={`Supprimer #${dialog.channel.name} ?`}
-          message="Tous les messages de ce salon seront supprimés définitivement."
-          confirmLabel="Supprimer"
+          title={t("Supprimer #{0} ?", { 0: dialog.channel.name })}
+          message={t("Tous les messages de ce salon seront supprimés définitivement.")}
+          confirmLabel={t("Supprimer")}
           onClose={() => setDialog(null)}
           onConfirm={async () => {
             await api.deleteChannel(dialog.channel.id);

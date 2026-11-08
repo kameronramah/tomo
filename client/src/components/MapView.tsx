@@ -4,6 +4,7 @@ import { MAP_HALF, type SpatialEngine } from "../lib/spatial";
 import { getSettings, updateSettings } from "../lib/prefs";
 import { Avatar, Icon } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
+import { t } from "../lib/i18n";
 
 type Props = { room: Room; engine: SpatialEngine };
 
@@ -58,10 +59,10 @@ export default function MapView({ room, engine }: Props) {
       <div className="map-toolbar">
         <span className={`map-source${game ? " game" : ""}`}>
           <Icon name={game ? "monitor" : "orbit"} size={14} />
-          {game ? `Position du jeu : ${engine.gameName || "jeu"}` : "Glisse ton avatar pour te déplacer"}
+          {game ? t("Position du jeu : {0}", { 0: engine.gameName || "jeu" }) : t("Glisse ton avatar pour te déplacer")}
         </span>
         <label className="map-range">
-          Portée
+          {t("Portée")}
           <input
             type="range"
             min={8}
@@ -69,9 +70,9 @@ export default function MapView({ room, engine }: Props) {
             step={1}
             value={range}
             onChange={(e) => updateSettings("spatial", { range: Number(e.target.value) })}
-            aria-label="Portée d'écoute en mètres"
+            aria-label={t("Portée d'écoute en mètres")}
           />
-          <span>{range} m</span>
+          <span>{range} {t("m")}</span>
         </label>
       </div>
 
@@ -88,7 +89,7 @@ export default function MapView({ room, engine }: Props) {
         onPointerUp={() => (dragging.current = false)}
         onPointerCancel={() => (dragging.current = false)}
         role="application"
-        aria-label="Carte du salon : clique ou glisse pour déplacer ton avatar"
+        aria-label={t("Carte du salon : clique ou glisse pour déplacer ton avatar")}
       >
         {/* Portée d'écoute autour de moi */}
         <span className="map-range-ring" style={{ ...toPct(engine.me.x, engine.me.y), width: `${rangePct * 2}%`, height: `${rangePct * 2}%` }} />
@@ -98,11 +99,11 @@ export default function MapView({ room, engine }: Props) {
           const d = engine.distanceTo(p.identity) ?? 0;
           const audible = d <= range;
           return (
-            <span key={p.identity} className={`map-pin${audible ? "" : " far"}`} style={toPct(r.x, r.y)} title={`${p.name || p.identity} · ${Math.round(d)} m`}>
+            <span key={p.identity} className={`map-pin${audible ? "" : " far"}`} style={toPct(r.x, r.y)} title={t("{0} · {1} m", { 0: p.name || p.identity, 1: Math.round(d) })}>
               <Avatar name={p.name || p.identity} size={38} speaking={speaking.has(p.identity) && audible} />
               <span className="map-label">
                 {p.name || p.identity}
-                <em>{Math.round(d)} m</em>
+                <em>{Math.round(d)} {t("m")}</em>
               </span>
             </span>
           );
@@ -111,7 +112,7 @@ export default function MapView({ room, engine }: Props) {
         <span className="map-pin me" style={toPct(engine.me.x, engine.me.y)}>
           {game && <span className="map-facing" style={{ transform: `rotate(${engine.me.yaw}rad)` }} />}
           <Avatar name={me.name || me.identity} size={44} speaking={speaking.has(me.identity)} />
-          <span className="map-label">Toi</span>
+          <span className="map-label">{t("Toi")}</span>
         </span>
       </div>
 
@@ -119,7 +120,7 @@ export default function MapView({ room, engine }: Props) {
         <div className="map-unplaced muted small">
           <Icon name="info" size={14} />
           <span>
-            Entendu{unplaced.length > 1 ? "s" : ""} normalement, sans 3D :{" "}
+            {t("Entendu")}{unplaced.length > 1 ? "s" : ""} {t("normalement, sans 3D :")}{" "}
             {unplaced.map((p, i) => (
               <span key={p.identity}>
                 {i > 0 && " · "}
@@ -131,7 +132,7 @@ export default function MapView({ room, engine }: Props) {
       )}
 
       <button className="link small" onClick={() => updateSettings("spatial", { showMap: false })}>
-        Afficher les tuiles à la place de la carte
+        {t("Afficher les tuiles à la place de la carte")}
       </button>
     </div>
   );

@@ -2,6 +2,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import type { Api, Invite, Member, Role, ServerSummary } from "../lib/api";
 import { errorMessage, formatExpiry, ROLE_LABEL } from "../lib/ui";
 import { Avatar, Icon } from "./Brand";
+import { t } from "../lib/i18n";
 
 export function Modal({
   title,
@@ -30,7 +31,7 @@ export function Modal({
             <h2 className="title-sm">{title}</h2>
             {subtitle && <span className="muted">{subtitle}</span>}
           </div>
-          <button className="icon-btn" onClick={onClose} aria-label="Fermer">
+          <button className="icon-btn" onClick={onClose} aria-label={t("Fermer")}>
             <Icon name="x" />
           </button>
         </header>
@@ -97,10 +98,10 @@ export function PromptDialog({
         {error && <p className="error">{error}</p>}
         <div className="actions">
           <button type="button" className="btn ghost" onClick={onClose}>
-            Annuler
+            {t("Annuler")}
           </button>
           <button type="submit" className="btn primary" disabled={busy || !value.trim()}>
-            {busy ? "Un instant…" : confirmLabel}
+            {busy ? t("Un instant…") : confirmLabel}
           </button>
         </div>
       </form>
@@ -129,7 +130,7 @@ export function ConfirmDialog({
       {error && <p className="error">{error}</p>}
       <div className="actions">
         <button className="btn ghost" onClick={onClose}>
-          Annuler
+          {t("Annuler")}
         </button>
         <button
           className="btn danger"
@@ -155,15 +156,15 @@ export function ConfirmDialog({
 // Inviter
 // ---------------------------------------------------------------------------
 const MEMBER_DURATIONS = [
-  { hours: 24, label: "1 jour" },
-  { hours: 168, label: "7 jours" },
-  { hours: 720, label: "30 jours" },
+  { hours: 24, label: t("1 jour") },
+  { hours: 168, label: t("7 jours") },
+  { hours: 720, label: t("30 jours") },
 ];
 const GUEST_DURATIONS = [
-  { hours: 3, label: "3 h" },
-  { hours: 6, label: "6 h" },
-  { hours: 12, label: "12 h" },
-  { hours: 24, label: "24 h" },
+  { hours: 3, label: t("3 h") },
+  { hours: 6, label: t("6 h") },
+  { hours: 12, label: t("12 h") },
+  { hours: 24, label: t("24 h") },
 ];
 
 function CopyCode({ code }: { code: string }) {
@@ -180,7 +181,7 @@ function CopyCode({ code }: { code: string }) {
         }}
       >
         <Icon name={copied ? "check" : "copy"} size={16} />
-        {copied ? "Copié" : "Copier"}
+        {copied ? t("Copié") : t("Copier")}
       </button>
     </div>
   );
@@ -224,26 +225,26 @@ export function InviteDialog({
   const durations = kind === "member" ? MEMBER_DURATIONS : GUEST_DURATIONS;
 
   return (
-    <Modal title={`Inviter sur ${server.name}`} onClose={onClose}>
+    <Modal title={t("Inviter sur {0}", { 0: server.name })} onClose={onClose}>
       {canInviteGuests && (
         <div className="segmented" role="tablist">
           <button role="tab" aria-selected={kind === "member"} className={kind === "member" ? "on" : ""} onClick={() => pick("member")}>
-            <Icon name="users" size={16} /> Un ami avec un compte
+            <Icon name="users" size={16} /> {t("Un ami avec un compte")}
           </button>
           <button role="tab" aria-selected={kind === "guest"} className={kind === "guest" ? "on" : ""} onClick={() => pick("guest")}>
-            <Icon name="key" size={16} /> Un invité d'un soir
+            <Icon name="key" size={16} /> {t("Un invité d'un soir")}
           </button>
         </div>
       )}
 
       <p className="text muted">
         {kind === "member"
-          ? "Ton ami crée son compte, puis « Rejoindre un serveur » et colle ce code. Il devient membre du serveur."
-          : "Pas besoin de compte : sur l'écran de connexion, « J'ai un code invité », puis un pseudo. Son accès s'arrête tout seul."}
+          ? t("Ton ami crée son compte, puis « Rejoindre un serveur » et colle ce code. Il devient membre du serveur.")
+          : t("Pas besoin de compte : sur l'écran de connexion, « J'ai un code invité », puis un pseudo. Son accès s'arrête tout seul.")}
       </p>
 
       <div className="col gap-8">
-        <span className="label">Valable</span>
+        <span className="label">{t("Valable")}</span>
         <div className="chips">
           {durations.map((d) => (
             <button
@@ -258,17 +259,17 @@ export function InviteDialog({
             </button>
           ))}
         </div>
-        {kind === "guest" && <span className="hint">10 personnes maximum par code.</span>}
+        {kind === "guest" && <span className="hint">{t("10 personnes maximum par code.")}</span>}
       </div>
 
       {invite ? (
         <div className="col gap-8">
           <CopyCode code={invite.code} />
-          <span className="hint">Expire {formatExpiry(invite.expiresAt)}.</span>
+          <span className="hint">{t("Expire")} {formatExpiry(invite.expiresAt)}.</span>
         </div>
       ) : (
         <button className="btn primary" onClick={create} disabled={busy}>
-          {busy ? "Création…" : "Créer le code"}
+          {busy ? t("Création…") : t("Créer le code")}
         </button>
       )}
       {error && <p className="error">{error}</p>}
@@ -329,17 +330,17 @@ export function ManageServerDialog({
   const canKick = (target: Role) => target !== "owner" && (isOwner || (server.role === "admin" && target === "member"));
 
   return (
-    <Modal title={server.name} subtitle={`Tu es ${ROLE_LABEL[server.role].toLowerCase()} de ce serveur`} onClose={onClose} wide>
+    <Modal title={server.name} subtitle={t("Tu es {0} de ce serveur", { 0: ROLE_LABEL[server.role].toLowerCase() })} onClose={onClose} wide>
       <div className="segmented" role="tablist">
         <button role="tab" aria-selected={tab === "general"} className={tab === "general" ? "on" : ""} onClick={() => setTab("general")}>
-          Général
+          {t("Général")}
         </button>
         <button role="tab" aria-selected={tab === "members"} className={tab === "members" ? "on" : ""} onClick={() => setTab("members")}>
-          Membres
+          {t("Membres")}
         </button>
         {isManager && (
           <button role="tab" aria-selected={tab === "invites"} className={tab === "invites" ? "on" : ""} onClick={() => setTab("invites")}>
-            Invitations
+            {t("Invitations")}
           </button>
         )}
       </div>
@@ -358,11 +359,11 @@ export function ManageServerDialog({
               }}
             >
               <label className="field grow">
-                Nom du serveur
+                {t("Nom du serveur")}
                 <input value={name} onChange={(e) => setName(e.target.value)} maxLength={40} required />
               </label>
               <button className="btn" type="submit" disabled={!name.trim() || name.trim() === server.name}>
-                Enregistrer
+                {t("Enregistrer")}
               </button>
             </form>
           )}
@@ -370,16 +371,16 @@ export function ManageServerDialog({
             {isOwner ? (
               <>
                 <div className="col gap-4">
-                  <strong>Supprimer le serveur</strong>
-                  <span className="muted small">Tous les salons et invitations disparaissent. Irréversible.</span>
+                  <strong>{t("Supprimer le serveur")}</strong>
+                  <span className="muted small">{t("Tous les salons et invitations disparaissent. Irréversible.")}</span>
                 </div>
                 <button
                   className="btn danger"
                   onClick={() =>
                     setConfirm({
-                      title: "Supprimer le serveur ?",
-                      message: `« ${server.name} » sera supprimé pour tout le monde. Cette action est irréversible.`,
-                      label: "Supprimer définitivement",
+                      title: t("Supprimer le serveur ?"),
+                      message: t("« {0} » sera supprimé pour tout le monde. Cette action est irréversible.", { 0: server.name }),
+                      label: t("Supprimer définitivement"),
                       run: async () => {
                         await api.deleteServer(server.id);
                         onGone();
@@ -387,22 +388,22 @@ export function ManageServerDialog({
                     })
                   }
                 >
-                  Supprimer
+                  {t("Supprimer")}
                 </button>
               </>
             ) : (
               <>
                 <div className="col gap-4">
-                  <strong>Quitter le serveur</strong>
-                  <span className="muted small">Tu pourras revenir avec un nouveau code d'invitation.</span>
+                  <strong>{t("Quitter le serveur")}</strong>
+                  <span className="muted small">{t("Tu pourras revenir avec un nouveau code d'invitation.")}</span>
                 </div>
                 <button
                   className="btn danger"
                   onClick={() =>
                     setConfirm({
-                      title: "Quitter le serveur ?",
-                      message: `Tu ne verras plus « ${server.name} » dans ta liste.`,
-                      label: "Quitter",
+                      title: t("Quitter le serveur ?"),
+                      message: t("Tu ne verras plus « {0} » dans ta liste.", { 0: server.name }),
+                      label: t("Quitter"),
                       run: async () => {
                         await api.leaveServer(server.id);
                         onGone();
@@ -410,7 +411,7 @@ export function ManageServerDialog({
                     })
                   }
                 >
-                  Quitter
+                  {t("Quitter")}
                 </button>
               </>
             )}
@@ -425,7 +426,7 @@ export function ManageServerDialog({
               <Avatar name={m.username} size={32} />
               <span className="grow">
                 {m.username}
-                {m.id === myId && <span className="muted"> (toi)</span>}
+                {m.id === myId && <span className="muted"> {t("(toi)")}</span>}
               </span>
               <span className={`role-tag ${m.role}`}>{ROLE_LABEL[m.role]}</span>
               {isOwner && m.role !== "owner" && (
@@ -433,19 +434,19 @@ export function ManageServerDialog({
                   className="btn small"
                   onClick={() => act(() => api.setRole(server.id, m.id, m.role === "admin" ? "member" : "admin"), loadMembers)}
                 >
-                  {m.role === "admin" ? "Retirer admin" : "Nommer admin"}
+                  {m.role === "admin" ? t("Retirer admin") : t("Nommer admin")}
                 </button>
               )}
               {canKick(m.role) && m.id !== myId && (
                 <button
                   className="icon-btn danger"
-                  aria-label={`Exclure ${m.username}`}
-                  title="Exclure"
+                  aria-label={t("Exclure {0}", { 0: m.username })}
+                  title={t("Exclure")}
                   onClick={() =>
                     setConfirm({
-                      title: `Exclure ${m.username} ?`,
-                      message: "Il sera retiré du serveur et des salons vocaux. Il pourra revenir avec un nouveau code.",
-                      label: "Exclure",
+                      title: t("Exclure {0} ?", { 0: m.username }),
+                      message: t("Il sera retiré du serveur et des salons vocaux. Il pourra revenir avec un nouveau code."),
+                      label: t("Exclure"),
                       run: async () => {
                         await api.kick(server.id, m.id);
                         setConfirm(null);
@@ -465,22 +466,22 @@ export function ManageServerDialog({
       {tab === "invites" && (
         <>
           {invites.length === 0 ? (
-            <p className="muted">Aucune invitation active.</p>
+            <p className="muted">{t("Aucune invitation active.")}</p>
           ) : (
             <ul className="list">
               {invites.map((i) => (
                 <li key={i.code}>
                   <span className="code small-code">{i.code}</span>
                   <span className="grow col gap-2">
-                    <span>{i.kind === "guest" ? "Invité d'un soir" : "Membre"}</span>
+                    <span>{i.kind === "guest" ? t("Invité d'un soir") : t("Membre")}</span>
                     <span className="muted small">
                       {i.uses}
-                      {i.maxUses ? ` / ${i.maxUses}` : ""} utilisation{i.uses > 1 ? "s" : ""} · expire {formatExpiry(i.expiresAt)}
-                      {i.createdBy ? ` · par ${i.createdBy}` : ""}
+                      {i.maxUses ? ` / ${i.maxUses}` : ""} {t("utilisation")}{i.uses > 1 ? "s" : ""} {t("· expire")} {formatExpiry(i.expiresAt)}
+                      {i.createdBy ? t(" · par {0}", { 0: i.createdBy }) : ""}
                     </span>
                   </span>
                   <button className="btn small" onClick={() => act(() => api.revokeInvite(i.code), loadInvites)}>
-                    Révoquer
+                    {t("Révoquer")}
                   </button>
                 </li>
               ))}

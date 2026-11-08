@@ -4,6 +4,7 @@ import { colorFor, initials } from "../lib/ui";
 import { networkInfo } from "../lib/voice";
 import type { Presence } from "../lib/api";
 import { STATUS_LABEL, getPerson, usePeople, userIdOf } from "../lib/people";
+import { t } from "../lib/i18n";
 
 /**
  * Avatar d'une personne d'après l'annuaire : sa photo et son nom affiché à jour.
@@ -57,14 +58,14 @@ export function NetworkBadge({ room, showLabel = false }: { room: Room | null; s
   const n = networkInfo(room);
   const cls = n.level >= 2 ? "good" : n.level === 1 ? "poor" : "unknown";
   return (
-    <span className={`net ${cls}`} title={`Qualité réseau ${n.label}${n.rtt !== null ? ` · ping ${n.rtt} ms` : ""}`}>
+    <span className={`net ${cls}`} title={t("Qualité réseau {0}{1}", { 0: n.label, 1: n.rtt !== null ? ` · ping ${n.rtt} ms` : "" })}>
       <span className="net-bars" aria-hidden="true">
         {[1, 2, 3].map((i) => (
           <span key={i} className={i <= n.level ? "on" : ""} style={{ height: 3 + i * 3 }} />
         ))}
       </span>
-      <span className="net-ms">{n.rtt !== null ? `${n.rtt} ms` : "— ms"}</span>
-      {showLabel && <span className="net-label">· connexion {n.label}</span>}
+      <span className="net-ms">{n.rtt !== null ? `${n.rtt} ms` : t("— ms")}</span>
+      {showLabel && <span className="net-label">{t("· connexion")} {n.label}</span>}
     </span>
   );
 }
@@ -93,7 +94,7 @@ export function Logo({ size = 28, cut = "var(--panel)" }: { size?: number; cut?:
 export function Wordmark({ size = 17 }: { size?: number }) {
   return (
     <span className="wordmark" style={{ fontSize: size }}>
-      tom<span className="amber">o</span>
+      {t("tom")}<span className="amber">{t("o")}</span>
     </span>
   );
 }
@@ -245,7 +246,7 @@ export function ServerBadge({ name, size = 40 }: { name: string; size?: number }
 /** Trois barres animées « en train de parler ». */
 export function SpeakingBars() {
   return (
-    <span className="speaking-bars" aria-label="En train de parler" role="img">
+    <span className="speaking-bars" aria-label={t("En train de parler")} role="img">
       <span />
       <span />
       <span />

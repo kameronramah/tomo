@@ -5,6 +5,7 @@ import type { Share } from "../lib/screen";
 import { screenVolumeMemory, setScreenVolume } from "../lib/voice";
 import { Avatar, Icon } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
+import { t } from "../lib/i18n";
 
 const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -75,13 +76,13 @@ export default function ScreenView({ room, shares, onStopMine }: Props) {
       <div className="screen-bar">
         <span className="row gap-8 grow">
           <Avatar name={who} size={26} speaking={speaking.has(current.participant.identity)} />
-          <strong className="ellipsis">{current.isLocal ? "Ton écran" : `Écran de ${who}`}</strong>
-          <span className="screen-quality" title="Qualité reçue">
+          <strong className="ellipsis">{current.isLocal ? t("Ton écran") : t("Écran de {0}", { 0: who })}</strong>
+          <span className="screen-quality" title={t("Qualité reçue")}>
             {quality}
           </span>
         </span>
         {current.hasAudio && !current.isLocal && (
-          <label className="screen-volume" title="Volume du son partagé">
+          <label className="screen-volume" title={t("Volume du son partagé")}>
             <Icon name="volume" size={16} />
             <input
               type="range"
@@ -93,33 +94,33 @@ export default function ScreenView({ room, shares, onStopMine }: Props) {
                 setScreenVolume(remote, Number(e.target.value));
                 setTick((t) => t + 1);
               }}
-              aria-label={`Volume du son partagé par ${who}`}
+              aria-label={t("Volume du son partagé par {0}", { 0: who })}
             />
           </label>
         )}
         {current.isLocal && (
           <button className="btn small danger" onClick={onStopMine}>
-            Arrêter le partage
+            {t("Arrêter le partage")}
           </button>
         )}
-        <button className="icon-btn" onClick={() => setFull(!full)} aria-label={full ? "Quitter le plein écran" : "Plein écran"} title={full ? "Quitter le plein écran (Échap)" : "Plein écran"}>
+        <button className="icon-btn" onClick={() => setFull(!full)} aria-label={full ? t("Quitter le plein écran") : t("Plein écran")} title={full ? t("Quitter le plein écran (Échap)") : t("Plein écran")}>
           <Icon name={full ? "minimize" : "maximize"} />
         </button>
       </div>
 
       <div className="screen-stage" onDoubleClick={() => setFull(!full)}>
         <video ref={videoRef} autoPlay playsInline muted className="screen-video" />
-        {current.isLocal && <span className="screen-note">Aperçu de ce que voient tes potes</span>}
+        {current.isLocal && <span className="screen-note">{t("Aperçu de ce que voient tes potes")}</span>}
       </div>
 
       {shares.length > 1 && (
-        <div className="screen-picker" role="tablist" aria-label="Partages en cours">
+        <div className="screen-picker" role="tablist" aria-label={t("Partages en cours")}>
           {shares.map((s) => {
             const name = s.participant.name || s.participant.identity;
             const on = s === current;
             return (
               <button key={s.participant.identity} role="tab" aria-selected={on} className={on ? "on" : ""} onClick={() => setSelected(s.participant.identity)}>
-                <Icon name="monitor" size={15} /> {s.isLocal ? "Ton écran" : name}
+                <Icon name="monitor" size={15} /> {s.isLocal ? t("Ton écran") : name}
               </button>
             );
           })}

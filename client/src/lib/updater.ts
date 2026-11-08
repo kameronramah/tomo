@@ -6,6 +6,7 @@
 import conf from "../../src-tauri/tauri.conf.json";
 import { inTauri } from "./desktop";
 import { getSettings } from "./prefs";
+import { t } from "./i18n";
 
 export const APP_VERSION: string = conf.version;
 
@@ -64,7 +65,7 @@ export async function checkForUpdate(manual = false) {
     pending = update;
     set({ kind: "ready", version: update.version, notes: update.body ?? "" });
   } catch (e) {
-    set(manual ? { kind: "error", message: "Impossible de vérifier les mises à jour pour l'instant." } : { kind: "idle" });
+    set(manual ? { kind: "error", message: t("Impossible de vérifier les mises à jour pour l'instant.") } : { kind: "idle" });
     console.warn("mise à jour", e);
   } finally {
     running = false;

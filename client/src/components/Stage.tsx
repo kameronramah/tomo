@@ -13,6 +13,7 @@ import { useSpeaking } from "../lib/speaking";
 import MapView from "./MapView";
 import ScreenView from "./ScreenView";
 import { SCREEN_PRESETS, listShares, screenShareError, startScreenShare, stopScreenShare, type ScreenPresetId } from "../lib/screen";
+import { t } from "../lib/i18n";
 
 const REFRESH_EVENTS = [
   RoomEvent.TrackPublished,
@@ -75,8 +76,8 @@ function ShareMenu({
   const [preset, setPreset] = useState<ScreenPresetId>(initialPreset);
   const [audio, setAudio] = useState(initialAudio);
   return (
-    <div className="popover share-menu" role="dialog" aria-label="Partager mon écran">
-      <span className="section-title">Qualité du partage</span>
+    <div className="popover share-menu" role="dialog" aria-label={t("Partager mon écran")}>
+      <span className="section-title">{t("Qualité du partage")}</span>
       {SCREEN_PRESETS.map((p) => (
         <label key={p.id} className={`share-option${preset === p.id ? " on" : ""}`}>
           <input type="radio" name="screen-preset" checked={preset === p.id} onChange={() => setPreset(p.id)} />
@@ -88,10 +89,10 @@ function ShareMenu({
       ))}
       <label className="check small share-audio">
         <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} />
-        Partager aussi le son du PC (jeu, vidéo…)
+        {t("Partager aussi le son du PC (jeu, vidéo…)")}
       </label>
       <button className="btn primary" onClick={() => onStart(preset, audio)}>
-        <Icon name="screenShare" size={16} /> Choisir l'écran à partager
+        <Icon name="screenShare" size={16} /> {t("Choisir l'écran à partager")}
       </button>
     </div>
   );
@@ -174,15 +175,15 @@ export default function Stage(props: Props) {
         <div className="col gap-4">
           <div className="row gap-8">
             {props.onBack && (
-              <button className="icon-btn sm stage-back" onClick={props.onBack} aria-label="Retour" title="Retour">
+              <button className="icon-btn sm stage-back" onClick={props.onBack} aria-label={t("Retour")} title={t("Retour")}>
                 <Icon name="chevronLeft" size={18} />
               </button>
             )}
             <h1 className="title">{props.roomLabel}</h1>
           </div>
           <span className="muted small">
-            {props.serverName} · {participants.length} participant{participants.length > 1 ? "s" : ""} ·{" "}
-            {room.state === ConnectionState.Reconnecting ? <span className="amber">reconnexion…</span> : <NetworkBadge room={room} showLabel />}
+            {props.serverName} · {participants.length} {t("participant")}{participants.length > 1 ? "s" : ""} ·{" "}
+            {room.state === ConnectionState.Reconnecting ? <span className="amber">{t("reconnexion…")}</span> : <NetworkBadge room={room} showLabel />}
           </span>
         </div>
         <div className="row gap-8">
@@ -191,9 +192,9 @@ export default function Stage(props: Props) {
               className={`btn pill${props.chatOpen ? " active" : ""}`}
               onClick={props.onToggleChat}
               aria-pressed={!!props.chatOpen}
-              aria-label="Chat du salon"
+              aria-label={t("Chat du salon")}
             >
-              <Icon name="chat" size={16} /> <span className="pill-label">Chat</span>
+              <Icon name="chat" size={16} /> <span className="pill-label">{t("Chat")}</span>
               {!props.chatOpen && !!props.chatUnread && <span className="badge">{props.chatUnread}</span>}
             </button>
           )}
@@ -203,19 +204,19 @@ export default function Stage(props: Props) {
             onClick={props.onToggleSpatial}
             disabled={!props.canToggleSpatial}
             aria-pressed={props.spatial}
-            aria-label="Audio spatial"
-            title={props.canToggleSpatial ? "Active ou coupe l'audio spatial pour tout le salon" : "Réservé aux membres"}
+            aria-label={t("Audio spatial")}
+            title={props.canToggleSpatial ? t("Active ou coupe l'audio spatial pour tout le salon") : t("Réservé aux membres")}
           >
             <Icon name="orbit" size={16} />
-            <span className="pill-label">Audio spatial</span>
+            <span className="pill-label">{t("Audio spatial")}</span>
             <span className={`switch${props.spatial ? " on" : ""}`} aria-hidden="true">
               <span />
             </span>
           </button>
           )}
           {props.canInvite && (
-            <button className="btn pill" onClick={props.onInvite} aria-label="Inviter">
-              <Icon name="userPlus" size={16} /> <span className="pill-label">Inviter</span>
+            <button className="btn pill" onClick={props.onInvite} aria-label={t("Inviter")}>
+              <Icon name="userPlus" size={16} /> <span className="pill-label">{t("Inviter")}</span>
             </button>
           )}
         </div>
@@ -231,7 +232,7 @@ export default function Stage(props: Props) {
       <div className="tiles">
         {props.spatial && !props.isCall && !getSettings().spatial.showMap && (
           <button className="link small tiles-map-link" onClick={() => updateSettings("spatial", { showMap: true })}>
-            Afficher la carte de l'audio spatial
+            {t("Afficher la carte de l'audio spatial")}
           </button>
         )}
         {participants.map((p) => {
@@ -245,19 +246,19 @@ export default function Stage(props: Props) {
             <div key={p.identity} className={`tile${talking ? " speaking" : ""}`}>
               {muted && (
                 <span className="tile-badge amber-badge">
-                  <Icon name="micOff" size={13} /> Micro coupé
+                  <Icon name="micOff" size={13} /> {t("Micro coupé")}
                 </span>
               )}
-              {guest && !muted && <span className="tile-badge">Invité</span>}
-              {bot && !muted && <span className="tile-badge">Bot de test</span>}
+              {guest && !muted && <span className="tile-badge">{t("Invité")}</span>}
+              {bot && !muted && <span className="tile-badge">{t("Bot de test")}</span>}
               {p.isScreenShareEnabled && (
-                <span className="tile-share" title="Partage son écran">
-                  <Icon name="screenShare" size={13} /> En direct
+                <span className="tile-share" title={t("Partage son écran")}>
+                  <Icon name="screenShare" size={13} /> {t("En direct")}
                 </span>
               )}
               {p.attributes?.clips === "1" && (
-                <span className="tile-clip" title="Clips activés : cette personne peut enregistrer les dernières secondes du salon">
-                  <Icon name="rewind" size={12} label="Clips activés" />
+                <span className="tile-clip" title={t("Clips activés : cette personne peut enregistrer les dernières secondes du salon")}>
+                  <Icon name="rewind" size={12} label={t("Clips activés")} />
                 </span>
               )}
               {props.spatial && engine && !isMe && (
@@ -266,19 +267,19 @@ export default function Stage(props: Props) {
               <button
                 className="plain-btn"
                 onClick={() => p.identity.startsWith("u:") && props.onOpenProfile?.(p.identity.slice(2))}
-                aria-label={`Profil de ${label}`}
+                aria-label={t("Profil de {0}", { 0: label })}
                 disabled={!p.identity.startsWith("u:")}
               >
                 <UserAvatar identity={p.identity} name={label} size={92} speaking={talking} className="big" />
               </button>
               <span className="tile-name">
                 {label}
-                {isMe && <span className="muted"> (toi)</span>}
+                {isMe && <span className="muted"> {t("(toi)")}</span>}
                 {talking && <SpeakingBars />}
               </span>
               {!isMe && (
                 <label className="volume">
-                  Volume
+                  {t("Volume")}
                   <input
                     type="range"
                     min={0}
@@ -289,7 +290,7 @@ export default function Stage(props: Props) {
                       setParticipantVolume(p as RemoteParticipant, Number(e.target.value));
                       refresh();
                     }}
-                    aria-label={`Volume de ${label}`}
+                    aria-label={t("Volume de {0}", { 0: label })}
                   />
                 </label>
               )}
@@ -305,16 +306,16 @@ export default function Stage(props: Props) {
           <button
             className={`dock-btn${props.micOn ? " on" : " off"}`}
             onClick={props.onToggleMic}
-            aria-label={props.micOn ? "Couper le micro" : "Activer le micro"}
-            title={props.micOn ? "Couper le micro" : "Activer le micro"}
+            aria-label={props.micOn ? t("Couper le micro") : t("Activer le micro")}
+            title={props.micOn ? t("Couper le micro") : t("Activer le micro")}
           >
             <Icon name={props.micOn ? "mic" : "micOff"} size={22} />
           </button>
           <button
             className={`dock-btn${props.deafened ? " off" : ""}`}
             onClick={props.onToggleDeafen}
-            aria-label={props.deafened ? "Rétablir le son" : "Couper le son"}
-            title={props.deafened ? "Rétablir le son" : "Couper le son"}
+            aria-label={props.deafened ? t("Rétablir le son") : t("Couper le son")}
+            title={props.deafened ? t("Rétablir le son") : t("Couper le son")}
           >
             <Icon name={props.deafened ? "headphonesOff" : "headphones"} size={22} />
           </button>
@@ -322,21 +323,21 @@ export default function Stage(props: Props) {
             className="dock-btn wide"
             onClick={props.onClip}
             disabled={!clipsReady || !props.onClip}
-            title={clipsReady ? `Enregistrer les ${getSettings().clips.seconds} dernières secondes (Ctrl+Maj+C)` : "Clips désactivés (Paramètres > Clips)"}
-            aria-label={`Enregistrer les ${getSettings().clips.seconds} dernières secondes`}
+            title={clipsReady ? t("Enregistrer les {0} dernières secondes (Ctrl+Maj+C)", { 0: getSettings().clips.seconds }) : t("Clips désactivés (Paramètres > Clips)")}
+            aria-label={t("Enregistrer les {0} dernières secondes", { 0: getSettings().clips.seconds })}
           >
             <span className="amber">
               <Icon name="rewind" size={20} />
             </span>
-            <span className="dock-label">Clip {getSettings().clips.seconds} s</span>
+            <span className="dock-label">{t("Clip")} {getSettings().clips.seconds} {t("s")}</span>
           </button>
           <div className="relative">
             <button
               className={`dock-btn${sharing ? " live" : ""}`}
               onClick={() => (sharing ? stopShare() : setShareOpen(!shareOpen))}
               disabled={shareBusy}
-              aria-label={sharing ? "Arrêter le partage d'écran" : "Partager mon écran"}
-              title={sharing ? "Arrêter le partage d'écran" : "Partager mon écran"}
+              aria-label={sharing ? t("Arrêter le partage d'écran") : t("Partager mon écran")}
+              title={sharing ? t("Arrêter le partage d'écran") : t("Partager mon écran")}
               aria-expanded={shareOpen}
             >
               <Icon name="screenShare" size={22} />
@@ -356,8 +357,8 @@ export default function Stage(props: Props) {
             <button
               className="dock-btn"
               onClick={() => setDevicesOpen(!devicesOpen)}
-              aria-label="Micro et sortie audio"
-              title="Micro et sortie audio"
+              aria-label={t("Micro et sortie audio")}
+              title={t("Micro et sortie audio")}
               aria-expanded={devicesOpen}
             >
               <Icon name="sliders" size={22} />
@@ -367,21 +368,21 @@ export default function Stage(props: Props) {
                 <div className="click-away" onClick={() => setDevicesOpen(false)} />
                 <div className="popover devices">
                   <label className="field">
-                    Micro
+                    {t("Micro")}
                     <select value={room.getActiveDevice("audioinput") ?? ""} onChange={(e) => switchDevice("audioinput", e.target.value)}>
                       {inputs.map((d) => (
                         <option key={d.deviceId} value={d.deviceId}>
-                          {d.label || "Micro"}
+                          {d.label || t("Micro")}
                         </option>
                       ))}
                     </select>
                   </label>
                   <label className="field">
-                    Sortie audio
+                    {t("Sortie audio")}
                     <select value={room.getActiveDevice("audiooutput") ?? ""} onChange={(e) => switchDevice("audiooutput", e.target.value)}>
                       {outputs.map((d) => (
                         <option key={d.deviceId} value={d.deviceId}>
-                          {d.label || "Haut-parleurs"}
+                          {d.label || t("Haut-parleurs")}
                         </option>
                       ))}
                     </select>
@@ -392,9 +393,9 @@ export default function Stage(props: Props) {
             )}
           </div>
           <span className="dock-sep" />
-          <button className="dock-btn wide leave" onClick={props.onLeave} aria-label={props.isCall ? "Raccrocher" : "Quitter le salon"}>
+          <button className="dock-btn wide leave" onClick={props.onLeave} aria-label={props.isCall ? t("Raccrocher") : t("Quitter le salon")}>
             <Icon name={props.isCall ? "phoneOff" : "leave"} size={20} />{" "}
-            <span className="dock-label">{props.isCall ? "Raccrocher" : "Quitter"}</span>
+            <span className="dock-label">{props.isCall ? t("Raccrocher") : t("Quitter")}</span>
           </button>
         </div>
       </div>

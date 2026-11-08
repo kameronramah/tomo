@@ -3,6 +3,7 @@ import { openUrl } from "@tauri-apps/plugin-opener";
 import type { Api, Attachment } from "../lib/api";
 import { formatDuration, formatSize } from "../lib/voiceNote";
 import { Icon } from "./Brand";
+import { t } from "../lib/i18n";
 
 /** Ouvre une adresse dans le navigateur (téléchargement d'un fichier, image en grand…). */
 export function openExternal(url: string) {
@@ -87,10 +88,10 @@ export function VoicePlayer({ src, durationMs, waveform }: { src: string; durati
   return (
     <div className="voice-note-player">
       <audio ref={audioRef} className="voice-note" src={src} preload="metadata" />
-      <button type="button" className="play" onClick={toggle} aria-label={playing ? "Mettre en pause" : "Écouter le message vocal"}>
+      <button type="button" className="play" onClick={toggle} aria-label={playing ? t("Mettre en pause") : t("Écouter le message vocal")}>
         <Icon name={playing ? "pause" : "play"} size={16} />
       </button>
-      <button type="button" className="seek" onClick={seek} aria-label="Avancer dans le message vocal">
+      <button type="button" className="seek" onClick={seek} aria-label={t("Avancer dans le message vocal")}>
         <Waveform levels={waveform ?? ""} progress={progress} />
       </button>
       <span className="dur">{formatDuration(playing || time > 0 ? time : total)}</span>
@@ -107,9 +108,9 @@ export function AttachmentView({ api, att, onOpenImage }: { api: Api; att: Attac
     const h = att.height ?? 200;
     const scale = Math.min(1, 320 / w, 240 / h);
     return (
-      <button type="button" className="att-image" onClick={() => onOpenImage(src, att.name)} aria-label={`Agrandir ${att.name}`}>
+      <button type="button" className="att-image" onClick={() => onOpenImage(src, att.name)} aria-label={t("Agrandir {0}", { 0: att.name })}>
         <img src={src} alt={att.name} width={Math.round(w * scale)} height={Math.round(h * scale)} loading="lazy" />
-        {att.mime === "image/gif" && <span className="gif-tag">GIF</span>}
+        {att.mime === "image/gif" && <span className="gif-tag">{t("GIF")}</span>}
       </button>
     );
   }
@@ -123,7 +124,7 @@ export function AttachmentView({ api, att, onOpenImage }: { api: Api; att: Attac
         <span className="ellipsis strong-ish">{att.name}</span>
         <span className="muted small">{formatSize(att.size)}</span>
       </span>
-      <button type="button" className="icon-btn sm" onClick={() => openExternal(src)} aria-label={`Télécharger ${att.name}`} title="Télécharger">
+      <button type="button" className="icon-btn sm" onClick={() => openExternal(src)} aria-label={t("Télécharger {0}", { 0: att.name })} title={t("Télécharger")}>
         <Icon name="download" size={16} />
       </button>
     </div>
@@ -143,9 +144,9 @@ export function Lightbox({ src, name, onClose }: { src: string; name: string; on
       <div className="lightbox-bar" onClick={(e) => e.stopPropagation()}>
         <span className="ellipsis">{name}</span>
         <button type="button" className="btn small" onClick={() => openExternal(src)}>
-          <Icon name="download" size={15} /> Ouvrir / enregistrer
+          <Icon name="download" size={15} /> {t("Ouvrir / enregistrer")}
         </button>
-        <button type="button" className="icon-btn sm" onClick={onClose} aria-label="Fermer">
+        <button type="button" className="icon-btn sm" onClick={onClose} aria-label={t("Fermer")}>
           <Icon name="x" size={16} />
         </button>
       </div>

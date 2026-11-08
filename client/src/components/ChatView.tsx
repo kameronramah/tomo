@@ -28,6 +28,7 @@ import {
   toTokens,
   type Mentionable,
 } from "./MessageParts";
+import { locale, t } from "../lib/i18n";
 
 type Props = {
   api: Api;
@@ -82,11 +83,11 @@ function dayLabel(ts: number) {
   const d = new Date(ts);
   const today = new Date();
   const yesterday = new Date(Date.now() - 86400_000);
-  if (d.toDateString() === today.toDateString()) return "Aujourd'hui";
-  if (d.toDateString() === yesterday.toDateString()) return "Hier";
-  return d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" });
+  if (d.toDateString() === today.toDateString()) return t("Aujourd'hui");
+  if (d.toDateString() === yesterday.toDateString()) return t("Hier");
+  return d.toLocaleDateString(locale(), { weekday: "long", day: "numeric", month: "long" });
 }
-const timeLabel = (ts: number) => new Date(ts).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const timeLabel = (ts: number) => new Date(ts).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
 
 
 export default function ChatView(props: Props) {
@@ -202,8 +203,8 @@ export default function ChatView(props: Props) {
 
   const mentionables: Mentionable[] = [
     ...(props.mentionables ?? []).filter((m) => m.id !== myId),
-    ...(scope === "dm" ? [] : [{ id: "vocal", name: "vocal", hint: "ceux en vocal" }]),
-    ...(scope !== "dm" && props.canModerate ? [{ id: "tous", name: "tous", hint: "tout le serveur" }] : []),
+    ...(scope === "dm" ? [] : [{ id: "vocal", name: "vocal", hint: t("ceux en vocal") }]),
+    ...(scope !== "dm" && props.canModerate ? [{ id: "tous", name: "tous", hint: t("tout le serveur") }] : []),
   ];
   const suggestions = suggest
     ? mentionables.filter((m) => m.name.toLowerCase().startsWith(suggest.query.toLowerCase())).slice(0, 6)
@@ -377,7 +378,7 @@ export default function ChatView(props: Props) {
         {grouped ? (
           <span className="msg-time-gutter">{timeLabel(m.createdAt)}</span>
         ) : (
-          <button className="plain-btn" onClick={() => !m.guest && props.onOpenProfile?.(m.authorId)} aria-label={`Profil de ${m.authorName}`} tabIndex={m.guest ? -1 : 0}>
+          <button className="plain-btn" onClick={() => !m.guest && props.onOpenProfile?.(m.authorId)} aria-label={t("Profil de {0}", { 0: m.authorName })} tabIndex={m.guest ? -1 : 0}>
             <UserAvatar userId={m.guest ? null : m.authorId} name={m.authorName} size={36} />
           </button>
         )}
@@ -385,7 +386,7 @@ export default function ChatView(props: Props) {
           {!grouped && (
             <div className="msg-head">
               <AuthorName id={m.guest ? null : m.authorId} name={m.authorName} onOpen={props.onOpenProfile} />
-              {m.guest && <span className="role-tag">Invité</span>}
+              {m.guest && <span className="role-tag">{t("Invité")}</span>}
               <time>{timeLabel(m.createdAt)}</time>
             </div>
           )}
@@ -395,14 +396,14 @@ export default function ChatView(props: Props) {
                 value={editing.text}
                 autoFocus
                 maxLength={2000}
-                aria-label="Modifier le message"
+                aria-label={t("Modifier le message")}
                 onChange={(e) => setEditing({ id: m.id, text: e.target.value })}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) (e.preventDefault(), saveEdit());
                   if (e.key === "Escape") setEditing(null);
                 }}
               />
-              <span className="small muted">Entrée pour enregistrer · Échap pour annuler</span>
+              <span className="small muted">{t("Entrée pour enregistrer · Échap pour annuler")}</span>
             </div>
           ) : (
             m.content && (
@@ -411,10 +412,10 @@ export default function ChatView(props: Props) {
               </div>
             )
           )}
-          {m.editedAt && !isEditing && <span className="edited">modifié</span>}
+          {m.editedAt && !isEditing && <span className="edited">{t("modifié")}</span>}
           {props.masked && !!m.attachments?.length && (
             <span className="masked-note">
-              {m.attachments.length} fichier{m.attachments.length > 1 ? "s" : ""} masqué{m.attachments.length > 1 ? "s" : ""} jusqu'à ce que tu acceptes
+              {m.attachments.length} {t("fichier")}{m.attachments.length > 1 ? "s" : ""} {t("masqué")}{m.attachments.length > 1 ? "s" : ""} {t("jusqu'à ce que tu acceptes")}
             </span>
           )}
           {!props.masked && !!m.attachments?.length && (
@@ -468,7 +469,7 @@ export default function ChatView(props: Props) {
     >
       {dragOver && (
         <div className="drop-hint" aria-hidden="true">
-          <Icon name="paperclip" size={22} /> Lâche pour joindre
+          <Icon name="paperclip" size={22} /> {t("Lâche pour joindre")}
         </div>
       )}
       {lightbox && <Lightbox src={lightbox.src} name={lightbox.name} onClose={() => setLightbox(null)} />}
@@ -476,16 +477,16 @@ export default function ChatView(props: Props) {
       <div className="chat-list" ref={listRef} onScroll={onScroll}>
         {hasMore && (
           <button className="btn small load-older" onClick={loadOlder}>
-            Charger les messages précédents
+            {t("Charger les messages précédents")}
           </button>
         )}
-        {loading && <p className="muted small pad">Chargement…</p>}
-        {!loading && messages.length === 0 && <p className="chat-empty muted">{props.emptyText ?? "Aucun message pour l'instant."}</p>}
+        {loading && <p className="muted small pad">{t("Chargement…")}</p>}
+        {!loading && messages.length === 0 && <p className="chat-empty muted">{props.emptyText ?? t("Aucun message pour l'instant.")}</p>}
         {rows}
       </div>
       {error && <p className="error small chat-error">{error}</p>}
       {!props.hideComposer && pending.length > 0 && (
-        <div className="pending-list" aria-label="Pièces jointes à envoyer">
+        <div className="pending-list" aria-label={t("Pièces jointes à envoyer")}>
           {pending.map((p) => (
             <div key={p.key} className={`pending ${p.status}`} title={p.error ?? p.name}>
               {p.preview ? <img src={p.preview} alt="" /> : <Icon name="file" size={18} />}
@@ -495,7 +496,7 @@ export default function ChatView(props: Props) {
                   {p.status === "uploading" ? "envoi…" : p.status === "error" ? p.error : formatSize(p.size)}
                 </span>
               </span>
-              <button type="button" className="icon-btn sm" onClick={() => removePending(p.key)} aria-label={`Retirer ${p.name}`}>
+              <button type="button" className="icon-btn sm" onClick={() => removePending(p.key)} aria-label={t("Retirer {0}", { 0: p.name })}>
                 <Icon name="x" size={14} />
               </button>
             </div>
@@ -506,8 +507,8 @@ export default function ChatView(props: Props) {
       {gifOpen && <GifPicker api={api} onPick={sendGif} onClose={() => setGifOpen(false)} />}
 
       {props.hideComposer ? null : recording ? (
-        <div className="composer recording" role="group" aria-label="Enregistrement d'un message vocal">
-          <button type="button" className="icon-btn rec-cancel" onClick={() => stopRecording(false)} aria-label="Annuler l'enregistrement" title="Annuler">
+        <div className="composer recording" role="group" aria-label={t("Enregistrement d'un message vocal")}>
+          <button type="button" className="icon-btn rec-cancel" onClick={() => stopRecording(false)} aria-label={t("Annuler l'enregistrement")} title={t("Annuler")}>
             <Icon name="trash" size={18} />
           </button>
           <span className="rec-dot" aria-hidden="true" />
@@ -517,8 +518,8 @@ export default function ChatView(props: Props) {
               <span key={i} style={{ height: `${4 + l * 22}px` }} />
             ))}
           </span>
-          <span className="muted small rec-left">{formatDuration(MAX_VOICE_MS - recMs)} restantes</span>
-          <button type="button" className="icon-btn send ready" onClick={() => stopRecording(true)} aria-label="Envoyer le message vocal" title="Envoyer">
+          <span className="muted small rec-left">{formatDuration(MAX_VOICE_MS - recMs)} {t("restantes")}</span>
+          <button type="button" className="icon-btn send ready" onClick={() => stopRecording(true)} aria-label={t("Envoyer le message vocal")} title={t("Envoyer")}>
             <Icon name="send" size={18} />
           </button>
         </div>
@@ -541,7 +542,7 @@ export default function ChatView(props: Props) {
               e.target.value = "";
             }}
           />
-          <button type="button" className="icon-btn" onClick={() => fileRef.current?.click()} aria-label="Joindre un fichier ou une image" title="Joindre un fichier (ou glisse-le ici)">
+          <button type="button" className="icon-btn" onClick={() => fileRef.current?.click()} aria-label={t("Joindre un fichier ou une image")} title={t("Joindre un fichier (ou glisse-le ici)")}>
             <Icon name="paperclip" size={18} />
           </button>
           <textarea
@@ -599,18 +600,18 @@ export default function ChatView(props: Props) {
             className={`gif-btn${gifOpen ? " on" : ""}`}
             onClick={() => setGifOpen(!gifOpen)}
             disabled={gifSending}
-            aria-label="Choisir un GIF"
+            aria-label={t("Choisir un GIF")}
             aria-expanded={gifOpen}
-            title="GIF"
+            title={t("GIF")}
           >
-            {gifSending ? "…" : "GIF"}
+            {gifSending ? "…" : t("GIF")}
           </button>
           {canSend || uploading ? (
-            <button type="submit" className="icon-btn send ready" disabled={!canSend} aria-label="Envoyer" title={uploading ? "Envoi des fichiers…" : "Envoyer (Entrée)"}>
+            <button type="submit" className="icon-btn send ready" disabled={!canSend} aria-label={t("Envoyer")} title={uploading ? t("Envoi des fichiers…") : t("Envoyer (Entrée)")}>
               <Icon name="send" size={18} />
             </button>
           ) : (
-            <button type="button" className="icon-btn send" onClick={startRecording} aria-label="Enregistrer un message vocal" title="Message vocal">
+            <button type="button" className="icon-btn send" onClick={startRecording} aria-label={t("Enregistrer un message vocal")} title={t("Message vocal")}>
               <Icon name="mic" size={18} />
             </button>
           )}

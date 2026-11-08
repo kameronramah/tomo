@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { Channel, RoomInfo, ServerDetail } from "../lib/api";
 import { getPerson, usePeople, userIdOf } from "../lib/people";
 import { Icon, UserAvatar } from "./Brand";
+import { t } from "../lib/i18n";
 
 type Props = {
   detail: ServerDetail;
@@ -40,14 +41,14 @@ export default function ServerPlan(p: Props) {
 
   if (p.collapsed) {
     return (
-      <aside className="plan collapsed" aria-label="Plan du serveur (réduit)">
-        <button className="icon-btn sm" onClick={p.onToggleCollapsed} aria-label="Afficher le plan du serveur" title="Afficher le plan du serveur">
+      <aside className="plan collapsed" aria-label={t("Plan du serveur (réduit)")}>
+        <button className="icon-btn sm" onClick={p.onToggleCollapsed} aria-label={t("Afficher le plan du serveur")} title={t("Afficher le plan du serveur")}>
           <Icon name="chevronRight" size={16} />
         </button>
         {detail.rooms
           .filter((r) => r.participants.length > 0 || r.id === p.voice?.roomId)
           .map((r) => (
-            <button key={r.id} className={`plan-mini${r.id === p.openRoomId ? " on" : ""}`} onClick={() => p.onJoinRoom(r)} title={`${r.label} · ${r.participants.length} en vocal`}>
+            <button key={r.id} className={`plan-mini${r.id === p.openRoomId ? " on" : ""}`} onClick={() => p.onJoinRoom(r)} title={t("{0} · {1} en vocal", { 0: r.label, 1: r.participants.length })}>
               <span className="plan-mini-count">{r.participants.length}</span>
             </button>
           ))}
@@ -58,23 +59,23 @@ export default function ServerPlan(p: Props) {
   }
 
   return (
-    <aside className="plan" aria-label="Plan du serveur">
+    <aside className="plan" aria-label={t("Plan du serveur")}>
       <div className="plan-head">
-        <button className="plan-title ellipsis" onClick={p.onOpenHome} title="Accueil du serveur">
+        <button className="plan-title ellipsis" onClick={p.onOpenHome} title={t("Accueil du serveur")}>
           {detail.name}
         </button>
         {!p.isGuest && (
-          <button className="icon-btn sm" onClick={p.onManage} aria-label="Gérer le serveur" title="Gérer le serveur">
+          <button className="icon-btn sm" onClick={p.onManage} aria-label={t("Gérer le serveur")} title={t("Gérer le serveur")}>
             <Icon name="settings" size={16} />
           </button>
         )}
-        <button className="icon-btn sm" onClick={p.onToggleCollapsed} aria-label="Réduire le plan" title="Réduire le plan">
+        <button className="icon-btn sm" onClick={p.onToggleCollapsed} aria-label={t("Réduire le plan")} title={t("Réduire le plan")}>
           <Icon name="chevronLeft" size={16} />
         </button>
       </div>
 
       <div className="plan-scroll">
-        <span className="section-title">Pièces</span>
+        <span className="section-title">{t("Pièces")}</span>
         {detail.rooms.map((room) => {
           const here = p.voice?.roomId === room.id;
           const others = room.participants.filter((x) => x.identity !== p.voice?.identity);
@@ -93,7 +94,7 @@ export default function ServerPlan(p: Props) {
                 <strong className="grow ellipsis">{room.label}</strong>
                 {chat > 0 && <span className="count amber">{chat}</span>}
                 <span className={`small ${here ? "teal-soft" : room.spatial ? "amber" : "muted"}`}>
-                  {p.joiningRoomId === room.id ? "…" : here ? "tu es ici" : room.spatial ? "spatial" : people.length ? "" : "vide"}
+                  {p.joiningRoomId === room.id ? "…" : here ? t("tu es ici") : room.spatial ? "spatial" : people.length ? "" : "vide"}
                 </span>
               </span>
               {people.length > 0 && (
@@ -111,11 +112,11 @@ export default function ServerPlan(p: Props) {
         })}
         {p.isManager && (
           <button className="plan-add" onClick={p.onAddRoom}>
-            <Icon name="plus" size={15} /> Nouvelle pièce
+            <Icon name="plus" size={15} /> {t("Nouvelle pièce")}
           </button>
         )}
 
-        <span className="section-title">Fils</span>
+        <span className="section-title">{t("Fils")}</span>
         {detail.channels.map((c) => {
           const n = p.unread[`channel:${c.id}`] ?? 0;
           const at = p.mentions?.[`channel:${c.id}`] ?? 0;

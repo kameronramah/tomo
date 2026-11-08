@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Channel, RoomInfo, ServerDetail } from "../lib/api";
 import { loadDevices } from "../lib/prefs";
 import { Icon, Logo, UserAvatar } from "./Brand";
+import { t } from "../lib/i18n";
 
 /** Premier lancement : aucun serveur. */
 export function Welcome({ name, onCreate, onJoin }: { name: string; onCreate: () => void; onJoin: () => void }) {
@@ -9,23 +10,23 @@ export function Welcome({ name, onCreate, onJoin }: { name: string; onCreate: ()
     <div className="welcome">
       <Logo size={64} cut="var(--bg)" />
       <div className="col gap-8 center">
-        <h1 className="display-sm">Bienvenue {name} !</h1>
-        <p className="muted text">Tu n'as encore aucun serveur. Crée le tien ou rejoins celui de tes potes.</p>
+        <h1 className="display-sm">{t("Bienvenue")} {name} !</h1>
+        <p className="muted text">{t("Tu n'as encore aucun serveur. Crée le tien ou rejoins celui de tes potes.")}</p>
       </div>
       <div className="welcome-cards">
         <button className="big-card" onClick={onCreate}>
           <span className="feature-icon teal lg">
             <Icon name="plus" size={22} />
           </span>
-          <strong>Créer un serveur</strong>
-          <span className="muted small">Tu en seras l'admin : salons, invitations, membres.</span>
+          <strong>{t("Créer un serveur")}</strong>
+          <span className="muted small">{t("Tu en seras l'admin : salons, invitations, membres.")}</span>
         </button>
         <button className="big-card" onClick={onJoin}>
           <span className="feature-icon amber lg">
             <Icon name="login" size={22} />
           </span>
-          <strong>Rejoindre avec un code</strong>
-          <span className="muted small">Un ami t'a envoyé un code ? Colle-le ici.</span>
+          <strong>{t("Rejoindre avec un code")}</strong>
+          <span className="muted small">{t("Un ami t'a envoyé un code ? Colle-le ici.")}</span>
         </button>
       </div>
     </div>
@@ -83,18 +84,18 @@ export function MicTester() {
         <Icon name="mic" />
       </span>
       <span className="grow col gap-2" style={{ minWidth: 0 }}>
-        <strong className="ellipsis" title={label}>{running ? label || "Micro actif" : "Tester mon micro"}</strong>
-        <span className="muted small">{error ?? (running ? "Parle : les barres doivent bouger." : "Vérifie ton niveau avant d'entrer.")}</span>
+        <strong className="ellipsis" title={label}>{running ? label || t("Micro actif") : t("Tester mon micro")}</strong>
+        <span className="muted small">{error ?? (running ? t("Parle : les barres doivent bouger.") : t("Vérifie ton niveau avant d'entrer."))}</span>
       </span>
       {running && (
-        <span className="level" aria-label={`Niveau du micro ${Math.round(level * 100)} %`} role="img">
+        <span className="level" aria-label={t("Niveau du micro {0} %", { 0: Math.round(level * 100) })} role="img">
           {Array.from({ length: bars }, (_, i) => (
             <span key={i} className={i < Math.round(level * bars) ? "on" : ""} style={{ height: 6 + i * 2 }} />
           ))}
         </span>
       )}
       <button className="btn small" onClick={() => (running ? stopRef.current?.() : start())}>
-        {running ? "Arrêter" : "Tester"}
+        {running ? t("Arrêter") : t("Tester")}
       </button>
     </div>
   );
@@ -130,7 +131,7 @@ function MoreMenu({ label, onRename, onDelete }: { label: string; onRename: () =
   const [open, setOpen] = useState(false);
   return (
     <span className="relative">
-      <button className="icon-btn sm" aria-label={`Options de ${label}`} aria-expanded={open} onClick={(e) => (e.stopPropagation(), setOpen(!open))}>
+      <button className="icon-btn sm" aria-label={t("Options de {0}", { 0: label })} aria-expanded={open} onClick={(e) => (e.stopPropagation(), setOpen(!open))}>
         <Icon name="more" size={16} />
       </button>
       {open && (
@@ -138,10 +139,10 @@ function MoreMenu({ label, onRename, onDelete }: { label: string; onRename: () =
           <div className="click-away" onClick={() => setOpen(false)} />
           <div className="popover room-menu" role="menu">
             <button role="menuitem" className="menu-item" onClick={() => (setOpen(false), onRename())}>
-              <Icon name="edit" size={16} /> Renommer
+              <Icon name="edit" size={16} /> {t("Renommer")}
             </button>
             <button role="menuitem" className="menu-item danger" onClick={() => (setOpen(false), onDelete())}>
-              <Icon name="trash" size={16} /> Supprimer
+              <Icon name="trash" size={16} /> {t("Supprimer")}
             </button>
           </div>
         </>
@@ -162,31 +163,31 @@ export function ServerHome(p: HomeProps) {
           <div className="col gap-6">
             <h1 className="display-sm">{detail.name}</h1>
             <span className="muted">
-              {inVoice > 0 ? `${inVoice} en vocal` : "Personne en vocal"} · {detail.rooms.length} pièce{detail.rooms.length > 1 ? "s" : ""} ·{" "}
-              {detail.channels.length} fil{detail.channels.length > 1 ? "s" : ""}
+              {inVoice > 0 ? t("{0} en vocal", { 0: inVoice }) : t("Personne en vocal")} · {detail.rooms.length} {t("pièce")}{detail.rooms.length > 1 ? "s" : ""} ·{" "}
+              {detail.channels.length} {t("fil")}{detail.channels.length > 1 ? "s" : ""}
             </span>
           </div>
           <div className="row gap-8 wrap">
             {!p.isGuest && (
               <button className="btn soft" onClick={p.onInvite}>
-                <Icon name="userPlus" size={16} /> Inviter
+                <Icon name="userPlus" size={16} /> {t("Inviter")}
               </button>
             )}
             {p.isManager && (
               <button className="btn soft" onClick={p.onAddRoom}>
-                <Icon name="plus" size={16} /> Nouvelle pièce
+                <Icon name="plus" size={16} /> {t("Nouvelle pièce")}
               </button>
             )}
             {!p.isGuest && (
-              <button className="icon-btn" onClick={p.onManage} aria-label="Gérer le serveur" title="Gérer le serveur">
+              <button className="icon-btn" onClick={p.onManage} aria-label={t("Gérer le serveur")} title={t("Gérer le serveur")}>
                 <Icon name="settings" size={18} />
               </button>
             )}
           </div>
         </header>
 
-        <section className="pieces" aria-label="Pièces vocales">
-          {detail.rooms.length === 0 && <p className="muted">Aucune pièce vocale. {p.isManager ? "Crée-en une avec « Nouvelle pièce »." : ""}</p>}
+        <section className="pieces" aria-label={t("Pièces vocales")}>
+          {detail.rooms.length === 0 && <p className="muted">{t("Aucune pièce vocale.")} {p.isManager ? t("Crée-en une avec « Nouvelle pièce ».") : ""}</p>}
           {detail.rooms.map((room) => {
             const here = p.voice?.roomId === room.id;
             const others = room.participants.filter((x) => x.identity !== p.voice?.identity);
@@ -199,15 +200,15 @@ export function ServerHome(p: HomeProps) {
                   <div className="col gap-4 grow" style={{ minWidth: 0 }}>
                     <h2 className="piece-title ellipsis">{room.label}</h2>
                     <span className={`small ${here ? "teal-soft strong-ish" : "muted"}`}>
-                      {here ? <>Tu es ici {p.voice?.ping}</> : busy ? `${people.length} en vocal` : "Personne pour l'instant"}
+                      {here ? <>{t("Tu es ici")} {p.voice?.ping}</> : busy ? t("{0} en vocal", { 0: people.length }) : t("Personne pour l'instant")}
                     </span>
                   </div>
                   {room.spatial && (
-                    <span className="chip amber" title="Audio spatial activé">
-                      <Icon name="orbit" size={13} /> Spatial
+                    <span className="chip amber" title={t("Audio spatial activé")}>
+                      <Icon name="orbit" size={13} /> {t("Spatial")}
                     </span>
                   )}
-                  {chat > 0 && <span className="badge-dot" title="Nouveaux messages dans la discussion" />}
+                  {chat > 0 && <span className="badge-dot" title={t("Nouveaux messages dans la discussion")} />}
                   {p.isManager && <MoreMenu label={room.label} onRename={() => p.onRenameRoom(room)} onDelete={() => p.onDeleteRoom(room)} />}
                 </div>
                 <div className="piece-people">
@@ -227,7 +228,7 @@ export function ServerHome(p: HomeProps) {
                     onClick={() => p.onJoin(room)}
                     disabled={p.joiningRoomId === room.id}
                   >
-                    {p.joiningRoomId === room.id ? "Connexion…" : here ? "Ouvrir" : busy ? "Rejoindre" : "Entrer en premier"}
+                    {p.joiningRoomId === room.id ? t("Connexion…") : here ? t("Ouvrir") : busy ? t("Rejoindre") : t("Entrer en premier")}
                   </button>
                 </div>
               </article>
@@ -235,11 +236,11 @@ export function ServerHome(p: HomeProps) {
           })}
         </section>
 
-        <section className="fils" aria-label="Fils de discussion">
+        <section className="fils" aria-label={t("Fils de discussion")}>
           <div className="row space-between fils-head">
-            <span className="section-title">Fils</span>
+            <span className="section-title">{t("Fils")}</span>
             {p.isManager && (
-              <button className="icon-btn sm" onClick={p.onAddChannel} aria-label="Nouveau fil" title="Nouveau fil">
+              <button className="icon-btn sm" onClick={p.onAddChannel} aria-label={t("Nouveau fil")} title={t("Nouveau fil")}>
                 <Icon name="plus" size={15} />
               </button>
             )}
@@ -252,7 +253,7 @@ export function ServerHome(p: HomeProps) {
                   <span className="fil-hash">#</span>
                   <span className="grow col gap-2 left" style={{ minWidth: 0 }}>
                     <span className="fil-name ellipsis">{c.name}</span>
-                    <span className="small muted">{n > 0 ? `${n} nouveau${n > 1 ? "x" : ""} message${n > 1 ? "s" : ""}` : "Ouvrir le fil"}</span>
+                    <span className="small muted">{n > 0 ? t("{0} nouveau{1} message{2}", { 0: n, 1: n > 1 ? "x" : "", 2: n > 1 ? "s" : "" }) : t("Ouvrir le fil")}</span>
                   </span>
                   {(p.mentions?.[`channel:${c.id}`] ?? 0) > 0 ? (
                     <span className="count red">@{p.mentions![`channel:${c.id}`]}</span>
@@ -267,7 +268,7 @@ export function ServerHome(p: HomeProps) {
         </section>
       </div>
 
-      <aside className="home-side" aria-label="Membres">
+      <aside className="home-side" aria-label={t("Membres")}>
         {p.members}
       </aside>
     </div>

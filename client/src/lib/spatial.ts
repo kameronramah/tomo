@@ -11,6 +11,7 @@
 import { Room, RoomEvent, Track, type RemoteParticipant, type RemoteTrack, type RemoteAudioTrack } from "livekit-client";
 import { getSettings, onSettingsChange } from "./prefs";
 import type { VoiceLeveler } from "./leveler";
+import { t } from "./i18n";
 
 export type Pose = { x: number; y: number; yaw: number };
 export type PoseSource = "map" | "game";
@@ -156,9 +157,9 @@ export class SpatialEngine {
    */
   unplacedReason(id: string): string | null {
     const r = this.remotes.get(id);
-    if (!r || Date.now() - r.at > STALE_MS) return "pas de position";
-    if (r.src !== this.mySource) return r.src === "map" ? "est sur la carte, toi dans le jeu" : "est dans un jeu, toi sur la carte";
-    if (r.src === "game" && r.ctx !== this.myCtx) return "pas dans le même jeu ou serveur";
+    if (!r || Date.now() - r.at > STALE_MS) return t("pas de position");
+    if (r.src !== this.mySource) return r.src === "map" ? t("est sur la carte, toi dans le jeu") : t("est dans un jeu, toi sur la carte");
+    if (r.src === "game" && r.ctx !== this.myCtx) return t("pas dans le même jeu ou serveur");
     return null;
   }
 

@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import type { Reaction } from "../lib/api";
 import { getPerson, usePeople } from "../lib/people";
 import { Icon, UserAvatar } from "./Brand";
+import { t } from "../lib/i18n";
 
 export const QUICK_REACTIONS = ["👍", "😂", "🔥"];
 export const EMOJIS = [
@@ -88,7 +89,7 @@ export function Reactions({ reactions, myId, onToggle, onAdd }: { reactions: Rea
           </button>
         );
       })}
-      <button className="react add" onClick={onAdd} aria-label="Ajouter une réaction" title="Ajouter une réaction">
+      <button className="react add" onClick={onAdd} aria-label={t("Ajouter une réaction")} title={t("Ajouter une réaction")}>
         <Icon name="smile" size={14} />+
       </button>
     </div>
@@ -105,9 +106,9 @@ export function EmojiPicker({ onPick, onClose }: { onPick: (e: string) => void; 
   return (
     <>
       <div className="click-away" onClick={onClose} />
-      <div className="popover emoji-picker" role="dialog" aria-label="Choisir une réaction">
+      <div className="popover emoji-picker" role="dialog" aria-label={t("Choisir une réaction")}>
         {EMOJIS.map((e) => (
-          <button key={e} className="emoji-cell" onClick={() => onPick(e)} aria-label={`Réagir ${e}`}>
+          <button key={e} className="emoji-cell" onClick={() => onPick(e)} aria-label={t("Réagir {0}", { 0: e })}>
             {e}
           </button>
         ))}
@@ -135,28 +136,28 @@ export function MessageToolbar({
   onMention?: () => void;
 }) {
   return (
-    <div className="msg-toolbar" role="toolbar" aria-label="Actions sur le message">
+    <div className="msg-toolbar" role="toolbar" aria-label={t("Actions sur le message")}>
       {QUICK_REACTIONS.map((e) => (
-        <button key={e} className="tb-btn" onClick={() => onReact(e)} aria-label={`Réagir ${e}`}>
+        <button key={e} className="tb-btn" onClick={() => onReact(e)} aria-label={t("Réagir {0}", { 0: e })}>
           {e}
         </button>
       ))}
-      <button className="tb-btn" onClick={onMore} aria-label="Plus de réactions" title="Plus de réactions">
+      <button className="tb-btn" onClick={onMore} aria-label={t("Plus de réactions")} title={t("Plus de réactions")}>
         <Icon name="smile" size={16} />
       </button>
       <span className="tb-sep" />
       {!mine && onMention && (
-        <button className="tb-btn" onClick={onMention} aria-label="Mentionner" title="Mentionner">
+        <button className="tb-btn" onClick={onMention} aria-label={t("Mentionner")} title={t("Mentionner")}>
           @
         </button>
       )}
       {mine && (
-        <button className="tb-btn" onClick={onEdit} aria-label="Modifier" title="Modifier">
+        <button className="tb-btn" onClick={onEdit} aria-label={t("Modifier")} title={t("Modifier")}>
           <Icon name="edit" size={15} />
         </button>
       )}
       {canDelete && (
-        <button className="tb-btn danger" onClick={onDelete} aria-label="Supprimer" title="Supprimer">
+        <button className="tb-btn danger" onClick={onDelete} aria-label={t("Supprimer")} title={t("Supprimer")}>
           <Icon name="trash" size={15} />
         </button>
       )}
@@ -178,7 +179,7 @@ export function MentionSuggest({
 }) {
   const [hover, setHover] = useState<number | null>(null);
   return (
-    <div className="mention-suggest" role="listbox" aria-label="Mentionner quelqu'un">
+    <div className="mention-suggest" role="listbox" aria-label={t("Mentionner quelqu'un")}>
       {items.map((m, i) => (
         <button
           key={m.id}
@@ -197,7 +198,7 @@ export function MentionSuggest({
           {m.hint && <span className="small muted">{m.hint}</span>}
         </button>
       ))}
-      <span className="mention-help">↑ ↓ pour choisir · Tab ou Entrée pour insérer</span>
+      <span className="mention-help">{t("↑ ↓ pour choisir · Tab ou Entrée pour insérer")}</span>
     </div>
   );
 }

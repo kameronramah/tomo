@@ -1,4 +1,5 @@
 import { secretDelete, secretGet, secretSet } from "./secure";
+import { t } from "./i18n";
 
 // ---------------------------------------------------------------------------
 // Types renvoyés par l'API
@@ -174,7 +175,7 @@ export class Api {
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
     } catch {
-      throw new ApiError("Serveur tomo injoignable. Vérifie ta connexion.", 0);
+      throw new ApiError(t("Serveur tomo injoignable. Vérifie ta connexion."), 0);
     }
     if (res.status === 401 && retry && this.refresh && !path.startsWith("/auth/")) {
       if (await this.renew()) return this.request<T>(method, path, body, false);
@@ -337,7 +338,7 @@ export class Api {
 
   /** Envoie un fichier (corps binaire brut) ; renvoie la pièce jointe à mettre dans un message. */
   async uploadAttachment(file: Blob, meta: UploadMeta, retry = true): Promise<Attachment> {
-    if (file.size > MAX_FILE_BYTES) throw new ApiError("Fichier trop lourd (25 Mo maximum).", 413);
+    if (file.size > MAX_FILE_BYTES) throw new ApiError(t("Fichier trop lourd (25 Mo maximum)."), 413);
     const q = new URLSearchParams({ name: meta.name });
     if (meta.durationMs) q.set("durationMs", String(Math.round(meta.durationMs)));
     if (meta.width) q.set("width", String(meta.width));
@@ -354,11 +355,11 @@ export class Api {
         body: file,
       });
     } catch {
-      throw new ApiError("Envoi du fichier impossible. Vérifie ta connexion.", 0);
+      throw new ApiError(t("Envoi du fichier impossible. Vérifie ta connexion."), 0);
     }
     if (res.status === 401 && retry && this.refresh && (await this.renew())) return this.uploadAttachment(file, meta, false);
     const data = await res.json().catch(() => ({}));
-    if (res.status === 413) throw new ApiError("Fichier trop lourd (25 Mo maximum).", 413);
+    if (res.status === 413) throw new ApiError(t("Fichier trop lourd (25 Mo maximum)."), 413);
     if (!res.ok) throw new ApiError(data.error ?? `Erreur serveur (${res.status})`, res.status);
     return data as Attachment;
   }

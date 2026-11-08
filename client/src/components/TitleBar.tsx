@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { Logo } from "./Brand";
+import { t } from "../lib/i18n";
 
 export const inDesktopApp = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -25,18 +26,18 @@ export default function TitleBar() {
     <div className="titlebar" data-tauri-drag-region>
       <span className="titlebar-brand" data-tauri-drag-region>
         <Logo size={16} cut="var(--rail)" />
-        <span data-tauri-drag-region>tomo</span>
+        <span data-tauri-drag-region>{t("tomo")}</span>
       </span>
       <div className="window-controls">
-        <button onClick={() => win.minimize()} aria-label="Réduire" title="Réduire">
+        <button onClick={() => win.minimize()} aria-label={t("Réduire")} title={t("Réduire")}>
           <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
             <path d="M0 5h10" stroke="currentColor" strokeWidth="1" />
           </svg>
         </button>
         <button
           onClick={() => win.toggleMaximize()}
-          aria-label={maximized ? "Restaurer" : "Agrandir"}
-          title={maximized ? "Restaurer" : "Agrandir"}
+          aria-label={maximized ? t("Restaurer") : t("Agrandir")}
+          title={maximized ? t("Restaurer") : t("Agrandir")}
         >
           {maximized ? (
             <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true" fill="none" stroke="currentColor">
@@ -49,7 +50,7 @@ export default function TitleBar() {
             </svg>
           )}
         </button>
-        <button className="close" onClick={() => win.close()} aria-label="Fermer" title="Fermer">
+        <button className="close" onClick={() => win.close()} aria-label={t("Fermer")} title={t("Fermer")}>
           <svg width="10" height="10" viewBox="0 0 10 10" aria-hidden="true">
             <path d="M0 0l10 10M10 0L0 10" stroke="currentColor" strokeWidth="1.1" />
           </svg>

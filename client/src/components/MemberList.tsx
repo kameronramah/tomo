@@ -3,6 +3,7 @@ import type { Api, Person } from "../lib/api";
 import type { Realtime } from "../lib/realtime";
 import { STATUS_LABEL, getPerson, putPeople, usePeople } from "../lib/people";
 import { Icon, UserAvatar } from "./Brand";
+import { t } from "../lib/i18n";
 
 const ROLE_TAG: Record<string, string | undefined> = { owner: "CRÉATEUR", admin: "ADMIN", guest: "INVITÉ" };
 
@@ -77,7 +78,7 @@ export default function MemberList({
         <span className="grow col gap-2 left" style={{ minWidth: 0 }}>
           <span className="ellipsis strong-ish">
             {p.displayName}
-            {p.id === myId && <span className="muted small"> (toi)</span>}
+            {p.id === myId && <span className="muted small"> {t("(toi)")}</span>}
             {tag && <span className={`role-tag${p.role === "admin" || p.role === "owner" ? " admin" : ""}`}> {tag}</span>}
           </span>
           <span className={`member-sub ellipsis${p.room ? " teal" : ""}`}>{sub}</span>
@@ -87,21 +88,21 @@ export default function MemberList({
   };
 
   return (
-    <section className="members" aria-label="Membres du serveur">
+    <section className="members" aria-label={t("Membres du serveur")}>
       <div className="members-head">
-        <span className="side-title grow">Membres</span>
+        <span className="side-title grow">{t("Membres")}</span>
         <label className="members-search">
           <Icon name="search" size={14} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Chercher" aria-label="Chercher un membre" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Chercher")} aria-label={t("Chercher un membre")} />
         </label>
       </div>
-      {inVoice.length > 0 && <span className="section-title">En vocal · {inVoice.length}</span>}
+      {inVoice.length > 0 && <span className="section-title">{t("En vocal ·")} {inVoice.length}</span>}
       {inVoice.map(row)}
-      {online.length > 0 && <span className="section-title">En ligne · {online.length}</span>}
+      {online.length > 0 && <span className="section-title">{t("En ligne ·")} {online.length}</span>}
       {online.map(row)}
-      {offline.length > 0 && <span className="section-title">Hors ligne · {offline.length}</span>}
+      {offline.length > 0 && <span className="section-title">{t("Hors ligne ·")} {offline.length}</span>}
       {offline.map(row)}
-      {rows.length === 0 && <p className="muted small pad">{filter ? "Personne ne correspond." : "Chargement…"}</p>}
+      {rows.length === 0 && <p className="muted small pad">{filter ? t("Personne ne correspond.") : t("Chargement…")}</p>}
     </section>
   );
 }

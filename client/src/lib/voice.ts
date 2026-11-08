@@ -6,6 +6,7 @@ import { ClipRecorder } from "./clips";
 import { VoiceLeveler } from "./leveler";
 import { onGameLink } from "./gameLink";
 import { applyMicProcessing, watchMicProcessing } from "./denoise";
+import { t } from "./i18n";
 
 /** Volumes choisis par personne (par pseudo), gardés le temps de la session. */
 export const volumeMemory = new Map<string, number>();
@@ -196,7 +197,7 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
     try {
       await room.localParticipant.setMicrophoneEnabled(true);
     } catch {
-      warning = "Micro indisponible : tu peux écouter, mais pas parler. Vérifie l'autorisation du micro.";
+      warning = t("Micro indisponible : tu peux écouter, mais pas parler. Vérifie l'autorisation du micro.");
     }
   }
   return { room, warning };
@@ -214,7 +215,7 @@ export type NetworkInfo = { rtt: number | null; level: 0 | 1 | 2 | 3; label: str
 
 /** Ping (aller-retour vers le serveur vocal) et qualité estimée par LiveKit. */
 export function networkInfo(room: Room | null): NetworkInfo {
-  if (!room) return { rtt: null, level: 0, label: "hors ligne" };
+  if (!room) return { rtt: null, level: 0, label: t("hors ligne") };
   const raw = (room as unknown as { engine?: { client?: { rtt?: number } } }).engine?.client?.rtt;
   const rtt = typeof raw === "number" && raw > 0 ? Math.round(raw) : null;
   const q = room.localParticipant.connectionQuality;
@@ -222,6 +223,6 @@ export function networkInfo(room: Room | null): NetworkInfo {
     q === ConnectionQuality.Excellent ? 3 : q === ConnectionQuality.Good ? 2 : q === ConnectionQuality.Poor ? 1 : 0;
   // Si LiveKit n'a pas encore d'avis, on se base sur le ping.
   if (level === 0 && rtt !== null) level = rtt < 80 ? 3 : rtt < 180 ? 2 : 1;
-  const label = level === 3 ? "excellente" : level === 2 ? "bonne" : level === 1 ? "faible" : "en cours…";
+  const label = level === 3 ? t("excellente") : level === 2 ? t("bonne") : level === 1 ? t("faible") : t("en cours…");
   return { rtt, level, label };
 }

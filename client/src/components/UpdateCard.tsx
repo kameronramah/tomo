@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getUpdateState, onUpdateState, restartNow, startUpdateChecks, type UpdateState } from "../lib/updater";
 import { Icon } from "./Brand";
+import { t } from "../lib/i18n";
 
 /** Petite carte « tomo X est prête » quand une mise à jour a été téléchargée. */
 export default function UpdateCard({ inVoice }: { inVoice: boolean }) {
@@ -20,7 +21,7 @@ export default function UpdateCard({ inVoice }: { inVoice: boolean }) {
         <Icon name="download" size={18} />
       </span>
       <div className="col gap-4 grow" style={{ minWidth: 0 }}>
-        <strong>tomo {up.version} est prête</strong>
+        <strong>{t("tomo")} {up.version} {t("est prête")}</strong>
         {notes.length > 0 && (
           <ul className="update-notes">
             {notes.map((n) => (
@@ -28,15 +29,15 @@ export default function UpdateCard({ inVoice }: { inVoice: boolean }) {
             ))}
           </ul>
         )}
-        <span className="muted small">{inVoice ? "Tu es en vocal : installe-la quand tu auras fini." : "Redémarre pour l'installer (quelques secondes)."}</span>
+        <span className="muted small">{inVoice ? t("Tu es en vocal : installe-la quand tu auras fini.") : t("Redémarre pour l'installer (quelques secondes).")}</span>
         <div className="row gap-8">
           {!inVoice && (
             <button className="btn primary small" onClick={() => void restartNow()}>
-              Redémarrer
+              {t("Redémarrer")}
             </button>
           )}
           <button className="btn small" onClick={() => setHidden(true)}>
-            Plus tard
+            {t("Plus tard")}
           </button>
         </div>
       </div>

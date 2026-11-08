@@ -1,5 +1,6 @@
 import type { Room } from "livekit-client";
 import { Icon, NetworkBadge } from "./Brand";
+import { t } from "../lib/i18n";
 
 type Props = {
   room: Room;
@@ -22,8 +23,8 @@ export default function VoiceIsland(p: Props) {
     <button
       className={`island-btn${p.micOn ? " mic-on" : " off"}`}
       onClick={p.onToggleMic}
-      aria-label={p.micOn ? "Couper le micro" : "Activer le micro"}
-      title={p.micOn ? "Couper le micro (Ctrl+Maj+M)" : "Activer le micro (Ctrl+Maj+M)"}
+      aria-label={p.micOn ? t("Couper le micro") : t("Activer le micro")}
+      title={p.micOn ? t("Couper le micro (Ctrl+Maj+M)") : t("Activer le micro (Ctrl+Maj+M)")}
     >
       <Icon name={p.micOn ? "mic" : "micOff"} size={variant === "island" ? 18 : 16} />
     </button>
@@ -32,8 +33,8 @@ export default function VoiceIsland(p: Props) {
     <button
       className={`island-btn${p.deafened ? " off" : ""}`}
       onClick={p.onToggleDeafen}
-      aria-label={p.deafened ? "Rétablir le son" : "Couper le son"}
-      title={p.deafened ? "Rétablir le son (Ctrl+Maj+D)" : "Couper le son (Ctrl+Maj+D)"}
+      aria-label={p.deafened ? t("Rétablir le son") : t("Couper le son")}
+      title={p.deafened ? t("Rétablir le son (Ctrl+Maj+D)") : t("Couper le son (Ctrl+Maj+D)")}
     >
       <Icon name={p.deafened ? "headphonesOff" : "headphones"} size={variant === "island" ? 18 : 16} />
     </button>
@@ -41,13 +42,13 @@ export default function VoiceIsland(p: Props) {
 
   if (variant === "mini") {
     return (
-      <div className="voice-mini" role="region" aria-label="Vocal en cours">
-        <button className="island-btn" onClick={p.onOpen} title={`Revenir à ${p.label}`} aria-label={`Revenir à ${p.label}`}>
+      <div className="voice-mini" role="region" aria-label={t("Vocal en cours")}>
+        <button className="island-btn" onClick={p.onOpen} title={t("Revenir à {0}", { 0: p.label })} aria-label={t("Revenir à {0}", { 0: p.label })}>
           <span className="island-dot" aria-hidden="true" />
         </button>
         {mic}
         {deaf}
-        <button className="island-btn leave" onClick={p.onLeave} aria-label={p.isCall ? "Raccrocher" : "Quitter"} title={p.isCall ? "Raccrocher" : "Quitter"}>
+        <button className="island-btn leave" onClick={p.onLeave} aria-label={p.isCall ? t("Raccrocher") : t("Quitter")} title={p.isCall ? t("Raccrocher") : t("Quitter")}>
           <Icon name={p.isCall ? "phoneOff" : "leave"} size={16} />
         </button>
       </div>
@@ -56,11 +57,11 @@ export default function VoiceIsland(p: Props) {
 
   if (variant === "panel") {
     return (
-      <div className="voice-panel" role="region" aria-label="Vocal en cours">
-        <button className="voice-panel-info" onClick={p.onOpen} title="Revenir à la pièce">
+      <div className="voice-panel" role="region" aria-label={t("Vocal en cours")}>
+        <button className="voice-panel-info" onClick={p.onOpen} title={t("Revenir à la pièce")}>
           <span className="island-dot" aria-hidden="true" />
           <span className="col gap-2 grow left" style={{ minWidth: 0 }}>
-            <strong className="ellipsis">En vocal · {p.label}</strong>
+            <strong className="ellipsis">{t("En vocal ·")} {p.label}</strong>
             <span className="muted small row gap-6">
               <NetworkBadge room={p.room} />
             </span>
@@ -70,7 +71,7 @@ export default function VoiceIsland(p: Props) {
           {mic}
           {deaf}
           <button className="voice-panel-leave" onClick={p.onLeave}>
-            {p.isCall ? "Raccrocher" : "Quitter"}
+            {p.isCall ? t("Raccrocher") : t("Quitter")}
           </button>
         </div>
       </div>
@@ -79,8 +80,8 @@ export default function VoiceIsland(p: Props) {
 
   return (
     <div className="island-wrap">
-      <div className="island" role="region" aria-label="Vocal en cours">
-        <button className="island-info" onClick={p.onOpen} title="Revenir à la pièce">
+      <div className="island" role="region" aria-label={t("Vocal en cours")}>
+        <button className="island-info" onClick={p.onOpen} title={t("Revenir à la pièce")}>
           <span className="island-dot" aria-hidden="true" />
           <span className="strong ellipsis">{p.label}</span>
           <NetworkBadge room={p.room} />
@@ -88,7 +89,7 @@ export default function VoiceIsland(p: Props) {
         {mic}
         {deaf}
         <button className="island-leave" onClick={p.onLeave}>
-          {p.isCall ? "Raccrocher" : "Quitter"}
+          {p.isCall ? t("Raccrocher") : t("Quitter")}
         </button>
       </div>
     </div>

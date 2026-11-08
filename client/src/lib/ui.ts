@@ -1,3 +1,4 @@
+import { locale, t } from "./i18n";
 /** Petites aides d'affichage. */
 
 const PALETTE = [
@@ -24,24 +25,25 @@ export function initials(name: string, max = 2): string {
 }
 
 export function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : String(err);
+  // Les messages d'erreur du serveur sont en français : on les traduit s'ils sont connus.
+  return t(err instanceof Error ? err.message : String(err));
 }
 
 export function formatExpiry(ts: number): string {
   const d = new Date(ts);
   const sameDay = d.toDateString() === new Date().toDateString();
-  const time = d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
-  return sameDay ? `aujourd'hui à ${time}` : `le ${d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} à ${time}`;
+  const time = d.toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
+  return sameDay ? t("aujourd'hui à {0}", { 0: time }) : t("le {0} à {1}", { 0: d.toLocaleDateString(locale(), { day: "numeric", month: "short" }), 1: time });
 }
 
 export function greeting(): string {
   const h = new Date().getHours();
-  return h < 5 || h >= 18 ? "Bonsoir" : "Bonjour";
+  return h < 5 || h >= 18 ? t("Bonsoir") : t("Bonjour");
 }
 
 export const ROLE_LABEL: Record<string, string> = {
-  owner: "Créateur",
-  admin: "Admin",
-  member: "Membre",
-  guest: "Invité",
+  owner: t("Créateur"),
+  admin: t("Admin"),
+  member: t("Membre"),
+  guest: t("Invité"),
 };

@@ -4,6 +4,7 @@ import { useServerLayout, type Folder } from "../lib/folders";
 import { STATUS_LABEL } from "../lib/people";
 import { formatExpiry } from "../lib/ui";
 import { Avatar, Icon, Logo, ServerBadge, StatusDot } from "./Brand";
+import { t } from "../lib/i18n";
 
 export type Mode = "servers" | "messages";
 
@@ -33,10 +34,10 @@ type Props = {
 };
 
 const STATUS_OPTIONS: { id: ChosenStatus; label: string; hint: string }[] = [
-  { id: "online", label: "En ligne", hint: "Tout le monde te voit dispo" },
-  { id: "idle", label: "Inactif", hint: "Mis tout seul après 10 min sans bouger" },
-  { id: "dnd", label: "Ne pas déranger", hint: "Plus de sons de messages ni d'appels" },
-  { id: "invisible", label: "Invisible", hint: "Tu vois tout, on te voit hors ligne" },
+  { id: "online", label: t("En ligne"), hint: t("Tout le monde te voit dispo") },
+  { id: "idle", label: t("Inactif"), hint: t("Mis tout seul après 10 min sans bouger") },
+  { id: "dnd", label: t("Ne pas déranger"), hint: t("Plus de sons de messages ni d'appels") },
+  { id: "invisible", label: t("Invisible"), hint: t("Tu vois tout, on te voit hors ligne") },
 ];
 
 /** Fin du statut personnalisé : dans 1 h, ce soir (4 h du matin), jamais. */
@@ -68,8 +69,8 @@ function StatusMenu({ me, onSet, onClose, onProfile, onSettings, onLogout, onDev
   return (
     <>
       <div className="click-away" onClick={() => (saveCustom(), onClose())} />
-      <div className="popover status-menu" role="menu" aria-label="Mon statut">
-        <span className="section-title">Mon statut</span>
+      <div className="popover status-menu" role="menu" aria-label={t("Mon statut")}>
+        <span className="section-title">{t("Mon statut")}</span>
         {STATUS_OPTIONS.map((o) => (
           <button
             key={o.id}
@@ -92,14 +93,14 @@ function StatusMenu({ me, onSet, onClose, onProfile, onSettings, onLogout, onDev
           <input
             value={text}
             maxLength={60}
-            placeholder="Statut perso (ex. dispo pour un ranked)"
-            aria-label="Statut personnalisé"
+            placeholder={t("Statut perso (ex. dispo pour un ranked)")}
+            aria-label={t("Statut personnalisé")}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && saveCustom()}
             onBlur={saveCustom}
           />
         </label>
-        <div className="chips" role="group" aria-label="Effacer le statut perso">
+        <div className="chips" role="group" aria-label={t("Effacer le statut perso")}>
           {(
             [
               ["1h", "Effacer dans 1 h"],
@@ -113,24 +114,24 @@ function StatusMenu({ me, onSet, onClose, onProfile, onSettings, onLogout, onDev
           ))}
           {me.customStatusRaw && (
             <button className="chip-btn" onClick={() => (setText(""), onSet({ customStatus: null }))}>
-              Retirer
+              {t("Retirer")}
             </button>
           )}
         </div>
         <span className="menu-sep" />
         <button role="menuitem" className="menu-item" onClick={() => (onClose(), onProfile())}>
-          <Icon name="user" size={16} /> Mon profil
+          <Icon name="user" size={16} /> {t("Mon profil")}
         </button>
         <button role="menuitem" className="menu-item" onClick={() => (onClose(), onSettings())}>
-          <Icon name="settings" size={16} /> Paramètres
+          <Icon name="settings" size={16} /> {t("Paramètres")}
         </button>
         {onDev && (
           <button role="menuitem" className="menu-item" onClick={() => (onClose(), onDev())}>
-            <Icon name="flask" size={16} /> Outils de test
+            <Icon name="flask" size={16} /> {t("Outils de test")}
           </button>
         )}
         <button role="menuitem" className="menu-item danger" onClick={() => (onClose(), onLogout())}>
-          <Icon name="logout" size={16} /> Se déconnecter
+          <Icon name="logout" size={16} /> {t("Se déconnecter")}
         </button>
       </div>
     </>
@@ -201,7 +202,7 @@ export default function ServerRail(props: Props) {
         <span className="rail-badge">
           <ServerBadge name={s.name} size={nested ? 30 : 34} />
           {props.serverDots.has(s.id) && !active ? (
-            <span className="new-dot" title="Nouveaux messages" />
+            <span className="new-dot" title={t("Nouveaux messages")} />
           ) : (
             collapsed && s.inVoice > 0 && <span className={`rail-dot ${here ? "teal" : "amber"}`} />
           )}
@@ -250,7 +251,7 @@ export default function ServerRail(props: Props) {
                   defaultValue={f.name}
                   autoFocus
                   maxLength={32}
-                  aria-label="Nom du dossier"
+                  aria-label={t("Nom du dossier")}
                   onClick={(e) => e.stopPropagation()}
                   onBlur={(e) => (layout.renameFolder(f.id, e.target.value), setRenaming(null))}
                   onKeyDown={(e) => {
@@ -261,14 +262,14 @@ export default function ServerRail(props: Props) {
               ) : (
                 <>
                   <span className="grow ellipsis left strong-ish folder-name">{f.name}</span>
-                  {live && !f.open && <span className="rail-dot inline amber" title="Quelqu'un est en vocal dans ce dossier" />}
+                  {live && !f.open && <span className="rail-dot inline amber" title={t("Quelqu'un est en vocal dans ce dossier")} />}
                   {!f.open && <span className="muted small">{items.length}</span>}
                   <Icon name={f.open ? "chevronDown" : "chevronRight"} size={15} />
                 </>
               ))}
           </button>
           {!collapsed && (
-            <button className="icon-btn sm rail-more" aria-label={`Options du dossier ${f.name}`} onClick={() => setMenu(menu === f.id ? null : f.id)}>
+            <button className="icon-btn sm rail-more" aria-label={t("Options du dossier {0}", { 0: f.name })} onClick={() => setMenu(menu === f.id ? null : f.id)}>
               <Icon name="more" size={15} />
             </button>
           )}
@@ -277,10 +278,10 @@ export default function ServerRail(props: Props) {
               <div className="click-away" onClick={() => setMenu(null)} />
               <div className="popover room-menu" role="menu">
                 <button role="menuitem" className="menu-item" onClick={() => (setMenu(null), setRenaming(f.id))}>
-                  <Icon name="edit" size={16} /> Renommer
+                  <Icon name="edit" size={16} /> {t("Renommer")}
                 </button>
                 <button role="menuitem" className="menu-item" onClick={() => (setMenu(null), layout.ungroup(f.id))}>
-                  <Icon name="folder" size={16} /> Défaire le dossier
+                  <Icon name="folder" size={16} /> {t("Défaire le dossier")}
                 </button>
               </div>
             </>
@@ -292,37 +293,37 @@ export default function ServerRail(props: Props) {
   }
 
   return (
-    <nav className={`rail${collapsed ? " collapsed" : ""}`} aria-label="Navigation">
+    <nav className={`rail${collapsed ? " collapsed" : ""}`} aria-label={t("Navigation")}>
       <div className="rail-brand">
         <Logo size={28} cut="var(--rail)" />
-        {!collapsed && <span className="wordmark grow">tomo</span>}
+        {!collapsed && <span className="wordmark grow">{t("tomo")}</span>}
         <button
           className="icon-btn sm"
           onClick={() => layout.setCollapsed(!collapsed)}
-          aria-label={collapsed ? "Afficher les noms des serveurs" : "Réduire la colonne en icônes"}
-          title={collapsed ? "Afficher les noms" : "Réduire"}
+          aria-label={collapsed ? t("Afficher les noms des serveurs") : t("Réduire la colonne en icônes")}
+          title={collapsed ? t("Afficher les noms") : t("Réduire")}
         >
           <Icon name="sidebar" size={16} />
         </button>
       </div>
 
       {!isGuest && (
-        <button className={`rail-server${mode === "messages" ? " active" : ""}`} onClick={() => props.onMode("messages")} title={collapsed ? "Messages" : undefined}>
+        <button className={`rail-server${mode === "messages" ? " active" : ""}`} onClick={() => props.onMode("messages")} title={collapsed ? t("Messages") : undefined}>
           <span className="rail-badge">
             <span className="rail-icon">
               <Icon name="chat" size={17} />
             </span>
             {props.messagesBadge > 0 && <span className="count red">{props.messagesBadge > 99 ? "99+" : props.messagesBadge}</span>}
           </span>
-          {!collapsed && <span className="grow left">Messages</span>}
+          {!collapsed && <span className="grow left">{t("Messages")}</span>}
         </button>
       )}
 
       <div className="rail-section">
-        {!collapsed && <span className="section-title">Serveurs</span>}
+        {!collapsed && <span className="section-title">{t("Serveurs")}</span>}
         {!isGuest && (
           <div className="relative">
-            <button className="icon-btn sm" onClick={() => setAddOpen(!addOpen)} aria-label="Créer ou rejoindre un serveur" aria-expanded={addOpen}>
+            <button className="icon-btn sm" onClick={() => setAddOpen(!addOpen)} aria-label={t("Créer ou rejoindre un serveur")} aria-expanded={addOpen}>
               <Icon name="plus" size={15} />
             </button>
             {addOpen && (
@@ -330,10 +331,10 @@ export default function ServerRail(props: Props) {
                 <div className="click-away" onClick={() => setAddOpen(false)} />
                 <div className="popover rail-add-menu" role="menu">
                   <button role="menuitem" className="menu-item" onClick={() => (setAddOpen(false), props.onCreateServer())}>
-                    <Icon name="plus" size={16} /> Créer un serveur
+                    <Icon name="plus" size={16} /> {t("Créer un serveur")}
                   </button>
                   <button role="menuitem" className="menu-item" onClick={() => (setAddOpen(false), props.onJoinServer())}>
-                    <Icon name="login" size={16} /> Rejoindre avec un code
+                    <Icon name="login" size={16} /> {t("Rejoindre avec un code")}
                   </button>
                 </div>
               </>
@@ -348,14 +349,14 @@ export default function ServerRail(props: Props) {
           const s = byId.get(e.id);
           return s ? serverRow(s, false) : null;
         })}
-        {dragging && !collapsed && <span className={`rail-drop-end${over === "end" ? " on" : ""}`}>Lâche ici pour sortir du dossier</span>}
+        {dragging && !collapsed && <span className={`rail-drop-end${over === "end" ? " on" : ""}`}>{t("Lâche ici pour sortir du dossier")}</span>}
         {!isGuest && !collapsed && servers.length > 1 && !dragging && !layout.entries.some((e) => e.kind === "folder") && (
-          <span className="rail-hint">Glisse un serveur sur un autre pour créer un dossier</span>
+          <span className="rail-hint">{t("Glisse un serveur sur un autre pour créer un dossier")}</span>
         )}
       </div>
 
       <div className="rail-me">
-        <button className="rail-me-main" onClick={() => setProfileOpen(!profileOpen)} aria-expanded={profileOpen} aria-label="Mon compte et mon statut">
+        <button className="rail-me-main" onClick={() => setProfileOpen(!profileOpen)} aria-expanded={profileOpen} aria-label={t("Mon compte et mon statut")}>
           <Avatar
             name={props.me?.displayName ?? props.displayName}
             src={props.me?.avatarUrl}
@@ -367,7 +368,7 @@ export default function ServerRail(props: Props) {
               <span className="strong ellipsis">{props.me?.displayName ?? props.displayName}</span>
               <span className="muted small ellipsis">
                 {isGuest
-                  ? `Invité · jusqu'à ${formatExpiry(session.guest.expiresAt).replace(/^aujourd'hui à /, "")}`
+                  ? t("Invité · jusqu'à {0}", { 0: formatExpiry(session.guest.expiresAt).replace(/^aujourd'hui à /, "") })
                   : props.me?.customStatusRaw && (!props.me.customStatusUntil || props.me.customStatusUntil > Date.now())
                     ? props.me.customStatusRaw
                     : STATUS_LABEL[props.me?.chosenStatus ?? "online"]}
@@ -376,12 +377,12 @@ export default function ServerRail(props: Props) {
           )}
         </button>
         {!collapsed && props.onOpenDev && (
-          <button className="icon-btn sm dev-btn" onClick={props.onOpenDev} aria-label="Outils de test" title="Outils de test">
+          <button className="icon-btn sm dev-btn" onClick={props.onOpenDev} aria-label={t("Outils de test")} title={t("Outils de test")}>
             <Icon name="flask" size={16} />
           </button>
         )}
         {!collapsed && !isGuest && (
-          <button className="icon-btn sm" onClick={props.onOpenSettings} aria-label="Paramètres" title="Paramètres (Ctrl+,)">
+          <button className="icon-btn sm" onClick={props.onOpenSettings} aria-label={t("Paramètres")} title={t("Paramètres (Ctrl+,)")}>
             <Icon name="settings" size={16} />
           </button>
         )}
@@ -402,16 +403,16 @@ export default function ServerRail(props: Props) {
             <div className="popover profile-menu" role="menu">
               {!isGuest && (
                 <button role="menuitem" className="menu-item" onClick={() => (setProfileOpen(false), props.onOpenSettings())}>
-                  <Icon name="settings" size={16} /> Paramètres
+                  <Icon name="settings" size={16} /> {t("Paramètres")}
                 </button>
               )}
               {props.onOpenDev && (
                 <button role="menuitem" className="menu-item" onClick={() => (setProfileOpen(false), props.onOpenDev!())}>
-                  <Icon name="flask" size={16} /> Outils de test
+                  <Icon name="flask" size={16} /> {t("Outils de test")}
                 </button>
               )}
               <button role="menuitem" className="menu-item danger" onClick={() => (setProfileOpen(false), props.onLogout())}>
-                <Icon name="logout" size={16} /> {isGuest ? "Quitter la soirée" : "Se déconnecter"}
+                <Icon name="logout" size={16} /> {isGuest ? t("Quitter la soirée") : t("Se déconnecter")}
               </button>
             </div>
           </>

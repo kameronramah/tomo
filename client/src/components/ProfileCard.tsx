@@ -5,16 +5,17 @@ import { STATUS_LABEL, putPeople } from "../lib/people";
 import { setParticipantVolume, volumeMemory } from "../lib/voice";
 import { errorMessage } from "../lib/ui";
 import { Avatar, Icon } from "./Brand";
+import { locale, t } from "../lib/i18n";
 
-const monthYear = (ts: number) => new Date(ts).toLocaleDateString("fr-FR", { month: "long", year: "numeric" });
+const monthYear = (ts: number) => new Date(ts).toLocaleDateString(locale(), { month: "long", year: "numeric" });
 
 function lastSeenLabel(ts: number) {
   const min = Math.round((Date.now() - ts) / 60000);
-  if (min < 2) return "à l'instant";
-  if (min < 60) return `il y a ${min} min`;
+  if (min < 2) return t("à l'instant");
+  if (min < 60) return t("il y a {0} min", { 0: min });
   const h = Math.round(min / 60);
-  if (h < 24) return `il y a ${h} h`;
-  return `le ${new Date(ts).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}`;
+  if (h < 24) return t("il y a {0} h", { 0: h });
+  return t("le {0}", { 0: new Date(ts).toLocaleDateString(locale(), { day: "numeric", month: "long" }) });
 }
 
 /** Contenu d'une fiche profil (aussi utilisé comme aperçu dans Paramètres > Mon profil). */
@@ -22,7 +23,7 @@ export function ProfileView({ p, children }: { p: FullProfile; children?: React.
   const banner = p.bannerUrl ? { backgroundImage: `url("${p.bannerUrl}")` } : { background: p.accent ?? "var(--teal-bg)" };
   return (
     <>
-      <div className="profile-banner" style={banner} role="img" aria-label={`Bannière de ${p.displayName}`} />
+      <div className="profile-banner" style={banner} role="img" aria-label={t("Bannière de {0}", { 0: p.displayName })} />
       <div className="profile-body">
         <div className="profile-top">
           <Avatar name={p.displayName} src={p.avatarUrl} size={88} status={p.status} />
@@ -33,17 +34,17 @@ export function ProfileView({ p, children }: { p: FullProfile; children?: React.
             {p.username !== p.displayName && <>{p.username} · </>}
             {STATUS_LABEL[p.status]}
             {p.customStatus && <> · « {p.customStatus} »</>}
-            {p.status === "offline" && p.lastSeen ? <> · vu {lastSeenLabel(p.lastSeen)}</> : null}
+            {p.status === "offline" && p.lastSeen ? <> {t("· vu")} {lastSeenLabel(p.lastSeen)}</> : null}
           </span>
         </div>
         {p.bio && <p className="profile-bio">{p.bio}</p>}
         <div className="profile-meta">
           <span>
-            <strong>Sur tomo</strong> depuis {monthYear(p.createdAt)}
+            <strong>{t("Sur tomo")}</strong> {t("depuis")} {monthYear(p.createdAt)}
           </span>
           {!p.self && p.commonServers > 0 && (
             <span>
-              <strong>{p.commonServers}</strong> serveur{p.commonServers > 1 ? "s" : ""} en commun
+              <strong>{p.commonServers}</strong> {t("serveur")}{p.commonServers > 1 ? "s" : ""} {t("en commun")}
             </span>
           )}
         </div>
@@ -108,20 +109,20 @@ export default function ProfileCard(props: Props) {
 
   return (
     <div className="profile-backdrop" onClick={props.onClose}>
-      <section className="pcard" role="dialog" aria-label={p ? `Profil de ${p.displayName}` : "Profil"} onClick={(e) => e.stopPropagation()}>
-        <button className="icon-btn sm profile-close" onClick={props.onClose} aria-label="Fermer">
+      <section className="pcard" role="dialog" aria-label={p ? t("Profil de {0}", { 0: p.displayName }) : t("Profil")} onClick={(e) => e.stopPropagation()}>
+        <button className="icon-btn sm profile-close" onClick={props.onClose} aria-label={t("Fermer")}>
           <Icon name="x" size={16} />
         </button>
         {!p ? (
           <p className="muted pad" style={{ padding: 24 }}>
-            {error ?? "Chargement…"}
+            {error ?? t("Chargement…")}
           </p>
         ) : (
           <ProfileView p={p}>
             {participant && (
               <label className="setting-row" style={{ gap: 12 }}>
                 <Icon name="volume" size={18} />
-                <span className="soft">Volume</span>
+                <span className="soft">{t("Volume")}</span>
                 <input
                   type="range"
                   min={0}
@@ -133,7 +134,7 @@ export default function ProfileCard(props: Props) {
                     setParticipantVolume(participant, Number(e.target.value));
                     setTick((t) => t + 1);
                   }}
-                  aria-label={`Volume de ${p.displayName}`}
+                  aria-label={t("Volume de {0}", { 0: p.displayName })}
                 />
                 <span className="value">{Math.round((volumeMemory.get(volKey) ?? 1) * 100)} %</span>
               </label>
@@ -141,42 +142,42 @@ export default function ProfileCard(props: Props) {
             {error && <p className="error small">{error}</p>}
             {p.self ? (
               <button className="btn" onClick={props.onEditMine}>
-                <Icon name="edit" size={16} /> Modifier mon profil
+                <Icon name="edit" size={16} /> {t("Modifier mon profil")}
               </button>
             ) : p.blockedByMe ? (
               <button className="btn" disabled={busy} onClick={() => act(() => api.unblock(p.id))}>
-                Débloquer
+                {t("Débloquer")}
               </button>
             ) : (
               <>
                 <div className="profile-actions">
                   {p.canMessage && (
                     <button className="btn primary" onClick={() => props.onMessage(p.id)}>
-                      <Icon name="chat" size={16} /> Message
+                      <Icon name="chat" size={16} /> {t("Message")}
                     </button>
                   )}
                   {p.canCall && (
                     <button className="btn" onClick={() => props.onCall(p.id, p.displayName)}>
-                      <Icon name="phone" size={16} /> Appeler
+                      <Icon name="phone" size={16} /> {t("Appeler")}
                     </button>
                   )}
                   {p.friendship === "incoming" && (
                     <button className="btn" disabled={busy} onClick={() => act(() => api.acceptFriend(p.id))}>
-                      <Icon name="userCheck" size={16} /> Accepter en ami
+                      <Icon name="userCheck" size={16} /> {t("Accepter en ami")}
                     </button>
                   )}
                   {p.canAddFriend && (
                     <button className="btn" disabled={busy} onClick={() => act(() => api.addFriend(p.username))}>
-                      <Icon name="userPlus" size={16} /> Ajouter en ami
+                      <Icon name="userPlus" size={16} /> {t("Ajouter en ami")}
                     </button>
                   )}
                   {p.friendship === "outgoing" && (
                     <button className="btn" disabled>
-                      Demande envoyée
+                      {t("Demande envoyée")}
                     </button>
                   )}
                   <span className="relative">
-                    <button className="icon-btn" aria-label="Plus d'options" aria-expanded={menu} onClick={() => setMenu(!menu)}>
+                    <button className="icon-btn" aria-label={t("Plus d'options")} aria-expanded={menu} onClick={() => setMenu(!menu)}>
                       <Icon name="more" />
                     </button>
                     {menu && (
@@ -184,15 +185,15 @@ export default function ProfileCard(props: Props) {
                         <div className="click-away" onClick={() => setMenu(false)} />
                         <div className="popover profile-menu-pop" role="menu">
                           <button role="menuitem" className="menu-item" onClick={() => (navigator.clipboard?.writeText(p.username), setMenu(false))}>
-                            <Icon name="copy" size={16} /> Copier le pseudo
+                            <Icon name="copy" size={16} /> {t("Copier le pseudo")}
                           </button>
                           {p.friendship === "friend" && (
                             <button role="menuitem" className="menu-item" onClick={() => act(() => api.removeFriend(p.id))}>
-                              <Icon name="users" size={16} /> Retirer des amis
+                              <Icon name="users" size={16} /> {t("Retirer des amis")}
                             </button>
                           )}
                           <button role="menuitem" className="menu-item danger" onClick={() => act(() => api.block(p.id))}>
-                            <Icon name="lock" size={16} /> Bloquer
+                            <Icon name="lock" size={16} /> {t("Bloquer")}
                           </button>
                         </div>
                       </>
@@ -201,7 +202,7 @@ export default function ProfileCard(props: Props) {
                 </div>
                 {p.friendship === "friend" && (
                   <span className="small teal-soft">
-                    <Icon name="check" size={13} /> Vous êtes amis
+                    <Icon name="check" size={13} /> {t("Vous êtes amis")}
                   </span>
                 )}
               </>

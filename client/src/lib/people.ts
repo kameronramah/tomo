@@ -6,6 +6,7 @@
 import { useEffect, useReducer } from "react";
 import type { Api, LightProfile, Presence } from "./api";
 import type { Realtime } from "./realtime";
+import { t } from "./i18n";
 
 const map = new Map<string, LightProfile>();
 const listeners = new Set<() => void>();
@@ -95,9 +96,9 @@ export function usePeople(ids: (string | null | undefined)[] = []) {
 }
 
 export const STATUS_LABEL: Record<Presence | "invisible", string> = {
-  online: "En ligne",
-  idle: "Inactif",
-  dnd: "Ne pas déranger",
-  offline: "Hors ligne",
-  invisible: "Invisible",
+  online: t("En ligne"),
+  idle: t("Inactif"),
+  dnd: t("Ne pas déranger"),
+  offline: t("Hors ligne"),
+  invisible: t("Invisible"),
 };

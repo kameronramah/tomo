@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { DmSummary, Friend } from "../lib/api";
 import { STATUS_LABEL, getPerson, usePeople } from "../lib/people";
 import { Icon, UserAvatar } from "./Brand";
+import { t } from "../lib/i18n";
 
 export type DmView = { type: "friends" } | { type: "requests" } | { type: "dm"; userId: string } | { type: "call" };
 
@@ -23,13 +24,13 @@ export default function MessagesView(p: Props) {
   const pendingIn = p.friends.filter((f) => f.status === "incoming").length;
   return (
     <div className="messages">
-      <aside className="conv-list" aria-label="Conversations">
-        <h1 className="title-sm conv-title">Messages</h1>
+      <aside className="conv-list" aria-label={t("Conversations")}>
+        <h1 className="title-sm conv-title">{t("Messages")}</h1>
         <button className={`conv${p.dmView.type === "friends" ? " open" : ""}`} onClick={p.onOpenFriends}>
           <span className="conv-icon">
             <Icon name="users" size={18} />
           </span>
-          <span className="grow left strong-ish">Amis</span>
+          <span className="grow left strong-ish">{t("Amis")}</span>
           {pendingIn > 0 && <span className="badge amber-badge-fill">{pendingIn}</span>}
         </button>
         {p.requests > 0 && (
@@ -38,14 +39,14 @@ export default function MessagesView(p: Props) {
               <Icon name="mail" size={18} />
             </span>
             <span className="grow col gap-2 left">
-              <span className="strong-ish">Demandes de message</span>
-              <span className="small muted">De gens qui ne sont pas tes amis</span>
+              <span className="strong-ish">{t("Demandes de message")}</span>
+              <span className="small muted">{t("De gens qui ne sont pas tes amis")}</span>
             </span>
             <span className="badge amber-badge-fill">{p.requests}</span>
           </button>
         )}
-        <span className="section-title conv-section">Conversations</span>
-        {p.dmOrder.length === 0 && <p className="muted small pad">Ajoute des amis pour discuter avec eux.</p>}
+        <span className="section-title conv-section">{t("Conversations")}</span>
+        {p.dmOrder.length === 0 && <p className="muted small pad">{t("Ajoute des amis pour discuter avec eux.")}</p>}
         {p.dmOrder.map((id) => {
           const person = getPerson(id);
           const f = p.friends.find((x) => x.id === id);
@@ -81,12 +82,12 @@ export function RequestsView({ requests, onOpen }: { requests: DmSummary[]; onOp
           <Icon name="mail" size={18} />
         </span>
         <span className="col gap-2">
-          <strong>Demandes de message</strong>
-          <span className="muted small">Personne ne sait que tu as lu tant que tu n'acceptes pas.</span>
+          <strong>{t("Demandes de message")}</strong>
+          <span className="muted small">{t("Personne ne sait que tu as lu tant que tu n'acceptes pas.")}</span>
         </span>
       </header>
       <div className="col gap-4" style={{ padding: 16 }}>
-        {requests.length === 0 && <p className="muted">Aucune demande en attente.</p>}
+        {requests.length === 0 && <p className="muted">{t("Aucune demande en attente.")}</p>}
         {requests.map((r) => {
           const person = getPerson(r.userId) ?? r.profile;
           return (
@@ -94,7 +95,7 @@ export function RequestsView({ requests, onOpen }: { requests: DmSummary[]; onOp
               <UserAvatar userId={r.userId} name={person?.displayName ?? "…"} size={40} />
               <span className="grow col gap-2 left">
                 <span className="strong-ish">{person?.displayName ?? "…"}</span>
-                <span className="small muted">Pas ton ami · ouvre pour lire</span>
+                <span className="small muted">{t("Pas ton ami · ouvre pour lire")}</span>
               </span>
               <Icon name="chevronRight" size={16} />
             </button>

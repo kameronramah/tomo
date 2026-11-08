@@ -13,6 +13,7 @@ import { CLIP_CHOICES, clipUrl, clipsSupported, deleteClip, listClips, openClips
 import { gameLinkSupported, onGameLink, type GameLink } from "../lib/gameLink";
 import { SCREEN_PRESETS } from "../lib/screen";
 import { APP_VERSION, checkForUpdate, getUpdateState, onUpdateState, restartNow, type UpdateState } from "../lib/updater";
+import { LANGS, lang, locale, setLang, t, type Lang } from "../lib/i18n";
 
 type Section =
   | "profile"
@@ -31,31 +32,31 @@ type Section =
 
 const GROUPS: { title: string; items: { id: Section; label: string; icon: IconName }[] }[] = [
   {
-    title: "Compte",
+    title: t("Compte"),
     items: [
-      { id: "profile", label: "Mon profil", icon: "user" },
-      { id: "account", label: "Compte et sécurité", icon: "lock" },
-      { id: "privacy", label: "Confidentialité", icon: "shield" },
+      { id: "profile", label: t("Mon profil"), icon: "user" },
+      { id: "account", label: t("Compte et sécurité"), icon: "lock" },
+      { id: "privacy", label: t("Confidentialité"), icon: "shield" },
     ],
   },
   {
-    title: "Vocal",
+    title: t("Vocal"),
     items: [
-      { id: "audio", label: "Audio et micro", icon: "mic" },
-      { id: "spatial", label: "Audio spatial", icon: "orbit" },
-      { id: "clips", label: "Clips", icon: "rewind" },
-      { id: "screen", label: "Partage d'écran", icon: "screenShare" },
+      { id: "audio", label: t("Audio et micro"), icon: "mic" },
+      { id: "spatial", label: t("Audio spatial"), icon: "orbit" },
+      { id: "clips", label: t("Clips"), icon: "rewind" },
+      { id: "screen", label: t("Partage d'écran"), icon: "screenShare" },
     ],
   },
   {
-    title: "Appli",
+    title: t("Appli"),
     items: [
-      { id: "sounds", label: "Sons et notifications", icon: "bell" },
-      { id: "appearance", label: "Apparence", icon: "monitor" },
-      { id: "startup", label: "Démarrage", icon: "power" },
-      { id: "shortcuts", label: "Raccourcis clavier", icon: "keyboard" },
-      { id: "network", label: "Réseau", icon: "signal" },
-      { id: "about", label: "À propos", icon: "info" },
+      { id: "sounds", label: t("Sons et notifications"), icon: "bell" },
+      { id: "appearance", label: t("Apparence"), icon: "monitor" },
+      { id: "startup", label: t("Démarrage"), icon: "power" },
+      { id: "shortcuts", label: t("Raccourcis clavier"), icon: "keyboard" },
+      { id: "network", label: t("Réseau"), icon: "signal" },
+      { id: "about", label: t("À propos"), icon: "info" },
     ],
   },
 ];
@@ -114,7 +115,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
   }, [onClose]);
 
   return (
-    <div className="settings" role="dialog" aria-modal="true" aria-label="Paramètres">
+    <div className="settings" role="dialog" aria-modal="true" aria-label={t("Paramètres")}>
       <nav className="settings-nav">
         {GROUPS.map((g) => (
           <div key={g.title} className="col gap-2 settings-group">
@@ -130,14 +131,14 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
         <span className="menu-sep" />
         <button className="nav-item danger-text" onClick={onLogout}>
           <Icon name="logout" size={17} />
-          <span className="grow left">Se déconnecter</span>
+          <span className="grow left">{t("Se déconnecter")}</span>
         </button>
       </nav>
 
       <div className="settings-body">
-        <button className="settings-close" onClick={onClose} aria-label="Fermer les paramètres" title="Fermer (Échap)">
+        <button className="settings-close" onClick={onClose} aria-label={t("Fermer les paramètres")} title={t("Fermer (Échap)")}>
           <Icon name="x" />
-          <span>Échap</span>
+          <span>{t("Échap")}</span>
         </button>
         <div className={`settings-content${section === "profile" ? " wide" : ""}`}>
           {section === "profile" && <MyProfileSection api={api} onChanged={onProfileChanged} />}
@@ -174,14 +175,14 @@ function Account({ api, user, onLogoutAll }: { api: Api; user: User; onLogoutAll
   async function changePassword(e: React.FormEvent) {
     e.preventDefault();
     setMsg(undefined);
-    if (next !== confirm) return setMsg({ ok: false, text: "Les deux nouveaux mots de passe ne sont pas identiques." });
-    if (next.length < 12) return setMsg({ ok: false, text: "Le nouveau mot de passe doit faire au moins 12 caractères." });
+    if (next !== confirm) return setMsg({ ok: false, text: t("Les deux nouveaux mots de passe ne sont pas identiques.") });
+    if (next.length < 12) return setMsg({ ok: false, text: t("Le nouveau mot de passe doit faire au moins 12 caractères.") });
     try {
       await api.changePassword(current, next);
       setCurrent("");
       setNext("");
       setConfirm("");
-      setMsg({ ok: true, text: "Mot de passe changé. Tes autres appareils ont été déconnectés." });
+      setMsg({ ok: true, text: t("Mot de passe changé. Tes autres appareils ont été déconnectés.") });
       api.sessions().then(setSessions).catch(() => {});
     } catch (err) {
       setMsg({ ok: false, text: errorMessage(err) });
@@ -190,58 +191,58 @@ function Account({ api, user, onLogoutAll }: { api: Api; user: User; onLogoutAll
 
   return (
     <>
-      <h1 className="title">Compte et sécurité</h1>
+      <h1 className="title">{t("Compte et sécurité")}</h1>
       <div className="account-hero">
         <UserAvatar userId={user.id} name={user.username} size={64} />
         <div className="col gap-4">
           <strong className="title-sm">{user.username}</strong>
           <span className="muted small">
-            Pseudo de connexion · {user.isDev ? "compte de test, outils de test activés" : "compte tomo"}
+            {t("Pseudo de connexion ·")} {user.isDev ? t("compte de test, outils de test activés") : t("compte tomo")}
           </span>
         </div>
       </div>
 
-      <Card title="Changer le mot de passe">
+      <Card title={t("Changer le mot de passe")}>
         <form className="col gap-12" onSubmit={changePassword}>
           <label className="field">
-            Mot de passe actuel
+            {t("Mot de passe actuel")}
             <input type="password" value={current} onChange={(e) => setCurrent(e.target.value)} autoComplete="current-password" required />
           </label>
           <div className="grid-2">
             <label className="field">
-              Nouveau mot de passe
+              {t("Nouveau mot de passe")}
               <input type="password" value={next} onChange={(e) => setNext(e.target.value)} autoComplete="new-password" required />
             </label>
             <label className="field">
-              Confirmer
+              {t("Confirmer")}
               <input type="password" value={confirm} onChange={(e) => setConfirm(e.target.value)} autoComplete="new-password" required />
             </label>
           </div>
-          <span className="hint">12 caractères minimum. Changer de mot de passe déconnecte tes autres appareils.</span>
+          <span className="hint">{t("12 caractères minimum. Changer de mot de passe déconnecte tes autres appareils.")}</span>
           {msg && <p className={msg.ok ? "ok" : "error"}>{msg.text}</p>}
           <div>
             <button className="btn primary" disabled={!current || !next || !confirm}>
-              Changer le mot de passe
+              {t("Changer le mot de passe")}
             </button>
           </div>
         </form>
       </Card>
 
-      <Card title={`Appareils connectés · ${sessions.length}`}>
+      <Card title={t("Appareils connectés · {0}", { 0: sessions.length })}>
         <ul className="list">
           {sessions.map((x, i) => (
             <li key={i}>
               <Icon name="monitor" />
               <span className="grow col gap-2">
-                <span className="ellipsis">{x.userAgent?.includes("Windows") ? "Windows" : x.userAgent?.split(" ")[0] ?? "Appareil inconnu"}</span>
-                <span className="muted small">Connecté le {new Date(x.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</span>
+                <span className="ellipsis">{x.userAgent?.includes("Windows") ? t("Windows") : x.userAgent?.split(" ")[0] ?? t("Appareil inconnu")}</span>
+                <span className="muted small">{t("Connecté le")} {new Date(x.createdAt).toLocaleDateString(locale(), { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })}</span>
               </span>
             </li>
           ))}
         </ul>
         <div>
           <button className="btn danger" onClick={onLogoutAll}>
-            <Icon name="lock" size={16} /> Déconnecter tous mes appareils
+            <Icon name="lock" size={16} /> {t("Déconnecter tous mes appareils")}
           </button>
         </div>
       </Card>
@@ -273,39 +274,39 @@ function Audio({ s }: { s: S }) {
 
   return (
     <>
-      <h1 className="title">Audio et micro</h1>
-      <Card title="Périphériques">
+      <h1 className="title">{t("Audio et micro")}</h1>
+      <Card title={t("Périphériques")}>
         <div className="grid-2">
           <label className="field">
-            Micro
+            {t("Micro")}
             <select value={devices.input ?? ""} onChange={(e) => pick("input", e.target.value)}>
-              <option value="">Par défaut (Windows)</option>
+              <option value="">{t("Par défaut (Windows)")}</option>
               {inputs.map((d) => (
                 <option key={d.deviceId} value={d.deviceId}>
-                  {d.label || "Micro"}
+                  {d.label || t("Micro")}
                 </option>
               ))}
             </select>
           </label>
           <label className="field">
-            Sortie audio
+            {t("Sortie audio")}
             <select value={devices.output ?? ""} onChange={(e) => pick("output", e.target.value)}>
-              <option value="">Par défaut (Windows)</option>
+              <option value="">{t("Par défaut (Windows)")}</option>
               {outputs.map((d) => (
                 <option key={d.deviceId} value={d.deviceId}>
-                  {d.label || "Haut-parleurs"}
+                  {d.label || t("Haut-parleurs")}
                 </option>
               ))}
             </select>
           </label>
         </div>
-        <span className="hint">Pris en compte à la prochaine connexion à un salon. En vocal, utilise le bouton réglages du dock pour changer tout de suite.</span>
+        <span className="hint">{t("Pris en compte à la prochaine connexion à un salon. En vocal, utilise le bouton réglages du dock pour changer tout de suite.")}</span>
         <MicTester />
       </Card>
 
-      <Card title="Volume">
+      <Card title={t("Volume")}>
         <label className="setting-row">
-          <span className="grow">Volume général des voix</span>
+          <span className="grow">{t("Volume général des voix")}</span>
           <input
             type="range"
             min={0}
@@ -313,20 +314,20 @@ function Audio({ s }: { s: S }) {
             step={0.05}
             value={s.audio.outputVolume}
             onChange={(e) => updateSettings("audio", { outputVolume: Number(e.target.value) })}
-            aria-label="Volume général des voix"
+            aria-label={t("Volume général des voix")}
           />
           <span className="value">{Math.round(s.audio.outputVolume * 100)} %</span>
         </label>
         <Toggle
-          label="Volume uniformisé"
-          hint="Tout le monde au même niveau : les voix trop faibles sont remontées, les trop fortes baissées, sans rien régler. S'applique tout de suite."
+          label={t("Volume uniformisé")}
+          hint={t("Tout le monde au même niveau : les voix trop faibles sont remontées, les trop fortes baissées, sans rien régler. S'applique tout de suite.")}
           checked={s.audio.normalize}
           onChange={(v) => updateSettings("audio", { normalize: v })}
         />
       </Card>
 
-      <Card title="Traitement du micro">
-        <span className="setting-label">Suppression du bruit</span>
+      <Card title={t("Traitement du micro")}>
+        <span className="setting-label">{t("Suppression du bruit")}</span>
         {DENOISE.map((d) => (
           <label key={d.id} className={`share-option${s.audio.denoise === d.id ? " on" : ""}`}>
             <input type="radio" name="denoise" checked={s.audio.denoise === d.id} onChange={() => updateSettings("audio", { denoise: d.id })} />
@@ -337,14 +338,14 @@ function Audio({ s }: { s: S }) {
           </label>
         ))}
         <Toggle
-          label="Porte de bruit"
-          hint="Ton micro se coupe tout seul quand tu ne parles pas (souffle, respiration, clavier entre deux phrases)."
+          label={t("Porte de bruit")}
+          hint={t("Ton micro se coupe tout seul quand tu ne parles pas (souffle, respiration, clavier entre deux phrases).")}
           checked={s.audio.gate}
           onChange={(v) => updateSettings("audio", { gate: v })}
         />
         {s.audio.gate && (
           <label className="setting-row">
-            <span className="grow">Seuil d'ouverture</span>
+            <span className="grow">{t("Seuil d'ouverture")}</span>
             <input
               type="range"
               min={-70}
@@ -352,27 +353,26 @@ function Audio({ s }: { s: S }) {
               step={1}
               value={s.audio.gateThreshold}
               onChange={(e) => updateSettings("audio", { gateThreshold: Number(e.target.value) })}
-              aria-label="Seuil de la porte de bruit"
+              aria-label={t("Seuil de la porte de bruit")}
             />
-            <span className="value">{s.audio.gateThreshold} dB</span>
+            <span className="value">{s.audio.gateThreshold} {t("dB")}</span>
           </label>
         )}
         <ListenTest s={s} />
         <Toggle
-          label="Annulation d'écho"
-          hint="Utile sans casque : évite que tes potes s'entendent dans tes haut-parleurs."
+          label={t("Annulation d'écho")}
+          hint={t("Utile sans casque : évite que tes potes s'entendent dans tes haut-parleurs.")}
           checked={s.audio.echoCancellation}
           onChange={(v) => updateSettings("audio", { echoCancellation: v })}
         />
         <Toggle
-          label="Contrôle automatique du volume du micro"
-          hint="Ajuste ton niveau quand tu parles fort ou doucement."
+          label={t("Contrôle automatique du volume du micro")}
+          hint={t("Ajuste ton niveau quand tu parles fort ou doucement.")}
           checked={s.audio.autoGain}
           onChange={(v) => updateSettings("audio", { autoGain: v })}
         />
         <span className="hint">
-          La suppression de bruit et la porte s'appliquent tout de suite, même en vocal. L'écho et le volume du micro, à la prochaine
-          connexion.
+          {t("La suppression de bruit et la porte s'appliquent tout de suite, même en vocal. L'écho et le volume du micro, à la prochaine connexion.")}
         </span>
       </Card>
     </>
@@ -380,9 +380,9 @@ function Audio({ s }: { s: S }) {
 }
 
 const DENOISE: { id: S["audio"]["denoise"]; label: string; detail: string }[] = [
-  { id: "off", label: "Aucune", detail: "Ton micro tel quel. Pour un micro de studio dans une pièce calme." },
-  { id: "light", label: "Légère", detail: "Le filtre du navigateur : enlève le souffle et le ventilateur." },
-  { id: "advanced", label: "Avancée (recommandée)", detail: "Une petite IA calculée sur ton PC : efface clavier, souris, chien, aspirateur. Rien ne sort de ton PC." },
+  { id: "off", label: t("Aucune"), detail: t("Ton micro tel quel. Pour un micro de studio dans une pièce calme.") },
+  { id: "light", label: t("Légère"), detail: t("Le filtre du navigateur : enlève le souffle et le ventilateur.") },
+  { id: "advanced", label: t("Avancée (recommandée)"), detail: t("Une petite IA calculée sur ton PC : efface clavier, souris, chien, aspirateur. Rien ne sort de ton PC.") },
 ];
 
 /** « S'écouter » : renvoie le micro dans le casque, avec ou sans le traitement, pour comparer. */
@@ -421,15 +421,15 @@ function ListenTest({ s }: { s: S }) {
   return (
     <div className="setting-row">
       <span className="grow col gap-2">
-        <span>S'écouter</span>
-        <span className="muted small">Mets un casque, tape sur ton clavier en parlant, et compare.</span>
+        <span>{t("S'écouter")}</span>
+        <span className="muted small">{t("Mets un casque, tape sur ton clavier en parlant, et compare.")}</span>
       </span>
-      <div className="segmented" role="group" aria-label="S'écouter">
+      <div className="segmented" role="group" aria-label={t("S'écouter")}>
         <button className={mode === "raw" ? "on" : ""} onClick={() => setMode(mode === "raw" ? "off" : "raw")}>
-          Sans
+          {t("Sans")}
         </button>
         <button className={mode === "clean" ? "on" : ""} onClick={() => setMode(mode === "clean" ? "off" : "clean")}>
-          Avec
+          {t("Avec")}
         </button>
       </div>
     </div>
@@ -449,11 +449,11 @@ const PREVIEWS: [SoundName, string][] = [
 function Sounds({ s }: { s: S }) {
   return (
     <>
-      <h1 className="title">Sons et notifications</h1>
-      <Card title="Sons de l'interface">
-        <Toggle label="Activer les sons" checked={s.sounds.enabled} onChange={(v) => updateSettings("sounds", { enabled: v })} />
+      <h1 className="title">{t("Sons et notifications")}</h1>
+      <Card title={t("Sons de l'interface")}>
+        <Toggle label={t("Activer les sons")} checked={s.sounds.enabled} onChange={(v) => updateSettings("sounds", { enabled: v })} />
         <label className="setting-row">
-          <span className="grow">Volume des sons</span>
+          <span className="grow">{t("Volume des sons")}</span>
           <input
             type="range"
             min={0}
@@ -463,55 +463,55 @@ function Sounds({ s }: { s: S }) {
             disabled={!s.sounds.enabled}
             onChange={(e) => updateSettings("sounds", { volume: Number(e.target.value) })}
             onMouseUp={() => playSound("message")}
-            aria-label="Volume des sons"
+            aria-label={t("Volume des sons")}
           />
           <span className="value">{Math.round(s.sounds.volume * 100)} %</span>
         </label>
       </Card>
-      <Card title="Quand jouer un son">
+      <Card title={t("Quand jouer un son")}>
         <Toggle
-          label="Vocal"
-          hint="Rejoindre / quitter un salon, arrivées et départs, micro et son coupés."
+          label={t("Vocal")}
+          hint={t("Rejoindre / quitter un salon, arrivées et départs, micro et son coupés.")}
           checked={s.sounds.voice}
           onChange={(v) => updateSettings("sounds", { voice: v })}
         />
-        <Toggle label="Messages privés" hint="Nouveau message d'un ami." checked={s.sounds.messages} onChange={(v) => updateSettings("sounds", { messages: v })} />
-        <Toggle label="Appels" hint="Sonnerie d'appel entrant et fin d'appel." checked={s.sounds.calls} onChange={(v) => updateSettings("sounds", { calls: v })} />
+        <Toggle label={t("Messages privés")} hint={t("Nouveau message d'un ami.")} checked={s.sounds.messages} onChange={(v) => updateSettings("sounds", { messages: v })} />
+        <Toggle label={t("Appels")} hint={t("Sonnerie d'appel entrant et fin d'appel.")} checked={s.sounds.calls} onChange={(v) => updateSettings("sounds", { calls: v })} />
       </Card>
-      <Card title="Notifications du système">
+      <Card title={t("Notifications du système")}>
         <Toggle
-          label="Notifications quand tomo est en arrière-plan"
-          hint="Messages privés, demandes de message et d'ami, appels entrants. Rien quand tomo est au premier plan."
+          label={t("Notifications quand tomo est en arrière-plan")}
+          hint={t("Messages privés, demandes de message et d'ami, appels entrants. Rien quand tomo est au premier plan.")}
           checked={s.notifications.desktop}
           onChange={(v) => updateSettings("notifications", { desktop: v })}
         />
         <Toggle
-          label="Montrer le contenu du message"
-          hint="Sinon : seulement « Nouveau message », pratique en partage d'écran."
+          label={t("Montrer le contenu du message")}
+          hint={t("Sinon : seulement « Nouveau message », pratique en partage d'écran.")}
           checked={s.notifications.desktopPreview}
           onChange={(v) => updateSettings("notifications", { desktopPreview: v })}
         />
-        {!inTauri && <span className="hint">Disponible dans l'application de bureau.</span>}
+        {!inTauri && <span className="hint">{t("Disponible dans l'application de bureau.")}</span>}
       </Card>
-      <Card title="Heures calmes">
+      <Card title={t("Heures calmes")}>
         <Toggle
-          label="Couper sons et notifications sur un créneau"
-          hint="Comme « Ne pas déranger », mais tout seul chaque jour (le vocal n'est pas touché)."
+          label={t("Couper sons et notifications sur un créneau")}
+          hint={t("Comme « Ne pas déranger », mais tout seul chaque jour (le vocal n'est pas touché).")}
           checked={s.notifications.quietEnabled}
           onChange={(v) => updateSettings("notifications", { quietEnabled: v })}
         />
         <div className="row gap-12 wrap">
           <label className="field">
-            De
+            {t("De")}
             <input type="time" value={s.notifications.quietFrom} disabled={!s.notifications.quietEnabled} onChange={(e) => updateSettings("notifications", { quietFrom: e.target.value })} />
           </label>
           <label className="field">
-            À
+            {t("À")}
             <input type="time" value={s.notifications.quietTo} disabled={!s.notifications.quietEnabled} onChange={(e) => updateSettings("notifications", { quietTo: e.target.value })} />
           </label>
         </div>
       </Card>
-      <Card title="Écouter">
+      <Card title={t("Écouter")}>
         <div className="chips">
           {PREVIEWS.map(([name, label]) => (
             <button key={name} className="chip" onClick={() => playSound(name, true)}>
@@ -528,10 +528,25 @@ function Sounds({ s }: { s: S }) {
 function Appearance({ s }: { s: S }) {
   return (
     <>
-      <h1 className="title">Apparence</h1>
-      <Card title="Taille de l'interface">
+      <h1 className="title">{t("Apparence")}</h1>
+      <Card title={t("Langue")}>
         <label className="setting-row">
-          <span className="grow">Zoom</span>
+          <span className="grow col gap-2">
+            <span>{t("Langue de tomo")}</span>
+            <span className="hint">{t("tomo redémarre la fenêtre pour changer de langue.")}</span>
+          </span>
+          <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} aria-label={t("Langue de tomo")}>
+            {LANGS.map((l) => (
+              <option key={l.id} value={l.id}>
+                {l.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </Card>
+      <Card title={t("Taille de l'interface")}>
+        <label className="setting-row">
+          <span className="grow">{t("Zoom")}</span>
           <input
             type="range"
             min={0.8}
@@ -539,26 +554,26 @@ function Appearance({ s }: { s: S }) {
             step={0.05}
             value={s.appearance.zoom}
             onChange={(e) => updateSettings("appearance", { zoom: Number(e.target.value) })}
-            aria-label="Zoom de l'interface"
+            aria-label={t("Zoom de l'interface")}
           />
           <span className="value">{Math.round(s.appearance.zoom * 100)} %</span>
         </label>
         <div>
           <button className="btn small" onClick={() => updateSettings("appearance", { zoom: 1 })}>
-            Réinitialiser
+            {t("Réinitialiser")}
           </button>
         </div>
       </Card>
-      <Card title="Affichage">
+      <Card title={t("Affichage")}>
         <Toggle
-          label="Mode compact"
-          hint="Tuiles et listes plus serrées, pour voir plus de monde à l'écran."
+          label={t("Mode compact")}
+          hint={t("Tuiles et listes plus serrées, pour voir plus de monde à l'écran.")}
           checked={s.appearance.compact}
           onChange={(v) => updateSettings("appearance", { compact: v })}
         />
         <Toggle
-          label="Réduire les animations"
-          hint="Désactive les barres animées et les transitions."
+          label={t("Réduire les animations")}
+          hint={t("Désactive les barres animées et les transitions.")}
           checked={s.appearance.reducedMotion}
           onChange={(v) => updateSettings("appearance", { reducedMotion: v })}
         />
@@ -574,11 +589,11 @@ function Startup({ s }: { s: S }) {
   useEffect(() => void autostartEnabled().then(setAuto), []);
   return (
     <>
-      <h1 className="title">Démarrage</h1>
-      <Card title="Au démarrage de l'ordinateur">
+      <h1 className="title">{t("Démarrage")}</h1>
+      <Card title={t("Au démarrage de l'ordinateur")}>
         <Toggle
-          label="Lancer tomo avec Windows / macOS"
-          hint="tomo s'ouvre tout seul quand tu allumes ton PC : tes potes te voient en ligne."
+          label={t("Lancer tomo avec Windows / macOS")}
+          hint={t("tomo s'ouvre tout seul quand tu allumes ton PC : tes potes te voient en ligne.")}
           checked={!!auto}
           onChange={async (v) => {
             setError(undefined);
@@ -591,18 +606,13 @@ function Startup({ s }: { s: S }) {
           }}
         />
         <Toggle
-          label="Démarrer réduit"
-          hint="Quand tomo se lance avec l'ordinateur, la fenêtre reste dans la barre des tâches."
+          label={t("Démarrer réduit")}
+          hint={t("Quand tomo se lance avec l'ordinateur, la fenêtre reste dans la barre des tâches.")}
           checked={s.startup.minimized}
           onChange={(v) => updateSettings("startup", { minimized: v })}
         />
-        {!inTauri && <span className="hint">Disponible dans l'application de bureau.</span>}
+        {!inTauri && <span className="hint">{t("Disponible dans l'application de bureau.")}</span>}
         {error && <p className="error small">{error}</p>}
-      </Card>
-      <Card title="Mises à jour">
-        <span className="hint">
-          Pour l'instant, télécharge la nouvelle version sur la page « Releases » du projet. La mise à jour automatique arrive bientôt.
-        </span>
       </Card>
     </>
   );
@@ -623,17 +633,17 @@ const SHORTCUTS: [string, string][] = [
 function Shortcuts() {
   return (
     <>
-      <h1 className="title">Raccourcis clavier</h1>
-      <Card title="Dans l'application">
+      <h1 className="title">{t("Raccourcis clavier")}</h1>
+      <Card title={t("Dans l'application")}>
         <ul className="list">
           {SHORTCUTS.map(([k, d]) => (
             <li key={k}>
-              <span className="grow">{d}</span>
-              <kbd>{k}</kbd>
+              <span className="grow">{t(d)}</span>
+              <kbd>{t(k)}</kbd>
             </li>
           ))}
         </ul>
-        <span className="hint">Les raccourcis globaux (qui marchent pendant que tu joues, comme le push-to-talk) arrivent bientôt.</span>
+        <span className="hint">{t("Les raccourcis globaux (qui marchent pendant que tu joues, comme le push-to-talk) arrivent bientôt.")}</span>
       </Card>
     </>
   );
@@ -653,27 +663,27 @@ function Network({ api, realtime, voiceRoom }: { api: Api; realtime: Realtime | 
 
   return (
     <>
-      <h1 className="title">Réseau</h1>
-      <Card title="Connexion">
+      <h1 className="title">{t("Réseau")}</h1>
+      <Card title={t("Connexion")}>
         <ul className="list">
           <li>
-            <span className="grow">Instance tomo</span>
+            <span className="grow">{t("Instance tomo")}</span>
             <span className="muted">{api.baseUrl.replace(/^https?:\/\//, "")}</span>
           </li>
           <li>
-            <span className="grow">Temps réel (messages, appels)</span>
-            <span className={connected ? "ok" : "warning"}>{connected ? "connecté" : "reconnexion…"}</span>
+            <span className="grow">{t("Temps réel (messages, appels)")}</span>
+            <span className={connected ? "ok" : "warning"}>{connected ? t("connecté") : "reconnexion…"}</span>
           </li>
           <li>
-            <span className="grow">Ping de l'API</span>
+            <span className="grow">{t("Ping de l'API")}</span>
             <span className={ping === null ? "muted" : ping < 100 ? "ok" : ping < 250 ? "warning" : "error"}>{ping === null ? "—" : `${ping} ms`}</span>
           </li>
           <li>
-            <span className="grow">Vocal</span>
-            {voiceRoom ? <NetworkBadge room={voiceRoom} showLabel /> : <span className="muted">pas en vocal</span>}
+            <span className="grow">{t("Vocal")}</span>
+            {voiceRoom ? <NetworkBadge room={voiceRoom} showLabel /> : <span className="muted">{t("pas en vocal")}</span>}
           </li>
         </ul>
-        <span className="hint">Moins de 80 ms : excellent pour jouer. Au-delà de 200 ms, un léger décalage dans les conversations est possible.</span>
+        <span className="hint">{t("Moins de 80 ms : excellent pour jouer. Au-delà de 200 ms, un léger décalage dans les conversations est possible.")}</span>
       </Card>
     </>
   );
@@ -685,62 +695,62 @@ function About({ s }: { s: S }) {
   const desktop = inTauri;
   return (
     <>
-      <h1 className="title">À propos</h1>
-      <Card title="Mises à jour">
+      <h1 className="title">{t("À propos")}</h1>
+      <Card title={t("Mises à jour")}>
         <div className="setting-row">
           <span className="grow col gap-2">
-            <span>tomo {APP_VERSION}</span>
+            <span>{t("tomo")} {APP_VERSION}</span>
             <span className="muted small">
               {!desktop
-                ? "Version navigateur : toujours à jour."
+                ? t("Version navigateur : toujours à jour.")
                 : up.kind === "checking"
-                  ? "Recherche en cours…"
+                  ? t("Recherche en cours…")
                   : up.kind === "none"
-                    ? "Tu as la dernière version."
+                    ? t("Tu as la dernière version.")
                     : up.kind === "downloading"
-                      ? `Téléchargement de tomo ${up.version}… ${Math.round(up.progress * 100)} %`
+                      ? t("Téléchargement de tomo {0}… {1} %", { 0: up.version, 1: Math.round(up.progress * 100) })
                       : up.kind === "ready"
-                        ? `tomo ${up.version} est prête : redémarre pour l'installer.`
+                        ? t("tomo {0} est prête : redémarre pour l'installer.", { 0: up.version })
                         : up.kind === "error"
                           ? up.message
-                          : "tomo vérifie tout seul au démarrage puis toutes les 6 heures."}
+                          : t("tomo vérifie tout seul au démarrage puis toutes les 6 heures.")}
             </span>
           </span>
           {desktop &&
             (up.kind === "ready" ? (
               <button className="btn primary small" onClick={() => void restartNow()}>
-                Redémarrer
+                {t("Redémarrer")}
               </button>
             ) : (
               <button className="btn small" disabled={up.kind === "checking" || up.kind === "downloading"} onClick={() => void checkForUpdate(true)}>
-                Rechercher
+                {t("Rechercher")}
               </button>
             ))}
         </div>
         <Toggle
-          label="Mettre à jour automatiquement"
-          hint="La nouvelle version se télécharge en arrière-plan, puis tomo te propose de redémarrer pour l'installer. Jamais pendant un vocal."
+          label={t("Mettre à jour automatiquement")}
+          hint={t("La nouvelle version se télécharge en arrière-plan, puis tomo te propose de redémarrer pour l'installer. Jamais pendant un vocal.")}
           checked={s.updates.auto}
           onChange={(v) => updateSettings("updates", { auto: v })}
         />
       </Card>
-      <Card title="tomo">
-        <p className="text">Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, open source (licence MIT).</p>
+      <Card title={t("tomo")}>
+        <p className="text">{t("Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, open source (licence MIT).")}</p>
         <ul className="list">
           <li>
-            <span className="grow">Version</span>
+            <span className="grow">{t("Version")}</span>
             <span className="muted">{APP_VERSION}</span>
           </li>
           <li>
-            <span className="grow">Télécharger l'installateur</span>
+            <span className="grow">{t("Télécharger l'installateur")}</span>
             <a href="https://github.com/kameronramah/tomo/releases/latest" target="_blank" rel="noreferrer">
-              Dernière version (Windows, Mac)
+              {t("Dernière version (Windows, Mac)")}
             </a>
           </li>
           <li>
-            <span className="grow">Code source</span>
+            <span className="grow">{t("Code source")}</span>
             <a href="https://github.com/kameronramah/tomo" target="_blank" rel="noreferrer">
-              github.com/kameronramah/tomo
+              {t("github.com/kameronramah/tomo")}
             </a>
           </li>
         </ul>
@@ -755,14 +765,13 @@ function Spatial({ s }: { s: S }) {
   useEffect(() => onGameLink(setGame), []);
   return (
     <>
-      <h1 className="title">Audio spatial</h1>
+      <h1 className="title">{t("Audio spatial")}</h1>
       <p className="muted text">
-        Quand un salon a l'audio spatial activé, chaque voix vient de la direction de la personne et baisse avec la distance. Un casque
-        est fortement conseillé.
+        {t("Quand un salon a l'audio spatial activé, chaque voix vient de la direction de la personne et baisse avec la distance. Un casque est fortement conseillé.")}
       </p>
-      <Card title="Portée">
+      <Card title={t("Portée")}>
         <label className="setting-row">
-          <span className="grow">Distance maximale d'écoute</span>
+          <span className="grow">{t("Distance maximale d'écoute")}</span>
           <input
             type="range"
             min={8}
@@ -770,31 +779,29 @@ function Spatial({ s }: { s: S }) {
             step={1}
             value={s.spatial.range}
             onChange={(e) => updateSettings("spatial", { range: Number(e.target.value) })}
-            aria-label="Portée d'écoute en mètres"
+            aria-label={t("Portée d'écoute en mètres")}
           />
-          <span className="value">{s.spatial.range} m</span>
+          <span className="value">{s.spatial.range} {t("m")}</span>
         </label>
         <Toggle
-          label="Afficher la carte du salon"
-          hint="Sinon, les tuiles habituelles restent affichées (avec la distance de chacun)."
+          label={t("Afficher la carte du salon")}
+          hint={t("Sinon, les tuiles habituelles restent affichées (avec la distance de chacun).")}
           checked={s.spatial.showMap}
           onChange={(v) => updateSettings("spatial", { showMap: v })}
         />
       </Card>
-      <Card title="Position dans le jeu (Mumble Link)">
+      <Card title={t("Position dans le jeu (Mumble Link)")}>
         {!gameLinkSupported ? (
-          <p className="muted">Disponible dans l'application de bureau.</p>
+          <p className="muted">{t("Disponible dans l'application de bureau.")}</p>
         ) : game ? (
           <p className="ok">
-            Jeu détecté : <strong>{game.game || "jeu compatible"}</strong> — ta position en jeu est utilisée automatiquement.
+            {t("Jeu détecté :")} <strong>{game.game || t("jeu compatible")}</strong> {t("— ta position en jeu est utilisée automatiquement.")}
           </p>
         ) : (
-          <p className="muted">Aucun jeu compatible détecté pour l'instant. Sans jeu, la carte du salon est utilisée.</p>
+          <p className="muted">{t("Aucun jeu compatible détecté pour l'instant. Sans jeu, la carte du salon est utilisée.")}</p>
         )}
         <span className="hint">
-          Compatibles : Minecraft (avec un mod « MumbleLink »), Guild Wars 2, Arma 3, Star Citizen, et tous les jeux ou mods qui
-          prennent en charge Mumble Link. Pour que deux joueurs s'entendent en 3D, ils doivent être dans le même jeu et sur le même
-          serveur de jeu.
+          {t("Compatibles : Minecraft (avec un mod « MumbleLink »), Guild Wars 2, Arma 3, Star Citizen, et tous les jeux ou mods qui prennent en charge Mumble Link. Pour que deux joueurs s'entendent en 3D, ils doivent être dans le même jeu et sur le même serveur de jeu.")}
         </span>
       </Card>
     </>
@@ -819,18 +826,18 @@ function Clips({ s }: { s: S }) {
 
   return (
     <>
-      <h1 className="title">Clips</h1>
-      <Card title={`Garder les ${s.clips.seconds} dernières secondes`}>
+      <h1 className="title">{t("Clips")}</h1>
+      <Card title={t("Garder les {0} dernières secondes", { 0: s.clips.seconds })}>
         <Toggle
-          label="Activer les clips"
-          hint={`tomo garde en mémoire les ${s.clips.seconds} dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C.`}
+          label={t("Activer les clips")}
+          hint={t("tomo garde en mémoire les {0} dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C.", { 0: s.clips.seconds })}
           checked={s.clips.enabled}
           onChange={(v) => updateSettings("clips", { enabled: v })}
         />
         <label className="setting-row">
           <span className="col gap-2 grow">
-            <span>Durée du clip</span>
-            <span className="hint">Plus long = un peu plus de mémoire utilisée (2 min ≈ 46 Mo).</span>
+            <span>{t("Durée du clip")}</span>
+            <span className="hint">{t("Plus long = un peu plus de mémoire utilisée (2 min ≈ 46 Mo).")}</span>
           </span>
           <select value={s.clips.seconds} onChange={(e) => updateSettings("clips", { seconds: Number(e.target.value) as 30 | 60 | 120 })}>
             {CLIP_CHOICES.map((x) => (
@@ -841,22 +848,21 @@ function Clips({ s }: { s: S }) {
           </select>
         </label>
         <span className="hint">
-          Par respect pour tes potes, une petite icône ⏪ s'affiche sur ta tuile tant que les clips sont activés. Les clips restent
-          sur ton PC (dossier Musique\tomo Clips).
+          {t("Par respect pour tes potes, une petite icône ⏪ s'affiche sur ta tuile tant que les clips sont activés. Les clips restent sur ton PC (dossier Musique\\tomo Clips).")}
         </span>
       </Card>
-      <Card title={`Mes clips · ${clips.length}`}>
+      <Card title={t("Mes clips · {0}", { 0: clips.length })}>
         {!clipsSupported ? (
-          <p className="muted">Dans le navigateur, les clips sont téléchargés directement. La liste est disponible dans l'application de bureau.</p>
+          <p className="muted">{t("Dans le navigateur, les clips sont téléchargés directement. La liste est disponible dans l'application de bureau.")}</p>
         ) : clips.length === 0 ? (
-          <p className="muted">Aucun clip pour l'instant. En vocal, clique sur « Clip » dans le dock.</p>
+          <p className="muted">{t("Aucun clip pour l'instant. En vocal, clique sur « Clip » dans le dock.")}</p>
         ) : (
           <ul className="list">
             {clips.map((c) => (
               <li key={c.name}>
                 <button
                   className="icon-btn round"
-                  aria-label={`Écouter ${c.name}`}
+                  aria-label={t("Écouter {0}", { 0: c.name })}
                   onClick={async () => {
                     try {
                       setPlaying({ name: c.name, url: await clipUrl(c.name) });
@@ -869,12 +875,12 @@ function Clips({ s }: { s: S }) {
                 </button>
                 <span className="grow col gap-2">
                   <span className="ellipsis">{c.name.replace(/\.wav$/, "")}</span>
-                  <span className="muted small">{(c.size / 1024 / 1024).toFixed(1)} Mo</span>
+                  <span className="muted small">{(c.size / 1024 / 1024).toFixed(1)} {t("Mo")}</span>
                 </span>
                 <button
                   className="icon-btn danger"
-                  aria-label={`Supprimer ${c.name}`}
-                  title="Supprimer"
+                  aria-label={t("Supprimer {0}", { 0: c.name })}
+                  title={t("Supprimer")}
                   onClick={() => deleteClip(c.name).then(reload).catch((e) => setError(errorMessage(e)))}
                 >
                   <Icon name="trash" size={16} />
@@ -893,7 +899,7 @@ function Clips({ s }: { s: S }) {
         {clipsSupported && (
           <div>
             <button className="btn" onClick={() => openClipsFolder().catch((e) => setError(errorMessage(e)))}>
-              Ouvrir le dossier des clips
+              {t("Ouvrir le dossier des clips")}
             </button>
           </div>
         )}
@@ -905,40 +911,37 @@ function Clips({ s }: { s: S }) {
 function ScreenSettings({ s }: { s: S }) {
   return (
     <>
-      <h1 className="title">Partage d'écran</h1>
+      <h1 className="title">{t("Partage d'écran")}</h1>
       <p className="muted text">
-        Clique sur l'icône d'écran dans le dock d'un salon vocal pour partager un écran ou une fenêtre. Ces choix sont proposés par
-        défaut.
+        {t("Clique sur l'icône d'écran dans le dock d'un salon vocal pour partager un écran ou une fenêtre. Ces choix sont proposés par défaut.")}
       </p>
-      <Card title="Qualité par défaut">
+      <Card title={t("Qualité par défaut")}>
         {SCREEN_PRESETS.map((p) => (
           <label key={p.id} className={`share-option${s.screen.preset === p.id ? " on" : ""}`}>
             <input type="radio" name="default-preset" checked={s.screen.preset === p.id} onChange={() => updateSettings("screen", { preset: p.id })} />
             <span className="col gap-2 grow">
               <strong>{p.label}</strong>
               <span className="muted small">
-                {p.detail} · environ {Math.round(p.bitrate / 1_000_000)} Mbit/s · {p.codec === "h264" ? "H.264 (carte graphique)" : "VP9 (plus net)"}
+                {p.detail} {t("· environ")} {Math.round(p.bitrate / 1_000_000)} {t("Mbit/s ·")} {p.codec === "h264" ? t("H.264 (carte graphique)") : t("VP9 (plus net)")}
               </span>
             </span>
           </label>
         ))}
         <span className="hint">
-          « Jeu fluide » utilise l'encodage matériel de ta carte graphique : ton processeur reste libre pour jouer. Les potes avec
-          une connexion plus faible reçoivent automatiquement une version allégée.
+          {t("« Jeu fluide » utilise l'encodage matériel de ta carte graphique : ton processeur reste libre pour jouer. Les potes avec une connexion plus faible reçoivent automatiquement une version allégée.")}
         </span>
       </Card>
-      <Card title="Son">
+      <Card title={t("Son")}>
         <Toggle
-          label="Partager aussi le son du PC"
-          hint="Le son du jeu ou de la vidéo est envoyé avec l'image (écran entier). Tes potes peuvent régler son volume à part."
+          label={t("Partager aussi le son du PC")}
+          hint={t("Le son du jeu ou de la vidéo est envoyé avec l'image (écran entier). Tes potes peuvent régler son volume à part.")}
           checked={s.screen.audio}
           onChange={(v) => updateSettings("screen", { audio: v })}
         />
       </Card>
-      <Card title="Bon à savoir">
+      <Card title={t("Bon à savoir")}>
         <span className="hint">
-          Chaque spectateur reçoit le flux depuis le serveur : en « Maximum » (4K), compte jusqu'à 16 Mbit/s en envoi pour toi, et
-          autant par spectateur côté serveur. Vérifie la bande passante du VPS avant de partager en 4K à plusieurs.
+          {t("Chaque spectateur reçoit le flux depuis le serveur : en « Maximum » (4K), compte jusqu'à 16 Mbit/s en envoi pour toi, et autant par spectateur côté serveur. Vérifie la bande passante du VPS avant de partager en 4K à plusieurs.")}
         </span>
       </Card>
     </>

@@ -19,6 +19,7 @@ import {
   type ScreenShareCaptureOptions,
   type TrackPublishOptions,
 } from "livekit-client";
+import { t } from "./i18n";
 
 export type ScreenPresetId = "game" | "sharp" | "max" | "eco";
 
@@ -35,10 +36,10 @@ export type ScreenPreset = {
 };
 
 export const SCREEN_PRESETS: ScreenPreset[] = [
-  { id: "game", label: "Jeu fluide", detail: "1080p · 60 i/s", width: 1920, height: 1080, fps: 60, bitrate: 8_000_000, codec: "h264", hint: "motion" },
-  { id: "sharp", label: "Netteté", detail: "1440p · 30 i/s · texte, code", width: 2560, height: 1440, fps: 30, bitrate: 9_000_000, codec: "vp9", hint: "detail" },
+  { id: "game", label: t("Jeu fluide"), detail: t("1080p · 60 i/s"), width: 1920, height: 1080, fps: 60, bitrate: 8_000_000, codec: "h264", hint: "motion" },
+  { id: "sharp", label: t("Netteté"), detail: t("1440p · 30 i/s · texte, code"), width: 2560, height: 1440, fps: 30, bitrate: 9_000_000, codec: "vp9", hint: "detail" },
   { id: "max", label: "Maximum", detail: "4K · 30 i/s · grosse connexion", width: 3840, height: 2160, fps: 30, bitrate: 16_000_000, codec: "vp9", hint: "detail" },
-  { id: "eco", label: "Économie", detail: "720p · 30 i/s · petite connexion", width: 1280, height: 720, fps: 30, bitrate: 2_500_000, codec: "h264", hint: "motion" },
+  { id: "eco", label: t("Économie"), detail: t("720p · 30 i/s · petite connexion"), width: 1280, height: 720, fps: 30, bitrate: 2_500_000, codec: "h264", hint: "motion" },
 ];
 
 export const presetById = (id: string) => SCREEN_PRESETS.find((p) => p.id === id) ?? SCREEN_PRESETS[0];
@@ -102,7 +103,7 @@ export function listShares(room: Room): Share[] {
 export function screenShareError(err: unknown): string | null {
   const name = (err as { name?: string })?.name;
   if (name === "NotAllowedError" || name === "AbortError") return null; // l'utilisateur a annulé la fenêtre de choix
-  if (name === "NotSupportedError") return "Le partage d'écran n'est pas pris en charge ici.";
-  if (name === "NotReadableError") return "Impossible de capturer cet écran (protégé ou indisponible).";
-  return "Le partage d'écran n'a pas pu démarrer.";
+  if (name === "NotSupportedError") return t("Le partage d'écran n'est pas pris en charge ici.");
+  if (name === "NotReadableError") return t("Impossible de capturer cet écran (protégé ou indisponible).");
+  return t("Le partage d'écran n'a pas pu démarrer.");
 }

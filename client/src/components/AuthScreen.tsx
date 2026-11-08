@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import type { Api, Session } from "../lib/api";
 import { errorMessage } from "../lib/ui";
 import { Icon, Logo, Wordmark } from "./Brand";
+import { t } from "../lib/i18n";
+import { APP_VERSION } from "../lib/updater";
 
 type Mode = "login" | "register" | "guest";
 
@@ -82,30 +84,30 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
         </div>
 
         <div className="col gap-28">
-          <h1 className="display">Le vocal pensé pour jouer entre potes.</h1>
+          <h1 className="display">{t("Le vocal pensé pour jouer entre potes.")}</h1>
           <ul className="feature-list">
             <li>
               <span className="feature-icon teal">
                 <Icon name="orbit" />
               </span>
-              Audio spatial, activable en un clic
+              {t("Audio spatial, activable en un clic")}
             </li>
             <li>
               <span className="feature-icon amber">
                 <Icon name="rewind" />
               </span>
-              Garde les dernières secondes du salon en un raccourci
+              {t("Garde les dernières secondes du salon en un raccourci")}
             </li>
             <li>
               <span className="feature-icon">
                 <Icon name="lock" />
               </span>
-              Auto-hébergé, gratuit, tes données restent chez vous
+              {t("Auto-hébergé, gratuit, tes données restent chez vous")}
             </li>
           </ul>
         </div>
 
-        <span className="muted small">tomo v0.6 · open source</span>
+        <span className="muted small">tomo {APP_VERSION} · open source</span>
       </section>
 
       <section className="auth-form-wrap">
@@ -116,14 +118,14 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
           </div>
           <div className="col gap-6">
             <h2 className="title">
-              {mode === "login" ? "Content de te revoir" : mode === "register" ? "Créer un compte" : "Entrer comme invité"}
+              {mode === "login" ? t("Content de te revoir") : mode === "register" ? t("Créer un compte") : t("Entrer comme invité")}
             </h2>
             <span className="muted">
               {mode === "login"
-                ? "Connecte-toi pour retrouver tes serveurs."
+                ? t("Connecte-toi pour retrouver tes serveurs.")
                 : mode === "register"
-                  ? "Ensuite, crée ton serveur ou rejoins celui de tes potes."
-                  : "Un ami t'a donné un code invité ? Entre sans compte, le temps d'une soirée."}
+                  ? t("Ensuite, crée ton serveur ou rejoins celui de tes potes.")
+                  : t("Un ami t'a donné un code invité ? Entre sans compte, le temps d'une soirée.")}
             </span>
           </div>
 
@@ -131,11 +133,11 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
 
           {mode === "guest" && (
             <label className="field">
-              Code invité
+              {t("Code invité")}
               <input
                 value={code}
                 onChange={(e) => setCode(e.target.value.toUpperCase())}
-                placeholder="ABCD-EFGH"
+                placeholder={t("ABCD-EFGH")}
                 className="code-input"
                 required
                 autoFocus
@@ -144,7 +146,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
           )}
 
           <label className="field">
-            Pseudo
+            {t("Pseudo")}
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
@@ -154,12 +156,12 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
               required
               autoFocus={mode !== "guest"}
             />
-            {mode !== "login" && <span className="hint">3 à 32 caractères, visible par tes potes</span>}
+            {mode !== "login" && <span className="hint">{t("3 à 32 caractères, visible par tes potes")}</span>}
           </label>
 
           {mode !== "guest" && (
             <label className="field">
-              Mot de passe
+              {t("Mot de passe")}
               <span className="input-with-action">
                 <input
                   type={showPw ? "text" : "password"}
@@ -173,7 +175,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
                   type="button"
                   className="icon-btn"
                   onClick={() => setShowPw(!showPw)}
-                  aria-label={showPw ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                  aria-label={showPw ? t("Masquer le mot de passe") : t("Afficher le mot de passe")}
                 >
                   <Icon name={showPw ? "eyeOff" : "eye"} />
                 </button>
@@ -186,8 +188,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
                     ))}
                   </span>
                   <span className="hint">
-                    <strong className={score >= 2 ? "teal" : "amber"}>{STRENGTH_LABEL[score]}</strong> · {PASSWORD_MIN} caractères
-                    minimum, une phrase marche très bien
+                    <strong className={score >= 2 ? "teal" : "amber"}>{STRENGTH_LABEL[score]}</strong> · {PASSWORD_MIN} {t("caractères minimum, une phrase marche très bien")}
                   </span>
                 </>
               )}
@@ -196,7 +197,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
 
           {mode === "register" && (
             <label className="field">
-              Confirmer le mot de passe
+              {t("Confirmer le mot de passe")}
               <input
                 type={showPw ? "text" : "password"}
                 value={confirm}
@@ -210,7 +211,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
           {mode !== "guest" && (
             <label className="check">
               <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-              Rester connecté sur cet appareil
+              {t("Rester connecté sur cet appareil")}
             </label>
           )}
 
@@ -222,37 +223,37 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
 
           <button type="submit" className="btn primary lg" disabled={busy}>
             {busy
-              ? "Un instant…"
+              ? t("Un instant…")
               : mode === "login"
-                ? "Se connecter"
+                ? t("Se connecter")
                 : mode === "register"
-                  ? "Créer mon compte"
-                  : "Rejoindre la soirée"}
+                  ? t("Créer mon compte")
+                  : t("Rejoindre la soirée")}
           </button>
 
-          <div className="divider">ou</div>
+          <div className="divider">{t("ou")}</div>
 
           {mode === "login" ? (
             <div className="col gap-10">
               {registration === "open" && (
                 <button type="button" className="btn outline lg" onClick={() => switchMode("register")}>
-                  Créer un compte
+                  {t("Créer un compte")}
                 </button>
               )}
               <button type="button" className="btn ghost" onClick={() => switchMode("guest")}>
-                J'ai un code invité
+                {t("J'ai un code invité")}
               </button>
             </div>
           ) : (
             <button type="button" className="btn outline lg" onClick={() => switchMode("login")}>
-              J'ai déjà un compte
+              {t("J'ai déjà un compte")}
             </button>
           )}
 
           <div className="instance">
             {editInstance ? (
               <span className="row gap-8">
-                <input value={instance} onChange={(e) => setInstance(e.target.value)} aria-label="Adresse de l'instance tomo" />
+                <input value={instance} onChange={(e) => setInstance(e.target.value)} aria-label={t("Adresse de l'instance tomo")} />
                 <button
                   type="button"
                   className="btn small"
@@ -261,15 +262,15 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
                     setEditInstance(false);
                   }}
                 >
-                  OK
+                  {t("OK")}
                 </button>
               </span>
             ) : (
               <span className="row gap-8 muted small">
                 <Icon name="lock" size={14} />
-                Instance : {api.baseUrl.replace(/^https?:\/\//, "")}
+                {t("Instance :")} {api.baseUrl.replace(/^https?:\/\//, "")}
                 <button type="button" className="link" onClick={() => setEditInstance(true)}>
-                  modifier
+                  {t("modifier")}
                 </button>
               </span>
             )}
