@@ -10,6 +10,8 @@ import Stage from "./components/Stage";
 import { ServerHome, Welcome } from "./components/Home";
 import { ConfirmDialog, InviteDialog, ManageServerDialog, PromptDialog } from "./components/Dialogs";
 import { Logo } from "./components/Brand";
+import DevPanel from "./components/DevPanel";
+import { removeAllBots, setLoopback } from "./lib/dev";
 import "./App.css";
 
 type Voice = {
@@ -50,6 +52,7 @@ export default function App() {
   const [joiningRoomId, setJoiningRoomId] = useState<string>();
 
   const [dialog, setDialog] = useState<Dialog | null>(null);
+  const [devOpen, setDevOpen] = useState(false);
   const [toast, setToast] = useState<string>();
   const voiceRef = useRef<Voice | null>(null);
   voiceRef.current = voice;
@@ -66,6 +69,9 @@ export default function App() {
     const v = voiceRef.current;
     setVoice(null);
     await v?.room.disconnect();
+    await removeAllBots();
+    await setLoopback(false);
+    setDevOpen(false);
     setSession(null);
     setServers([]);
     setDetail(null);
@@ -190,6 +196,7 @@ export default function App() {
         const previous = voice.room;
         setVoice(null);
         await previous.disconnect();
+        await removeAllBots();
       }
       const joined = await joinRoom(api, room.id, { micEnabled: micOn && !deafened });
       applyDeafen(joined.room, deafened);
@@ -214,6 +221,7 @@ export default function App() {
     const v = voice;
     setVoice(null);
     await v?.room.disconnect();
+    await removeAllBots();
     loadDetail();
   }
 
@@ -316,6 +324,7 @@ export default function App() {
         onLeaveVoice={leaveVoice}
         onLogout={logout}
         onLogoutAll={logoutAll}
+        onOpenDev={session.kind === "user" && session.user.isDev ? () => setDevOpen(!devOpen) : undefined}
       />
 
       <main className="content">
@@ -358,6 +367,22 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {devOpen && session.kind === "user" && session.user.isDev && (
+        <DevPanel
+          api={api}
+          user={session.user}
+          room={voice?.room ?? null}
+          roomId={voice?.roomId}
+          roomLabel={voice?.roomLabel}
+          server={active}
+          onChanged={() => {
+            loadServers();
+            loadDetail();
+          }}
+          onClose={() => setDevOpen(false)}
+        />
+      )}
 
       {toast && (
         <div className="toast" role="alert" onClick={() => setToast(undefined)}>

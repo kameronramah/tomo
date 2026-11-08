@@ -132,6 +132,7 @@ export default function Stage(props: Props) {
           const label = p.name || p.identity;
           const muted = !p.isMicrophoneEnabled;
           const guest = p.identity.startsWith("g:");
+          const bot = p.identity.startsWith("bot:");
           return (
             <div key={p.identity} className={`tile${p.isSpeaking ? " speaking" : ""}`}>
               {muted && (
@@ -140,6 +141,7 @@ export default function Stage(props: Props) {
                 </span>
               )}
               {guest && !muted && <span className="tile-badge">Invité</span>}
+              {bot && !muted && <span className="tile-badge">Bot de test</span>}
               <Avatar name={label} size={92} speaking={p.isSpeaking} className="big" />
               <span className="tile-name">
                 {label}

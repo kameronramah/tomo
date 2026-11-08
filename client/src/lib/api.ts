@@ -4,7 +4,16 @@ import { secretDelete, secretGet, secretSet } from "./secure";
 // Types renvoyés par l'API
 // ---------------------------------------------------------------------------
 export type Role = "owner" | "admin" | "member" | "guest";
-export type User = { id: string; username: string };
+export type User = { id: string; username: string; isDev?: boolean };
+export type DevStats = {
+  users: number;
+  fakeMembers: number;
+  servers: number;
+  rooms: number;
+  sessions: number;
+  activeInvites: number;
+  registration: string;
+};
 export type Guest = { id: string; name: string; expiresAt: number; server: { id: string; name: string } };
 export type Session = { kind: "user"; user: User } | { kind: "guest"; guest: Guest };
 
@@ -184,4 +193,24 @@ export class Api {
   revokeInvite = (code: string) => this.request("DELETE", `/invites/${encodeURIComponent(code)}`);
   acceptInvite = (code: string) =>
     this.request<ServerSummary>("POST", `/invites/${encodeURIComponent(code.trim().toUpperCase())}/accept`, {});
+
+  // ---- Outils de test (compte de test, serveur en mode dev uniquement) ----
+  devBotToken = (roomId: string, name: string) =>
+    this.request<{ url: string; token: string; identity: string }>("POST", "/dev/bot-token", { roomId, name });
+  devFakeMembers = (serverId: string, count: number) =>
+    this.request<{ created: string[] }>("POST", `/dev/servers/${serverId}/fake-members`, { count });
+  devDeleteFakeMembers = () => this.request<{ deleted: number }>("DELETE", "/dev/fake-members");
+  devStats = () => this.request<DevStats>("GET", "/dev/stats");
+
+  /** Rend le jeton d'accès invalide : la prochaine requête doit renouveler la session toute seule. */
+  debugBreakAccessToken() {
+    this.access = "jeton.volontairement.invalide";
+  }
+  /** Simule une session perdue (révoquée côté serveur). */
+  debugLoseSession() {
+    this.onSessionLost?.();
+  }
+  get debugInfo() {
+    return { instance: this.baseUrl, remember: this.remember, hasRefresh: !!this.refresh };
+  }
 }

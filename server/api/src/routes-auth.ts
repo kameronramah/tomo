@@ -22,10 +22,13 @@ import {
 const SESSION_DAYS = 30;
 const GUEST_MAX_HOURS = 12;
 
-type UserRow = { id: string; username: string; password_hash: string };
+type UserRow = { id: string; username: string; password_hash: string; is_dev: number };
+
+/** Le compte a-t-il les outils de test ? (uniquement si le serveur est en mode dev) */
+export const devFlag = (isDev: number | undefined) => config.devTools && isDev === 1;
 
 /** Ouvre une session : jeton d'accès court + jeton de renouvellement (stocké haché). */
-async function openSession(user: { id: string; username: string }, userAgent?: string) {
+async function openSession(user: { id: string; username: string; isDev: boolean }, userAgent?: string) {
   const { token, hash } = newRefreshToken();
   const now = Date.now();
   db.prepare(
@@ -34,7 +37,7 @@ async function openSession(user: { id: string; username: string }, userAgent?: s
   return {
     accessToken: await signAccessToken(user),
     refreshToken: token,
-    user: { id: user.id, username: user.username },
+    user: { id: user.id, username: user.username, isDev: user.isDev },
   };
 }
 
@@ -62,7 +65,7 @@ export default async function authRoutes(app: FastifyInstance) {
     const exists = db.prepare("SELECT 1 FROM users WHERE username = ?").get(username);
     if (exists) return reply.code(409).send({ error: "Ce pseudo est déjà pris." });
 
-    const user = { id: randomUUID(), username };
+    const user = { id: randomUUID(), username, isDev: false };
     const passwordHash = await hashPassword(req.body!.password as string);
     try {
       db.prepare("INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)").run(
@@ -89,7 +92,7 @@ export default async function authRoutes(app: FastifyInstance) {
         .send({ error: `Trop d'essais. Réessaie dans ${Math.ceil(locked / 60000)} min.` });
     }
 
-    const row = db.prepare("SELECT id, username, password_hash FROM users WHERE username = ?").get(username) as
+    const row = db.prepare("SELECT id, username, password_hash, is_dev FROM users WHERE username = ?").get(username) as
       | UserRow
       | undefined;
     // On vérifie toujours un hash (même factice) pour ne pas révéler si le pseudo existe.
@@ -99,7 +102,7 @@ export default async function authRoutes(app: FastifyInstance) {
       return reply.code(401).send(generic);
     }
     clearLoginFailures(username);
-    return openSession(row, req.headers["user-agent"]);
+    return openSession({ id: row.id, username: row.username, isDev: devFlag(row.is_dev) }, req.headers["user-agent"]);
   });
 
   /** Échange un jeton de renouvellement contre une nouvelle paire (rotation : l'ancien ne marche plus). */
@@ -108,9 +111,11 @@ export default async function authRoutes(app: FastifyInstance) {
     if (typeof token !== "string") return reply.code(400).send({ error: "Jeton manquant." });
     const session = db
       .prepare(
-        "SELECT s.id, s.expires_at, u.id AS user_id, u.username FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?",
+        "SELECT s.id, s.expires_at, u.id AS user_id, u.username, u.is_dev FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?",
       )
-      .get(sha256(token)) as { id: string; expires_at: number; user_id: string; username: string } | undefined;
+      .get(sha256(token)) as
+      | { id: string; expires_at: number; user_id: string; username: string; is_dev: number }
+      | undefined;
     if (!session || session.expires_at < Date.now()) {
       if (session) db.prepare("DELETE FROM sessions WHERE id = ?").run(session.id);
       return reply.code(401).send({ error: "Session expirée, reconnecte-toi.", code: "unauthorized" });
@@ -121,7 +126,7 @@ export default async function authRoutes(app: FastifyInstance) {
       Date.now() + SESSION_DAYS * 86400_000,
       session.id,
     );
-    const user = { id: session.user_id, username: session.username };
+    const user = { id: session.user_id, username: session.username, isDev: devFlag(session.is_dev) };
     return { accessToken: await signAccessToken(user), refreshToken: next.token, user };
   });
 
@@ -142,7 +147,8 @@ export default async function authRoutes(app: FastifyInstance) {
   app.get("/me", async (req, reply) => {
     const me = await requireUser(req, reply);
     if (!me) return;
-    return { id: me.id, username: me.name };
+    const row = db.prepare("SELECT is_dev FROM users WHERE id = ?").get(me.id) as { is_dev: number } | undefined;
+    return { id: me.id, username: me.name, isDev: devFlag(row?.is_dev) };
   });
 
   // -------------------------------------------------------------------------

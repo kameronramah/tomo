@@ -35,6 +35,8 @@ type Props = {
   onLeaveVoice: () => void;
   onLogout: () => void;
   onLogoutAll: () => void;
+  /** Compte de test : ouvre le panneau « Outils de test ». */
+  onOpenDev?: () => void;
 };
 
 export default function Sidebar(props: Props) {
@@ -273,6 +275,11 @@ export default function Sidebar(props: Props) {
                 : "En ligne"}
             </span>
           </span>
+          {props.onOpenDev && (
+            <button className="icon-btn dev-btn" onClick={props.onOpenDev} aria-label="Outils de test" title="Outils de test">
+              <Icon name="flask" />
+            </button>
+          )}
           <button className="icon-btn" onClick={() => setProfileOpen(!profileOpen)} aria-label="Mon compte" aria-expanded={profileOpen}>
             <Icon name="more" />
           </button>

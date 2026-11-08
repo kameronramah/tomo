@@ -65,6 +65,18 @@ CREATE TABLE IF NOT EXISTS invites (
 );
 `);
 
+// Migrations : colonnes ajoutées après coup (ignorées si elles existent déjà).
+for (const sql of [
+  "ALTER TABLE users ADD COLUMN is_dev INTEGER NOT NULL DEFAULT 0", // compte de test avec outils
+  "ALTER TABLE users ADD COLUMN is_test INTEGER NOT NULL DEFAULT 0", // faux membre généré
+]) {
+  try {
+    db.exec(sql);
+  } catch {
+    // colonne déjà présente
+  }
+}
+
 export type Role = "owner" | "admin" | "member";
 
 /** Exécute fn dans une transaction (tout ou rien). */

@@ -35,6 +35,22 @@ winget install Microsoft.VisualStudio.2022.BuildTools --override "--wait --passi
 
 > Astuce : `npm run dev` lance seulement la partie web sur http://localhost:1420. Chaque onglet a sa propre session : pratique pour simuler plusieurs joueurs.
 
+### Compte de test et outils de test
+
+Le serveur de dev crée automatiquement un **compte de test** : son pseudo et son mot de passe sont `DEV_USERNAME` / `DEV_PASSWORD` dans [`server/docker-compose.dev.yml`](../server/docker-compose.dev.yml). Connecté avec ce compte, une icône 🧪 en bas à gauche ouvre le panneau **Outils de test** :
+
+| Outil | À quoi ça sert |
+|---|---|
+| Infos | instance, identité LiveKit, état et qualité de connexion, ping, version de LiveKit |
+| Faux joueurs (+1 / +3 bots) | remplir un salon quand on teste seul ; ils « parlent » (bip doux) pour tester l'indicateur et les volumes |
+| Retour micro | s'entendre soi-même pour régler son micro |
+| Coupure courte / reconnexion complète | vérifier que l'appli se reconnecte toute seule |
+| Jeton expiré / session perdue | vérifier le renouvellement automatique de session et le retour à l'écran de connexion |
+| Faux membres | remplir la liste des membres d'un serveur (et les supprimer d'un clic) |
+| Journal | les événements du salon en direct |
+
+**Sécurité :** ces outils n'existent que si l'API tourne avec `DEV_TOOLS=1` (serveur de dev). En production (`docker-compose.yml`), les routes `/dev` n'existent pas et le compte de test n'est pas créé. **Ne mets jamais `DEV_TOOLS` dans le `.env` du VPS.**
+
 L'adresse de l'instance par défaut peut être fixée à la compilation : `VITE_TOMO_INSTANCE=https://tomo-api.duckdns.org npm run tauri build`.
 
 ## Construire l'exécutable

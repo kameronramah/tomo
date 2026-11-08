@@ -23,6 +23,14 @@ app.get("/health", async () => ({ ok: true }));
 await app.register(authRoutes);
 await app.register(serverRoutes);
 
+// Outils de test : uniquement si DEV_TOOLS=1 (serveur de dev). Absents en production.
+if (config.devTools) {
+  const { default: devRoutes, seedDevUser } = await import("./routes-dev.js");
+  await app.register(devRoutes);
+  await seedDevUser((msg) => app.log.warn(msg));
+  app.log.warn("MODE DEV : outils de test actifs. Ne jamais activer DEV_TOOLS en production.");
+}
+
 app.listen({ port: config.port, host: "0.0.0.0" }).catch((err) => {
   app.log.error(err);
   process.exit(1);
