@@ -10,8 +10,12 @@ import { getSettings, loadDevices, onSettingsChange, saveDevices, updateSettings
 import { getRecorder, getSpatial, onExtrasChange, setParticipantVolume, volumeMemory } from "../lib/voice";
 import { Avatar, Icon, NetworkBadge, SpeakingBars } from "./Brand";
 import MapView from "./MapView";
+import ScreenView from "./ScreenView";
+import { SCREEN_PRESETS, listShares, screenShareError, startScreenShare, stopScreenShare, type ScreenPresetId } from "../lib/screen";
 
 const REFRESH_EVENTS = [
+  RoomEvent.TrackPublished,
+  RoomEvent.TrackUnpublished,
   RoomEvent.ParticipantConnected,
   RoomEvent.ParticipantDisconnected,
   RoomEvent.ActiveSpeakersChanged,
@@ -50,7 +54,44 @@ type Props = {
   onToggleChat?: () => void;
   /** Enregistrer les 60 dernières secondes. */
   onClip?: () => void;
+  /** Message à afficher (ex. erreur de partage d'écran). */
+  onNotice?: (text: string) => void;
 };
+
+/** Choix de la qualité avant de partager son écran. */
+function ShareMenu({
+  initialPreset,
+  initialAudio,
+  onStart,
+}: {
+  initialPreset: ScreenPresetId;
+  initialAudio: boolean;
+  onStart: (preset: ScreenPresetId, audio: boolean) => void;
+}) {
+  const [preset, setPreset] = useState<ScreenPresetId>(initialPreset);
+  const [audio, setAudio] = useState(initialAudio);
+  return (
+    <div className="popover share-menu" role="dialog" aria-label="Partager mon écran">
+      <span className="section-title">Qualité du partage</span>
+      {SCREEN_PRESETS.map((p) => (
+        <label key={p.id} className={`share-option${preset === p.id ? " on" : ""}`}>
+          <input type="radio" name="screen-preset" checked={preset === p.id} onChange={() => setPreset(p.id)} />
+          <span className="col gap-2 grow">
+            <strong>{p.label}</strong>
+            <span className="muted small">{p.detail}</span>
+          </span>
+        </label>
+      ))}
+      <label className="check small share-audio">
+        <input type="checkbox" checked={audio} onChange={(e) => setAudio(e.target.checked)} />
+        Partager aussi le son du PC (jeu, vidéo…)
+      </label>
+      <button className="btn primary" onClick={() => onStart(preset, audio)}>
+        <Icon name="screenShare" size={16} /> Choisir l'écran à partager
+      </button>
+    </div>
+  );
+}
 
 export default function Stage(props: Props) {
   const { room } = props;
@@ -59,6 +100,28 @@ export default function Stage(props: Props) {
   const [inputs, setInputs] = useState<MediaDeviceInfo[]>([]);
   const [outputs, setOutputs] = useState<MediaDeviceInfo[]>([]);
   const [deviceError, setDeviceError] = useState<string>();
+  const [shareOpen, setShareOpen] = useState(false);
+  const [shareBusy, setShareBusy] = useState(false);
+
+  async function startShare(preset: ScreenPresetId, audio: boolean) {
+    setShareOpen(false);
+    updateSettings("screen", { preset, audio });
+    setShareBusy(true);
+    try {
+      await startScreenShare(room, preset, audio);
+    } catch (err) {
+      const msg = screenShareError(err);
+      if (msg) props.onNotice?.(msg);
+    } finally {
+      setShareBusy(false);
+      refresh();
+    }
+  }
+
+  async function stopShare() {
+    await stopScreenShare(room).catch(() => {});
+    refresh();
+  }
 
   useEffect(() => {
     REFRESH_EVENTS.forEach((ev) => room.on(ev, refresh));
@@ -95,6 +158,9 @@ export default function Stage(props: Props) {
   const engine = getSpatial();
   const showMap = props.spatial && !props.isCall && !!engine && getSettings().spatial.showMap;
   const clipsReady = !!getRecorder();
+  const shares = listShares(room);
+  const sharing = me.isScreenShareEnabled;
+  const screenPrefs = getSettings().screen;
 
   return (
     <section className={`stage${props.chatOpen && props.chat ? " with-chat" : ""}`}>
@@ -145,7 +211,9 @@ export default function Stage(props: Props) {
 
       {props.warning && <p className="warning banner">{props.warning}</p>}
 
-      {showMap && engine ? (
+      {shares.length > 0 ? (
+        <ScreenView room={room} shares={shares} onStopMine={stopShare} />
+      ) : showMap && engine ? (
         <MapView room={room} engine={engine} />
       ) : (
       <div className="tiles">
@@ -169,6 +237,11 @@ export default function Stage(props: Props) {
               )}
               {guest && !muted && <span className="tile-badge">Invité</span>}
               {bot && !muted && <span className="tile-badge">Bot de test</span>}
+              {p.isScreenShareEnabled && (
+                <span className="tile-share" title="Partage son écran">
+                  <Icon name="screenShare" size={13} /> En direct
+                </span>
+              )}
               {p.attributes?.clips === "1" && (
                 <span className="tile-clip" title="Clips activés : cette personne peut enregistrer les 60 dernières secondes">
                   <Icon name="rewind" size={12} label="Clips activés" />
@@ -237,6 +310,28 @@ export default function Stage(props: Props) {
             </span>
             <span className="dock-label">Clip 60 s</span>
           </button>
+          <div className="relative">
+            <button
+              className={`dock-btn${sharing ? " live" : ""}`}
+              onClick={() => (sharing ? stopShare() : setShareOpen(!shareOpen))}
+              disabled={shareBusy}
+              aria-label={sharing ? "Arrêter le partage d'écran" : "Partager mon écran"}
+              title={sharing ? "Arrêter le partage d'écran" : "Partager mon écran"}
+              aria-expanded={shareOpen}
+            >
+              <Icon name="screenShare" size={22} />
+            </button>
+            {shareOpen && (
+              <>
+                <div className="click-away" onClick={() => setShareOpen(false)} />
+                <ShareMenu
+                  initialPreset={screenPrefs.preset}
+                  initialAudio={screenPrefs.audio}
+                  onStart={startShare}
+                />
+              </>
+            )}
+          </div>
           <div className="relative">
             <button
               className="dock-btn"

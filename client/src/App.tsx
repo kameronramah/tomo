@@ -660,6 +660,7 @@ export default function App() {
         onInvite={openInvite}
         onLeave={leaveVoice}
         onClip={takeClip}
+        onNotice={(text) => setToast({ text })}
         chatOpen={chatOpen}
         onToggleChat={() => setChatOpen(!chatOpen)}
         chatUnread={voice.kind === "room" ? unread[`room:${voice.roomId}`] : undefined}

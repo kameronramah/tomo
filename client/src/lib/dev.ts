@@ -77,6 +77,68 @@ export async function addBot(api: Api, roomId: string) {
   notify();
 }
 
+/**
+ * Un bot partage un « faux écran » : animation 1080p à 60 i/s (blocs qui bougent,
+ * compteur, petit texte) pour tester l'affichage, la netteté et la fluidité des partages.
+ */
+export async function addScreenBot(api: Api, roomId: string) {
+  const name = "Bot Écran";
+  const { url, token } = await api.devBotToken(roomId, name);
+  const room = new Room();
+  await room.connect(url, token, { autoSubscribe: false });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1920;
+  canvas.height = 1080;
+  const g = canvas.getContext("2d")!;
+  let frame = 0;
+  const start = performance.now();
+  const draw = () => {
+    const t = (performance.now() - start) / 1000;
+    frame++;
+    g.fillStyle = "#0e1014";
+    g.fillRect(0, 0, 1920, 1080);
+    // Grille
+    g.strokeStyle = "#1c2029";
+    for (let x = 0; x < 1920; x += 80) g.strokeRect(x, 0, 80, 1080);
+    for (let y = 0; y < 1080; y += 80) g.strokeRect(0, y, 1920, 80);
+    // Blocs en mouvement (fluidité)
+    const colors = ["#2dd4bf", "#ffb020", "#a78bfa", "#60a5fa", "#f472b6"];
+    colors.forEach((c, i) => {
+      g.fillStyle = c;
+      const x = 960 + Math.cos(t * (0.8 + i * 0.3) + i) * (300 + i * 90) - 60;
+      const y = 540 + Math.sin(t * (1.1 + i * 0.25) + i) * (220 + i * 40) - 60;
+      g.fillRect(x, y, 120, 120);
+    });
+    // Barre qui balaie l'écran (saccades visibles)
+    g.fillStyle = "#ffffff";
+    g.fillRect(((t * 600) % 2000) - 40, 0, 8, 1080);
+    // Textes (netteté)
+    g.fillStyle = "#eceef3";
+    g.font = "bold 64px Inter, sans-serif";
+    g.fillText("Tomo · partage de test", 80, 130);
+    g.font = "28px Inter, sans-serif";
+    g.fillText(`Image n° ${frame} · ${t.toFixed(2)} s · 1920 × 1080 · 60 i/s visés`, 80, 190);
+    g.font = "14px Consolas, monospace";
+    g.fillStyle = "#9aa1b2";
+    for (let i = 0; i < 6; i++) g.fillText("Petit texte pour juger la netteté : 0123456789 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ", 80, 960 + i * 18);
+  };
+  draw();
+  const timer = window.setInterval(draw, 1000 / 60);
+  const track = canvas.captureStream(60).getVideoTracks()[0];
+  await room.localParticipant.publishTrack(track, {
+    source: Track.Source.ScreenShare,
+    name: "bot-screen",
+    videoCodec: "h264",
+    screenShareEncoding: { maxBitrate: 8_000_000, maxFramerate: 60 },
+  });
+
+  // Rangé avec les autres bots (retiré par « Tout retirer »)
+  const ctx = new AudioContext();
+  bots.push({ name, room, ctx, gain: ctx.createGain(), timer: 0, talking: false, walk: timer });
+  notify();
+}
+
 export async function removeAllBots() {
   const all = bots.splice(0, bots.length);
   await Promise.all(

@@ -54,6 +54,7 @@ export type Settings = {
   notifications: { dmSound: boolean; mentionsOnly: boolean };
   clips: { enabled: boolean };
   spatial: { range: number; showMap: boolean };
+  screen: { preset: "game" | "sharp" | "max" | "eco"; audio: boolean };
 };
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -63,6 +64,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifications: { dmSound: true, mentionsOnly: false },
   clips: { enabled: true },
   spatial: { range: 25, showMap: true },
+  screen: { preset: "game", audio: true },
 };
 
 const SETTINGS_KEY = "tomo.settings";
@@ -75,6 +77,7 @@ let current: Settings = (() => {
     notifications: { ...DEFAULT_SETTINGS.notifications, ...saved.notifications },
     clips: { ...DEFAULT_SETTINGS.clips, ...saved.clips },
     spatial: { ...DEFAULT_SETTINGS.spatial, ...saved.spatial },
+    screen: { ...DEFAULT_SETTINGS.screen, ...saved.screen },
   };
 })();
 const settingsListeners = new Set<(s: Settings) => void>();

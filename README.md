@@ -9,7 +9,9 @@ Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout 
 
 ---
 
-## ✨ Ce qui marche déjà (v0.4)
+## ✨ Ce qui marche déjà (v0.5)
+
+- **Partage d'écran haute qualité** : jusqu'à 1080p 60 i/s (jeux) ou 4K (texte, détails), son du PC, plein écran, versions allégées automatiques pour les petites connexions.
 
 - **Audio spatial** : carte du salon où chacun déplace son avatar, voix en 3D selon la distance et la direction, et **position lue directement dans le jeu** (Mumble Link : Minecraft avec mod, Guild Wars 2, Arma…).
 - **Clip des 60 dernières secondes** : un clic ou Ctrl+Maj+C, le fichier arrive dans Musique\Tomo Clips.

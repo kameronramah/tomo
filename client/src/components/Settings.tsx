@@ -9,14 +9,16 @@ import { Avatar, Icon, NetworkBadge, type IconName } from "./Brand";
 import { MicTester } from "./Home";
 import { CLIP_SECONDS, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
 import { gameLinkSupported, onGameLink, type GameLink } from "../lib/gameLink";
+import { SCREEN_PRESETS } from "../lib/screen";
 
-type Section = "account" | "audio" | "spatial" | "clips" | "sounds" | "appearance" | "shortcuts" | "network" | "about";
+type Section = "account" | "audio" | "spatial" | "clips" | "screen" | "sounds" | "appearance" | "shortcuts" | "network" | "about";
 
 const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
   { id: "account", label: "Mon compte", icon: "user" },
   { id: "audio", label: "Audio et micro", icon: "mic" },
   { id: "spatial", label: "Audio spatial", icon: "orbit" },
   { id: "clips", label: "Clips", icon: "rewind" },
+  { id: "screen", label: "Partage d'écran", icon: "screenShare" },
   { id: "sounds", label: "Sons et notifications", icon: "bell" },
   { id: "appearance", label: "Apparence", icon: "monitor" },
   { id: "shortcuts", label: "Raccourcis clavier", icon: "keyboard" },
@@ -98,6 +100,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           {section === "audio" && <Audio s={s} />}
           {section === "spatial" && <Spatial s={s} />}
           {section === "clips" && <Clips s={s} />}
+          {section === "screen" && <ScreenSettings s={s} />}
           {section === "sounds" && <Sounds s={s} />}
           {section === "appearance" && <Appearance s={s} />}
           {section === "shortcuts" && <Shortcuts />}
@@ -470,7 +473,7 @@ function About() {
         <ul className="list">
           <li>
             <span className="grow">Version</span>
-            <span className="muted">0.4.0</span>
+            <span className="muted">0.5.0</span>
           </li>
           <li>
             <span className="grow">Code source</span>
@@ -619,6 +622,49 @@ function Clips({ s }: { s: S }) {
             </button>
           </div>
         )}
+      </Card>
+    </>
+  );
+}
+// ---------------------------------------------------------------------------
+function ScreenSettings({ s }: { s: S }) {
+  return (
+    <>
+      <h1 className="title">Partage d'écran</h1>
+      <p className="muted text">
+        Clique sur l'icône d'écran dans le dock d'un salon vocal pour partager un écran ou une fenêtre. Ces choix sont proposés par
+        défaut.
+      </p>
+      <Card title="Qualité par défaut">
+        {SCREEN_PRESETS.map((p) => (
+          <label key={p.id} className={`share-option${s.screen.preset === p.id ? " on" : ""}`}>
+            <input type="radio" name="default-preset" checked={s.screen.preset === p.id} onChange={() => updateSettings("screen", { preset: p.id })} />
+            <span className="col gap-2 grow">
+              <strong>{p.label}</strong>
+              <span className="muted small">
+                {p.detail} · environ {Math.round(p.bitrate / 1_000_000)} Mbit/s · {p.codec === "h264" ? "H.264 (carte graphique)" : "VP9 (plus net)"}
+              </span>
+            </span>
+          </label>
+        ))}
+        <span className="hint">
+          « Jeu fluide » utilise l'encodage matériel de ta carte graphique : ton processeur reste libre pour jouer. Les potes avec
+          une connexion plus faible reçoivent automatiquement une version allégée.
+        </span>
+      </Card>
+      <Card title="Son">
+        <Toggle
+          label="Partager aussi le son du PC"
+          hint="Le son du jeu ou de la vidéo est envoyé avec l'image (écran entier). Tes potes peuvent régler son volume à part."
+          checked={s.screen.audio}
+          onChange={(v) => updateSettings("screen", { audio: v })}
+        />
+      </Card>
+      <Card title="Bon à savoir">
+        <span className="hint">
+          Chaque spectateur reçoit le flux depuis le serveur : en « Maximum » (4K), compte jusqu'à 16 Mbit/s en envoi pour toi, et
+          autant par spectateur côté serveur. Vérifie la bande passante du VPS avant de partager en 4K à plusieurs.
+        </span>
       </Card>
     </>
   );

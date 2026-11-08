@@ -45,11 +45,13 @@ export class SpatialEngine {
     private ctx: AudioContext,
   ) {
     const onSub = (track: RemoteTrack, _pub: unknown, p: RemoteParticipant) => {
-      if (track.kind !== Track.Kind.Audio) return;
+      // Seule la voix (micro) est spatialisée ; le son d'un partage d'écran reste normal.
+      if (track.kind !== Track.Kind.Audio || track.source !== Track.Source.Microphone) return;
       this.tracks.set(p.identity, track as RemoteAudioTrack);
       this.applyPlugins(p.identity);
     };
-    const onUnsub = (_t: RemoteTrack, _pub: unknown, p: RemoteParticipant) => {
+    const onUnsub = (t: RemoteTrack, _pub: unknown, p: RemoteParticipant) => {
+      if (t.source !== Track.Source.Microphone) return;
       this.tracks.delete(p.identity);
       this.panners.delete(p.identity);
     };
@@ -94,7 +96,7 @@ export class SpatialEngine {
     // Pistes déjà présentes
     room.remoteParticipants.forEach((p) =>
       p.audioTrackPublications.forEach((pub) => {
-        if (pub.track) this.tracks.set(p.identity, pub.track as RemoteAudioTrack);
+        if (pub.track && pub.source === Track.Source.Microphone) this.tracks.set(p.identity, pub.track as RemoteAudioTrack);
       }),
     );
   }

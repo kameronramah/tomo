@@ -73,7 +73,8 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [ ] **Mur des légendes** : épingler des clips et des citations
 - [ ] **Défis et paris amicaux** avec points virtuels et classement
 - [ ] **Stats de jeu** via les APIs gratuites Steam et Riot
-- [ ] **Partage d'écran** + **annotation** en direct (mode coach)
+- [x] **Partage d'écran haute qualité** : profils Jeu fluide (1080p 60), Netteté (1440p), Maximum (4K), Économie (720p), H.264 matériel ou VP9, son du PC, versions allégées automatiques pour les petites connexions, plein écran, plusieurs partages en même temps
+- [ ] **Annotation** en direct sur un partage (mode coach)
 
 ## V4 — Accessibilité et langues
 > Exécuté en local, donc gratuit, mais gourmand : tout est désactivable.
@@ -109,6 +110,10 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Clips : choisir la durée (30 s / 60 s / 2 min) et le format (.ogg plus léger)
 - [ ] Clips : les partager directement dans un salon textuel ou un message privé
 - [ ] Carte spatiale : se déplacer aussi aux flèches du clavier
+- [ ] Partage d'écran : choisir la qualité reçue (auto / max) et la garder en mémoire
+- [ ] Partage d'écran : changer de profil sans arrêter le partage
+- [ ] Partage d'écran : vignette « en direct » dans la liste des salons
+- [ ] Partage d'écran : tester AV1 (encore plus efficace) quand les cartes graphiques le permettent
 - [ ] Carte spatiale : montrer qui parle avec une onde autour de l'avatar
 
 ### Messagerie et appels

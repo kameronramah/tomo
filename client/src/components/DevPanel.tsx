@@ -2,7 +2,7 @@ import { useEffect, useReducer, useState } from "react";
 import { RoomEvent, type Room } from "livekit-client";
 import type { Api, DevStats, ServerSummary, User } from "../lib/api";
 import { loadDevices } from "../lib/prefs";
-import { addBot, botCount, botsChatty, loopbackOn, onBotsChange, removeAllBots, setBotsChatty, setLoopback } from "../lib/dev";
+import { addBot, addScreenBot, botCount, botsChatty, loopbackOn, onBotsChange, removeAllBots, setBotsChatty, setLoopback } from "../lib/dev";
 import { errorMessage } from "../lib/ui";
 import { Icon } from "./Brand";
 
@@ -154,6 +154,13 @@ export default function DevPanel({ api, user, room, roomId, roomLabel, server, o
             }
           >
             +3 bots
+          </button>
+          <button
+            className="btn small"
+            disabled={!inVoice || !!busy}
+            onClick={() => run("bot écran", () => addScreenBot(api, roomId!), "un bot partage un faux écran (1080p 60 i/s)")}
+          >
+            Bot qui partage un écran
           </button>
           <button className="btn small" disabled={botCount() === 0 || !!busy} onClick={() => run("retirer les bots", removeAllBots, "bots retirés")}>
             Tout retirer

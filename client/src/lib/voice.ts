@@ -12,9 +12,18 @@ let activeRoom: Room | null = null;
 
 const volumeKey = (p: RemoteParticipant) => p.name || p.identity;
 
+/** Volume du son des partages d'écran, par personne. */
+export const screenVolumeMemory = new Map<string, number>();
+
 function applyVolume(p: RemoteParticipant) {
   const master = getSettings().audio.outputVolume;
   p.setVolume(deafened ? 0 : (volumeMemory.get(volumeKey(p)) ?? 1) * master);
+  p.setVolume(deafened ? 0 : (screenVolumeMemory.get(volumeKey(p)) ?? 1) * master, Track.Source.ScreenShareAudio);
+}
+
+export function setScreenVolume(p: RemoteParticipant, v: number) {
+  screenVolumeMemory.set(volumeKey(p), v);
+  applyVolume(p);
 }
 
 // Le volume général (Paramètres) s'applique tout de suite.
