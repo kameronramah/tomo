@@ -40,7 +40,11 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 > Objectif : utilisable tous les soirs par le groupe.
 
 - [x] Changer son mot de passe, voir ses appareils connectés
-- [ ] Changer son pseudo, photo de profil
+- [ ] **Profils** (maquettes faites) : photo, bannière, petite phrase, couleur, nom affiché ; fiche profil des autres (jeu en cours, serveurs en commun, volume, message, appel, bloquer)
+- [ ] **Statuts** (maquettes faites) : en ligne / inactif (auto après 10 min) / ne pas déranger / invisible + statut personnalisé avec durée
+- [ ] **Membres du serveur** (maquettes faites) : liste à droite par statut (en vocal, en ligne, hors ligne), recherche, rôles
+- [ ] **Messages hors amis** (maquettes faites) : Paramètres > Confidentialité (amis / + membres de mes serveurs / tout le monde), « Demandes de message » à accepter, blocage
+- [ ] **Nouveaux réglages proposés** : Jeux, Notifications, Démarrage et mises à jour (voir la liste dans la conversation du 8 novembre 2026)
 - [x] **Pièces jointes** : images (aperçu + agrandissement), fichiers (25 Mo max), glisser-déposer, coller une image, **messages vocaux** (2 min max, onde)
 - [x] **GIF** : recherche intégrée via Klipy (Tenor a fermé son API en juin 2026), clé `KLIPY_API_KEY` sur le serveur
 - [x] **Installateurs** Windows (.exe / .msi) et Mac (.dmg universel) fabriqués par GitHub Actions à chaque tag `v*`
@@ -100,7 +104,6 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Pastille de non-lus par serveur dans le sélecteur et l'accès rapide
 - [ ] Indicateur « X est en train d'écrire… »
 - [ ] Recherche dans les messages
-- [ ] Statuts : en ligne / absent / ne pas déranger (lié au mode focus)
 - [ ] Mettre à jour les maquettes « Connexion » et « Créer un compte » (elles montrent encore l'ancien parcours)
 
 ### Raccourcis
@@ -139,7 +142,7 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 
 ### Projet
 - [ ] Transformer les scripts de test PowerShell en vraie suite de tests (Vitest) lancée par GitHub Actions
-- [ ] Construire l'installateur Windows automatiquement à chaque version (GitHub Actions + Releases)
+- [x] Construire les installateurs automatiquement à chaque version (GitHub Actions + Releases, Windows + Mac)
 
 ---
 
