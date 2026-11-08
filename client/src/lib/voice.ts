@@ -6,6 +6,7 @@ import { ClipRecorder } from "./clips";
 import { VoiceLeveler } from "./leveler";
 import { onGameLink } from "./gameLink";
 import { currentGame, gamePrefs } from "./games";
+import { publishMyLang } from "./captions";
 import { applyMicProcessing, watchMicProcessing } from "./denoise";
 import { t } from "./i18n";
 
@@ -194,6 +195,7 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
 
   await room.connect(url, token);
   activeRoom = room;
+  publishMyLang(room); // pour les sous-titres des autres (langue de transcription)
   await startExtras(room, ctx);
 
   let warning: string | undefined;

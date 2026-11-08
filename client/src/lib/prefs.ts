@@ -80,6 +80,17 @@ export type Settings = {
   startup: { minimized: boolean };
   /** Mise à jour automatique (téléchargée en arrière-plan, installée au redémarrage) */
   updates: { auto: boolean };
+  /** Sous-titres : modèle Whisper (plus gros = plus juste mais plus lent), traduction vers ma langue */
+  captions: { model: string; translate: boolean };
+  /** Overlay en jeu : quand l'afficher, où, et quoi */
+  overlay: {
+    mode: "game" | "always" | "off";
+    corner: "tl" | "tr" | "bl" | "br";
+    opacity: number;
+    voices: boolean;
+    chat: boolean;
+    captions: boolean;
+  };
   /**
    * Jeux : detect (lire la liste des programmes), propose (proposer de rejoindre les potes),
    * perGame (réglages par jeu), custom (jeux ajoutés à la main), seen (jeux déjà détectés)
@@ -106,6 +117,8 @@ export const DEFAULT_SETTINGS: Settings = {
   clips: { enabled: true, seconds: 60 },
   startup: { minimized: true },
   updates: { auto: true },
+  captions: { model: "onnx-community/whisper-base", translate: true },
+  overlay: { mode: "game", corner: "tl", opacity: 0.9, voices: true, chat: true, captions: true },
   games: { detect: true, propose: true, perGame: {}, custom: [], seen: [] },
   spatial: { range: 25, showMap: true },
   screen: { preset: "game", audio: true },
@@ -130,6 +143,8 @@ let current: Settings = (() => {
     startup: { ...DEFAULT_SETTINGS.startup, ...saved.startup },
     updates: { ...DEFAULT_SETTINGS.updates, ...saved.updates },
     games: { ...DEFAULT_SETTINGS.games, ...saved.games },
+    captions: { ...DEFAULT_SETTINGS.captions, ...saved.captions },
+    overlay: { ...DEFAULT_SETTINGS.overlay, ...saved.overlay },
   };
 })();
 const settingsListeners = new Set<(s: Settings) => void>();

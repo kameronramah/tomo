@@ -822,6 +822,29 @@ export const EN: Record<string, string> = {
   "Steam ne répond pas pour l'instant.": "Steam isn't responding right now.",
   "Riot ne répond pas (clé expirée ?).": "Riot isn't responding (expired key?).",
 
+  // ---- Sous-titres ----
+  "(traduit)": "(translated)",
+  "≈ 250 Mo · plus juste, demande une bonne carte graphique": "≈ 250 MB · more accurate, needs a good graphics card",
+  "≈ 40 Mo · le plus réactif, un peu moins juste": "≈ 40 MB · fastest, a bit less accurate",
+  "≈ 80 Mo · bon compromis": "≈ 80 MB · good balance",
+  "Bouton « Sous-titres » en haut d'une pièce vocale. La reconnaissance (Whisper) et la traduction (Opus-MT) tournent sur ton PC : le modèle est téléchargé une seule fois, rien d'autre ne sort.":
+    "“Captions” button at the top of a voice room. Recognition (Whisper) and translation (Opus-MT) run on your PC: the model downloads once, nothing else leaves.",
+  "Calculé sur ton PC : rien n'est envoyé ailleurs.": "Computed on your PC: nothing is sent anywhere.",
+  "Enregistrer la transcription": "Save the transcript",
+  "Équilibré (recommandé)": "Balanced (recommended)",
+  "Les phrases de tes potes s'afficheront ici.": "Your friends' sentences will show here.",
+  "Précis": "Accurate",
+  "Préparation des sous-titres… {0} % (une seule fois, le modèle est gardé ensuite)": "Preparing captions… {0} % (only once, the model is kept afterwards)",
+  "Quand un pote parle une autre langue que toi (français ou anglais pour l'instant).": "When a friend speaks another language than you (French or English for now).",
+  "Rapide": "Fast",
+  "Sous-titres activés chez cette personne": "Captions on for this person",
+  "Sous-titres en direct": "Live captions",
+  "Sous-titres en direct, calculés sur ton PC": "Live captions, computed on your PC",
+  "Sous-titres indisponibles sur ce PC.": "Captions unavailable on this PC.",
+  "Sous-titres": "Captions",
+  "Traduire dans ma langue": "Translate into my language",
+  "Traduire": "Translate",
+
   // ---- Mode coach ----
   "Annotations fermées par celui qui partage": "Annotations closed by the sharer",
   "Annotations ouvertes": "Annotations open",

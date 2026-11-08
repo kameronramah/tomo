@@ -383,7 +383,40 @@ function Audio({ s }: { s: S }) {
           {t("La suppression de bruit et la porte s'appliquent tout de suite, même en vocal. L'écho et le volume du micro, à la prochaine connexion.")}
         </span>
       </Card>
+      <CaptionsSettings s={s} />
     </>
+  );
+}
+
+const CAPTION_MODELS = [
+  { id: "onnx-community/whisper-tiny", label: t("Rapide"), detail: t("≈ 40 Mo · le plus réactif, un peu moins juste") },
+  { id: "onnx-community/whisper-base", label: t("Équilibré (recommandé)"), detail: t("≈ 80 Mo · bon compromis") },
+  { id: "onnx-community/whisper-small", label: t("Précis"), detail: t("≈ 250 Mo · plus juste, demande une bonne carte graphique") },
+];
+
+/** Paramètres des sous-titres (dans Audio et micro). */
+function CaptionsSettings({ s }: { s: S }) {
+  return (
+    <Card title={t("Sous-titres en direct")}>
+      <span className="hint">
+        {t("Bouton « Sous-titres » en haut d'une pièce vocale. La reconnaissance (Whisper) et la traduction (Opus-MT) tournent sur ton PC : le modèle est téléchargé une seule fois, rien d'autre ne sort.")}
+      </span>
+      {CAPTION_MODELS.map((m) => (
+        <label key={m.id} className={`share-option${s.captions.model === m.id ? " on" : ""}`}>
+          <input type="radio" name="captions-model" checked={s.captions.model === m.id} onChange={() => updateSettings("captions", { model: m.id })} />
+          <span className="col gap-2 grow">
+            <strong>{m.label}</strong>
+            <span className="muted small">{m.detail}</span>
+          </span>
+        </label>
+      ))}
+      <Toggle
+        label={t("Traduire dans ma langue")}
+        hint={t("Quand un pote parle une autre langue que toi (français ou anglais pour l'instant).")}
+        checked={s.captions.translate}
+        onChange={(v) => updateSettings("captions", { translate: v })}
+      />
+    </Card>
   );
 }
 

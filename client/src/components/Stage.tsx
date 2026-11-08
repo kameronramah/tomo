@@ -14,6 +14,8 @@ import MapView from "./MapView";
 import ScreenView from "./ScreenView";
 import { SCREEN_PRESETS, listShares, screenShareError, startScreenShare, stopScreenShare, type ScreenPresetId } from "../lib/screen";
 import { t } from "../lib/i18n";
+import { getCaptions, onCaptions, startCaptions, stopCaptions } from "../lib/captions";
+import CaptionsBar from "./CaptionsBar";
 
 const REFRESH_EVENTS = [
   RoomEvent.TrackPublished,
@@ -160,6 +162,11 @@ export default function Stage(props: Props) {
     refresh();
   }
 
+  // Sous-titres : actifs tant qu'on reste dans cette pièce
+  const [captionsOn, setCaptionsOn] = useState(!!getCaptions());
+  useEffect(() => onCaptions(() => setCaptionsOn(!!getCaptions())), []);
+  useEffect(() => () => stopCaptions(), [room]);
+
   const speaking = useSpeaking(room);
   const me = room.localParticipant;
   const participants: Participant[] = [me, ...room.remoteParticipants.values()];
@@ -216,6 +223,15 @@ export default function Stage(props: Props) {
             </span>
           </button>
           )}
+          <button
+            className={`btn pill${captionsOn ? " active" : ""}`}
+            onClick={() => (captionsOn ? stopCaptions() : startCaptions(room))}
+            aria-pressed={captionsOn}
+            aria-label={t("Sous-titres")}
+            title={t("Sous-titres en direct, calculés sur ton PC")}
+          >
+            <Icon name="captions" size={16} /> <span className="pill-label">{t("Sous-titres")}</span>
+          </button>
           {props.canInvite && (
             <button className="btn pill" onClick={props.onInvite} aria-label={t("Inviter")}>
               <Icon name="userPlus" size={16} /> <span className="pill-label">{t("Inviter")}</span>
@@ -256,6 +272,11 @@ export default function Stage(props: Props) {
               {p.isScreenShareEnabled && (
                 <span className="tile-share" title={t("Partage son écran")}>
                   <Icon name="screenShare" size={13} /> {t("En direct")}
+                </span>
+              )}
+              {p.attributes?.cc === "1" && (
+                <span className="tile-cc" title={t("Sous-titres activés chez cette personne")}>
+                  CC
                 </span>
               )}
               {p.attributes?.clips === "1" && (
@@ -301,6 +322,8 @@ export default function Stage(props: Props) {
         })}
       </div>
       )}
+
+      <CaptionsBar />
 
       {/* ---- Dock ---- */}
       <div className="dock-wrap">
