@@ -8,7 +8,7 @@ import {
 } from "livekit-client";
 import { getSettings, loadDevices, onSettingsChange, saveDevices, updateSettings } from "../lib/prefs";
 import { getRecorder, getSpatial, onExtrasChange, setParticipantVolume, volumeMemory } from "../lib/voice";
-import { Avatar, Icon, NetworkBadge, SpeakingBars } from "./Brand";
+import { Icon, NetworkBadge, SpeakingBars, UserAvatar } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
 import MapView from "./MapView";
 import ScreenView from "./ScreenView";
@@ -47,6 +47,8 @@ type Props = {
   onLeave: () => void;
   /** Revenir à l'accueil du serveur (sans quitter le vocal). */
   onBack?: () => void;
+  /** Clic sur une bulle : fiche profil de la personne */
+  onOpenProfile?: (userId: string) => void;
   /** Appel privé : pas d'audio spatial ni d'invitation. */
   isCall?: boolean;
   /** Chat du salon (affiché à droite quand il est ouvert). */
@@ -254,14 +256,21 @@ export default function Stage(props: Props) {
                 </span>
               )}
               {p.attributes?.clips === "1" && (
-                <span className="tile-clip" title="Clips activés : cette personne peut enregistrer les 60 dernières secondes">
+                <span className="tile-clip" title="Clips activés : cette personne peut enregistrer les dernières secondes du salon">
                   <Icon name="rewind" size={12} label="Clips activés" />
                 </span>
               )}
               {props.spatial && engine && !isMe && (
                 <span className="tile-distance">{engine.isPlaced(p.identity) ? `${Math.round(engine.distanceTo(p.identity) ?? 0)} m` : (engine.unplacedReason(p.identity) ?? "")}</span>
               )}
-              <Avatar name={label} size={92} speaking={talking} className="big" />
+              <button
+                className="plain-btn"
+                onClick={() => p.identity.startsWith("u:") && props.onOpenProfile?.(p.identity.slice(2))}
+                aria-label={`Profil de ${label}`}
+                disabled={!p.identity.startsWith("u:")}
+              >
+                <UserAvatar identity={p.identity} name={label} size={92} speaking={talking} className="big" />
+              </button>
               <span className="tile-name">
                 {label}
                 {isMe && <span className="muted"> (toi)</span>}
@@ -313,13 +322,13 @@ export default function Stage(props: Props) {
             className="dock-btn wide"
             onClick={props.onClip}
             disabled={!clipsReady || !props.onClip}
-            title={clipsReady ? "Enregistrer les 60 dernières secondes (Ctrl+Maj+C)" : "Clips désactivés (Paramètres > Clips)"}
-            aria-label="Enregistrer les 60 dernières secondes"
+            title={clipsReady ? `Enregistrer les ${getSettings().clips.seconds} dernières secondes (Ctrl+Maj+C)` : "Clips désactivés (Paramètres > Clips)"}
+            aria-label={`Enregistrer les ${getSettings().clips.seconds} dernières secondes`}
           >
             <span className="amber">
               <Icon name="rewind" size={20} />
             </span>
-            <span className="dock-label">Clip 60 s</span>
+            <span className="dock-label">Clip {getSettings().clips.seconds} s</span>
           </button>
           <div className="relative">
             <button

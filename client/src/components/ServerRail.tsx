@@ -1,8 +1,9 @@
 import { useState } from "react";
-import type { ServerSummary, Session } from "../lib/api";
+import type { ChosenStatus, MyProfile, ServerSummary, Session } from "../lib/api";
 import { useServerLayout, type Folder } from "../lib/folders";
+import { STATUS_LABEL } from "../lib/people";
 import { formatExpiry } from "../lib/ui";
-import { Avatar, Icon, Logo, ServerBadge } from "./Brand";
+import { Avatar, Icon, Logo, ServerBadge, StatusDot } from "./Brand";
 
 export type Mode = "servers" | "messages";
 
@@ -23,7 +24,116 @@ type Props = {
   onOpenSettings: () => void;
   onLogout: () => void;
   onOpenDev?: () => void;
+  /** Mon profil (null pour un invité) */
+  me: MyProfile | null;
+  onSetStatus: (p: { status?: ChosenStatus; customStatus?: string | null; customStatusUntil?: number | null }) => void;
+  onOpenMyProfile: () => void;
 };
+
+const STATUS_OPTIONS: { id: ChosenStatus; label: string; hint: string }[] = [
+  { id: "online", label: "En ligne", hint: "Tout le monde te voit dispo" },
+  { id: "idle", label: "Inactif", hint: "Mis tout seul après 10 min sans bouger" },
+  { id: "dnd", label: "Ne pas déranger", hint: "Plus de sons de messages ni d'appels" },
+  { id: "invisible", label: "Invisible", hint: "Tu vois tout, on te voit hors ligne" },
+];
+
+/** Fin du statut personnalisé : dans 1 h, ce soir (4 h du matin), jamais. */
+function untilFor(choice: "1h" | "tonight" | "never"): number | null {
+  if (choice === "never") return null;
+  if (choice === "1h") return Date.now() + 3600_000;
+  const d = new Date();
+  if (d.getHours() >= 4) d.setDate(d.getDate() + 1);
+  d.setHours(4, 0, 0, 0);
+  return d.getTime();
+}
+
+function StatusMenu({ me, onSet, onClose, onProfile, onSettings, onLogout, onDev }: {
+  me: MyProfile;
+  onSet: Props["onSetStatus"];
+  onClose: () => void;
+  onProfile: () => void;
+  onSettings: () => void;
+  onLogout: () => void;
+  onDev?: () => void;
+}) {
+  const [text, setText] = useState(me.customStatusRaw ?? "");
+  const [until, setUntil] = useState<"1h" | "tonight" | "never">("never");
+  const saveCustom = () => {
+    const t = text.trim();
+    if (t === (me.customStatusRaw ?? "")) return;
+    onSet({ customStatus: t || null, customStatusUntil: t ? untilFor(until) : null });
+  };
+  return (
+    <>
+      <div className="click-away" onClick={() => (saveCustom(), onClose())} />
+      <div className="popover status-menu" role="menu" aria-label="Mon statut">
+        <span className="section-title">Mon statut</span>
+        {STATUS_OPTIONS.map((o) => (
+          <button
+            key={o.id}
+            role="menuitemradio"
+            aria-checked={me.chosenStatus === o.id}
+            className={`status-opt${me.chosenStatus === o.id ? " on" : ""}`}
+            onClick={() => onSet({ status: o.id })}
+          >
+            <StatusDot status={o.id === "invisible" ? "invisible" : o.id} size={12} inline />
+            <span className="grow">
+              {o.label}
+              <span className="hint">{o.hint}</span>
+            </span>
+            {me.chosenStatus === o.id && <Icon name="check" size={16} />}
+          </button>
+        ))}
+        <span className="menu-sep" />
+        <label className="custom-status">
+          <Icon name="edit" size={16} />
+          <input
+            value={text}
+            maxLength={60}
+            placeholder="Statut perso (ex. dispo pour un ranked)"
+            aria-label="Statut personnalisé"
+            onChange={(e) => setText(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && saveCustom()}
+            onBlur={saveCustom}
+          />
+        </label>
+        <div className="chips" role="group" aria-label="Effacer le statut perso">
+          {(
+            [
+              ["1h", "Effacer dans 1 h"],
+              ["tonight", "Ce soir"],
+              ["never", "Jamais"],
+            ] as const
+          ).map(([id, label]) => (
+            <button key={id} className={`chip-btn${until === id ? " on" : ""}`} onClick={() => setUntil(id)}>
+              {label}
+            </button>
+          ))}
+          {me.customStatusRaw && (
+            <button className="chip-btn" onClick={() => (setText(""), onSet({ customStatus: null }))}>
+              Retirer
+            </button>
+          )}
+        </div>
+        <span className="menu-sep" />
+        <button role="menuitem" className="menu-item" onClick={() => (onClose(), onProfile())}>
+          <Icon name="user" size={16} /> Mon profil
+        </button>
+        <button role="menuitem" className="menu-item" onClick={() => (onClose(), onSettings())}>
+          <Icon name="settings" size={16} /> Paramètres
+        </button>
+        {onDev && (
+          <button role="menuitem" className="menu-item" onClick={() => (onClose(), onDev())}>
+            <Icon name="flask" size={16} /> Outils de test
+          </button>
+        )}
+        <button role="menuitem" className="menu-item danger" onClick={() => (onClose(), onLogout())}>
+          <Icon name="logout" size={16} /> Se déconnecter
+        </button>
+      </div>
+    </>
+  );
+}
 
 /** Colonne de gauche : Messages, serveurs (rangés en dossiers), moi. */
 export default function ServerRail(props: Props) {
@@ -244,16 +354,22 @@ export default function ServerRail(props: Props) {
       </div>
 
       <div className="rail-me">
-        <button className="rail-me-main" onClick={() => setProfileOpen(!profileOpen)} aria-expanded={profileOpen} aria-label="Mon compte">
-          <span className="avatar-wrap">
-            <Avatar name={props.displayName} size={34} />
-            <span className="status-dot" />
-          </span>
+        <button className="rail-me-main" onClick={() => setProfileOpen(!profileOpen)} aria-expanded={profileOpen} aria-label="Mon compte et mon statut">
+          <Avatar
+            name={props.me?.displayName ?? props.displayName}
+            src={props.me?.avatarUrl}
+            size={34}
+            status={props.me ? (props.me.chosenStatus === "invisible" ? "offline" : props.me.chosenStatus === "online" ? "online" : props.me.chosenStatus) : "online"}
+          />
           {!collapsed && (
-            <span className="grow col gap-2 left">
-              <span className="strong ellipsis">{props.displayName}</span>
+            <span className="grow col gap-2 left" style={{ minWidth: 0 }}>
+              <span className="strong ellipsis">{props.me?.displayName ?? props.displayName}</span>
               <span className="muted small ellipsis">
-                {isGuest ? `Invité · jusqu'à ${formatExpiry(session.guest.expiresAt).replace(/^aujourd'hui à /, "")}` : "En ligne"}
+                {isGuest
+                  ? `Invité · jusqu'à ${formatExpiry(session.guest.expiresAt).replace(/^aujourd'hui à /, "")}`
+                  : props.me?.customStatusRaw && (!props.me.customStatusUntil || props.me.customStatusUntil > Date.now())
+                    ? props.me.customStatusRaw
+                    : STATUS_LABEL[props.me?.chosenStatus ?? "online"]}
               </span>
             </span>
           )}
@@ -268,7 +384,18 @@ export default function ServerRail(props: Props) {
             <Icon name="settings" size={16} />
           </button>
         )}
-        {profileOpen && (
+        {profileOpen && props.me && (
+          <StatusMenu
+            me={props.me}
+            onSet={props.onSetStatus}
+            onClose={() => setProfileOpen(false)}
+            onProfile={props.onOpenMyProfile}
+            onSettings={props.onOpenSettings}
+            onLogout={props.onLogout}
+            onDev={props.onOpenDev}
+          />
+        )}
+        {profileOpen && !props.me && (
           <>
             <div className="click-away" onClick={() => setProfileOpen(false)} />
             <div className="popover profile-menu" role="menu">

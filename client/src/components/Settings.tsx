@@ -5,25 +5,58 @@ import type { Realtime } from "../lib/realtime";
 import { getSettings, loadDevices, onSettingsChange, saveDevices, updateSettings, type Settings as S } from "../lib/prefs";
 import { playSound, type SoundName } from "../lib/sounds";
 import { errorMessage } from "../lib/ui";
-import { Avatar, Icon, NetworkBadge, type IconName } from "./Brand";
+import { Icon, NetworkBadge, UserAvatar, type IconName } from "./Brand";
+import { MyProfileSection, PrivacySection } from "./SettingsProfile";
+import { autostartEnabled, inTauri, setAutostart } from "../lib/desktop";
 import { MicTester } from "./Home";
-import { CLIP_SECONDS, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
+import { CLIP_CHOICES, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
 import { gameLinkSupported, onGameLink, type GameLink } from "../lib/gameLink";
 import { SCREEN_PRESETS } from "../lib/screen";
 
-type Section = "account" | "audio" | "spatial" | "clips" | "screen" | "sounds" | "appearance" | "shortcuts" | "network" | "about";
+type Section =
+  | "profile"
+  | "account"
+  | "privacy"
+  | "audio"
+  | "spatial"
+  | "clips"
+  | "screen"
+  | "sounds"
+  | "appearance"
+  | "startup"
+  | "shortcuts"
+  | "network"
+  | "about";
 
-const SECTIONS: { id: Section; label: string; icon: IconName }[] = [
-  { id: "account", label: "Mon compte", icon: "user" },
-  { id: "audio", label: "Audio et micro", icon: "mic" },
-  { id: "spatial", label: "Audio spatial", icon: "orbit" },
-  { id: "clips", label: "Clips", icon: "rewind" },
-  { id: "screen", label: "Partage d'écran", icon: "screenShare" },
-  { id: "sounds", label: "Sons et notifications", icon: "bell" },
-  { id: "appearance", label: "Apparence", icon: "monitor" },
-  { id: "shortcuts", label: "Raccourcis clavier", icon: "keyboard" },
-  { id: "network", label: "Réseau", icon: "signal" },
-  { id: "about", label: "À propos", icon: "info" },
+const GROUPS: { title: string; items: { id: Section; label: string; icon: IconName }[] }[] = [
+  {
+    title: "Compte",
+    items: [
+      { id: "profile", label: "Mon profil", icon: "user" },
+      { id: "account", label: "Compte et sécurité", icon: "lock" },
+      { id: "privacy", label: "Confidentialité", icon: "shield" },
+    ],
+  },
+  {
+    title: "Vocal",
+    items: [
+      { id: "audio", label: "Audio et micro", icon: "mic" },
+      { id: "spatial", label: "Audio spatial", icon: "orbit" },
+      { id: "clips", label: "Clips", icon: "rewind" },
+      { id: "screen", label: "Partage d'écran", icon: "screenShare" },
+    ],
+  },
+  {
+    title: "Appli",
+    items: [
+      { id: "sounds", label: "Sons et notifications", icon: "bell" },
+      { id: "appearance", label: "Apparence", icon: "monitor" },
+      { id: "startup", label: "Démarrage", icon: "power" },
+      { id: "shortcuts", label: "Raccourcis clavier", icon: "keyboard" },
+      { id: "network", label: "Réseau", icon: "signal" },
+      { id: "about", label: "À propos", icon: "info" },
+    ],
+  },
 ];
 
 type Props = {
@@ -34,6 +67,10 @@ type Props = {
   onLogout: () => void;
   onLogoutAll: () => void;
   onClose: () => void;
+  /** Section ouverte au départ */
+  initialSection?: string;
+  /** Mon profil a changé (photo, nom…) */
+  onProfileChanged: () => void;
 };
 
 function useSettings(): S {
@@ -63,8 +100,10 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
   );
 }
 
-export default function Settings({ api, user, realtime, voiceRoom, onLogout, onLogoutAll, onClose }: Props) {
-  const [section, setSection] = useState<Section>("account");
+export default function Settings({ api, user, realtime, voiceRoom, onLogout, onLogoutAll, onClose, initialSection, onProfileChanged }: Props) {
+  const [section, setSection] = useState<Section>(
+    GROUPS.some((g) => g.items.some((i) => i.id === initialSection)) ? (initialSection as Section) : "profile",
+  );
   const s = useSettings();
 
   useEffect(() => {
@@ -76,12 +115,16 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
   return (
     <div className="settings" role="dialog" aria-modal="true" aria-label="Paramètres">
       <nav className="settings-nav">
-        <span className="section-title">Paramètres</span>
-        {SECTIONS.map((x) => (
-          <button key={x.id} className={`nav-item${section === x.id ? " open" : ""}`} onClick={() => setSection(x.id)}>
-            <Icon name={x.icon} size={17} />
-            <span className="grow left">{x.label}</span>
-          </button>
+        {GROUPS.map((g) => (
+          <div key={g.title} className="col gap-2 settings-group">
+            <span className="section-title">{g.title}</span>
+            {g.items.map((x) => (
+              <button key={x.id} className={`nav-item${section === x.id ? " open" : ""}`} onClick={() => setSection(x.id)}>
+                <Icon name={x.icon} size={17} />
+                <span className="grow left">{x.label}</span>
+              </button>
+            ))}
+          </div>
         ))}
         <span className="menu-sep" />
         <button className="nav-item danger-text" onClick={onLogout}>
@@ -95,7 +138,9 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           <Icon name="x" />
           <span>Échap</span>
         </button>
-        <div className="settings-content">
+        <div className={`settings-content${section === "profile" ? " wide" : ""}`}>
+          {section === "profile" && <MyProfileSection api={api} onChanged={onProfileChanged} />}
+          {section === "privacy" && <PrivacySection api={api} />}
           {section === "account" && <Account api={api} user={user} onLogoutAll={onLogoutAll} />}
           {section === "audio" && <Audio s={s} />}
           {section === "spatial" && <Spatial s={s} />}
@@ -103,6 +148,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           {section === "screen" && <ScreenSettings s={s} />}
           {section === "sounds" && <Sounds s={s} />}
           {section === "appearance" && <Appearance s={s} />}
+          {section === "startup" && <Startup s={s} />}
           {section === "shortcuts" && <Shortcuts />}
           {section === "network" && <Network api={api} realtime={realtime} voiceRoom={voiceRoom} />}
           {section === "about" && <About />}
@@ -143,12 +189,14 @@ function Account({ api, user, onLogoutAll }: { api: Api; user: User; onLogoutAll
 
   return (
     <>
-      <h1 className="title">Mon compte</h1>
+      <h1 className="title">Compte et sécurité</h1>
       <div className="account-hero">
-        <Avatar name={user.username} size={64} />
+        <UserAvatar userId={user.id} name={user.username} size={64} />
         <div className="col gap-4">
           <strong className="title-sm">{user.username}</strong>
-          <span className="muted small">{user.isDev ? "Compte de test · outils de test activés" : "Compte Tomo"}</span>
+          <span className="muted small">
+            Pseudo de connexion · {user.isDev ? "compte de test, outils de test activés" : "compte Tomo"}
+          </span>
         </div>
       </div>
 
@@ -343,6 +391,39 @@ function Sounds({ s }: { s: S }) {
         <Toggle label="Messages privés" hint="Nouveau message d'un ami." checked={s.sounds.messages} onChange={(v) => updateSettings("sounds", { messages: v })} />
         <Toggle label="Appels" hint="Sonnerie d'appel entrant et fin d'appel." checked={s.sounds.calls} onChange={(v) => updateSettings("sounds", { calls: v })} />
       </Card>
+      <Card title="Notifications du système">
+        <Toggle
+          label="Notifications quand Tomo est en arrière-plan"
+          hint="Messages privés, demandes de message et d'ami, appels entrants. Rien quand Tomo est au premier plan."
+          checked={s.notifications.desktop}
+          onChange={(v) => updateSettings("notifications", { desktop: v })}
+        />
+        <Toggle
+          label="Montrer le contenu du message"
+          hint="Sinon : seulement « Nouveau message », pratique en partage d'écran."
+          checked={s.notifications.desktopPreview}
+          onChange={(v) => updateSettings("notifications", { desktopPreview: v })}
+        />
+        {!inTauri && <span className="hint">Disponible dans l'application de bureau.</span>}
+      </Card>
+      <Card title="Heures calmes">
+        <Toggle
+          label="Couper sons et notifications sur un créneau"
+          hint="Comme « Ne pas déranger », mais tout seul chaque jour (le vocal n'est pas touché)."
+          checked={s.notifications.quietEnabled}
+          onChange={(v) => updateSettings("notifications", { quietEnabled: v })}
+        />
+        <div className="row gap-12 wrap">
+          <label className="field">
+            De
+            <input type="time" value={s.notifications.quietFrom} disabled={!s.notifications.quietEnabled} onChange={(e) => updateSettings("notifications", { quietFrom: e.target.value })} />
+          </label>
+          <label className="field">
+            À
+            <input type="time" value={s.notifications.quietTo} disabled={!s.notifications.quietEnabled} onChange={(e) => updateSettings("notifications", { quietTo: e.target.value })} />
+          </label>
+        </div>
+      </Card>
       <Card title="Écouter">
         <div className="chips">
           {PREVIEWS.map(([name, label]) => (
@@ -400,11 +481,52 @@ function Appearance({ s }: { s: S }) {
 }
 
 // ---------------------------------------------------------------------------
+function Startup({ s }: { s: S }) {
+  const [auto, setAuto] = useState<boolean | null>(null);
+  const [error, setError] = useState<string>();
+  useEffect(() => void autostartEnabled().then(setAuto), []);
+  return (
+    <>
+      <h1 className="title">Démarrage</h1>
+      <Card title="Au démarrage de l'ordinateur">
+        <Toggle
+          label="Lancer Tomo avec Windows / macOS"
+          hint="Tomo s'ouvre tout seul quand tu allumes ton PC : tes potes te voient en ligne."
+          checked={!!auto}
+          onChange={async (v) => {
+            setError(undefined);
+            try {
+              await setAutostart(v);
+              setAuto(await autostartEnabled());
+            } catch (e) {
+              setError(errorMessage(e));
+            }
+          }}
+        />
+        <Toggle
+          label="Démarrer réduit"
+          hint="Quand Tomo se lance avec l'ordinateur, la fenêtre reste dans la barre des tâches."
+          checked={s.startup.minimized}
+          onChange={(v) => updateSettings("startup", { minimized: v })}
+        />
+        {!inTauri && <span className="hint">Disponible dans l'application de bureau.</span>}
+        {error && <p className="error small">{error}</p>}
+      </Card>
+      <Card title="Mises à jour">
+        <span className="hint">
+          Pour l'instant, télécharge la nouvelle version sur la page « Releases » du projet. La mise à jour automatique arrive bientôt.
+        </span>
+      </Card>
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
 const SHORTCUTS: [string, string][] = [
   ["Ctrl + 1 … 9", "Aller au serveur n°1 à 9"],
   ["Ctrl + Maj + M", "Couper / activer le micro"],
   ["Ctrl + Maj + D", "Couper / rétablir le son"],
-  ["Ctrl + Maj + C", "Enregistrer les 60 dernières secondes (clip)"],
+  ["Ctrl + Maj + C", "Enregistrer les dernières secondes (clip)"],
   ["Ctrl + ,", "Ouvrir les paramètres"],
   ["Entrée", "Envoyer un message"],
   ["Maj + Entrée", "Retour à la ligne dans un message"],
@@ -564,13 +686,26 @@ function Clips({ s }: { s: S }) {
   return (
     <>
       <h1 className="title">Clips</h1>
-      <Card title={`Garder les ${CLIP_SECONDS} dernières secondes`}>
+      <Card title={`Garder les ${s.clips.seconds} dernières secondes`}>
         <Toggle
           label="Activer les clips"
-          hint="Tomo garde en mémoire les 60 dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C."
+          hint={`Tomo garde en mémoire les ${s.clips.seconds} dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C.`}
           checked={s.clips.enabled}
           onChange={(v) => updateSettings("clips", { enabled: v })}
         />
+        <label className="setting-row">
+          <span className="col gap-2 grow">
+            <span>Durée du clip</span>
+            <span className="hint">Plus long = un peu plus de mémoire utilisée (2 min ≈ 46 Mo).</span>
+          </span>
+          <select value={s.clips.seconds} onChange={(e) => updateSettings("clips", { seconds: Number(e.target.value) as 30 | 60 | 120 })}>
+            {CLIP_CHOICES.map((x) => (
+              <option key={x} value={x}>
+                {x < 60 ? `${x} secondes` : `${x / 60} minute${x > 60 ? "s" : ""}`}
+              </option>
+            ))}
+          </select>
+        </label>
         <span className="hint">
           Par respect pour tes potes, une petite icône ⏪ s'affiche sur ta tuile tant que les clips sont activés. Les clips restent
           sur ton PC (dossier Musique\Tomo Clips).
@@ -580,7 +715,7 @@ function Clips({ s }: { s: S }) {
         {!clipsSupported ? (
           <p className="muted">Dans le navigateur, les clips sont téléchargés directement. La liste est disponible dans l'application de bureau.</p>
         ) : clips.length === 0 ? (
-          <p className="muted">Aucun clip pour l'instant. En vocal, clique sur « Clip 60 s » dans le dock.</p>
+          <p className="muted">Aucun clip pour l'instant. En vocal, clique sur « Clip » dans le dock.</p>
         ) : (
           <ul className="list">
             {clips.map((c) => (

@@ -2,6 +2,50 @@ import { useEffect, useReducer } from "react";
 import type { Room } from "livekit-client";
 import { colorFor, initials } from "../lib/ui";
 import { networkInfo } from "../lib/voice";
+import type { Presence } from "../lib/api";
+import { STATUS_LABEL, getPerson, usePeople, userIdOf } from "../lib/people";
+
+/**
+ * Avatar d'une personne d'après l'annuaire : sa photo et son nom affiché à jour.
+ * `userId` (compte) ou `identity` (vocal : u:<id>) ; `name` sert tant que le profil n'est pas chargé.
+ */
+export function UserAvatar({
+  userId,
+  identity,
+  name,
+  size,
+  speaking,
+  className,
+  showStatus = false,
+}: {
+  userId?: string | null;
+  identity?: string;
+  name: string;
+  size?: number;
+  speaking?: boolean;
+  className?: string;
+  showStatus?: boolean;
+}) {
+  const id = userId ?? (identity ? userIdOf(identity) : null);
+  usePeople(id ? [id] : []);
+  const p = getPerson(id);
+  return (
+    <Avatar
+      name={p?.displayName ?? name}
+      src={p?.avatarUrl}
+      size={size}
+      speaking={speaking}
+      className={className}
+      status={showStatus ? (p?.status ?? "offline") : undefined}
+    />
+  );
+}
+
+/** Nom affiché à jour d'une personne (son pseudo tant que le profil n'est pas chargé). */
+export function useDisplayName(userId: string | null | undefined, fallback: string) {
+  usePeople(userId ? [userId] : []);
+  return getPerson(userId)?.displayName ?? fallback;
+}
 
 /** Barres de signal + ping (ms), mis à jour toutes les 2 s. */
 export function NetworkBadge({ room, showLabel = false }: { room: Room | null; showLabel?: boolean }) {
@@ -102,6 +146,9 @@ const PATHS: Record<string, string[]> = {
   login: ["M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3", "M10 17l5-5-5-5", "M15 12H3"],
   paperclip: ["M20 11.5 12.4 19a5 5 0 0 1-7.1-7.1l8-8a3.3 3.3 0 0 1 4.7 4.7l-8 8a1.7 1.7 0 0 1-2.4-2.4l7.3-7.3"],
   play: ["M8 5.5v13l11-6.5z"],
+  power: ["M12 3v8", "M6.3 6.3a8 8 0 1 0 11.4 0"],
+  shield: ["M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"],
+  mail: ["M4 6h16v12H4z", "M4 7l8 6 8-6"],
   folder: ["M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"],
   chevronRight: ["M9 6l6 6-6 6"],
   chevronLeft: ["M15 6l-6 6 6 6"],
@@ -140,20 +187,47 @@ export function Avatar({
   size = 36,
   speaking = false,
   className = "",
+  src,
+  status,
 }: {
   name: string;
   size?: number;
   speaking?: boolean;
   className?: string;
+  /** Photo de profil (sinon : initiales sur fond coloré) */
+  src?: string | null;
+  /** Pastille de statut (en ligne, inactif, ne pas déranger, hors ligne) */
+  status?: Presence;
 }) {
   const c = colorFor(name);
+  const face = (
+    <span
+      className={`avatar${speaking ? " speaking" : ""}${src ? " photo" : ""} ${className}`}
+      style={{ width: size, height: size, background: src ? undefined : c.bg, color: c.fg, fontSize: size * 0.38 }}
+    >
+      {src ? <img src={src} alt="" draggable={false} /> : initials(name, 1)}
+    </span>
+  );
+  if (!status) return face;
+  const dot = Math.max(10, Math.round(size * 0.3));
+  return (
+    <span className="avatar-wrap">
+      {face}
+      <StatusDot status={status} size={dot} />
+    </span>
+  );
+}
+
+/** Pastille de statut : forme ET couleur différentes (lisible aussi pour les daltoniens). */
+export function StatusDot({ status, size = 12, inline = false }: { status: Presence | "invisible"; size?: number; inline?: boolean }) {
   return (
     <span
-      className={`avatar${speaking ? " speaking" : ""} ${className}`}
-      style={{ width: size, height: size, background: c.bg, color: c.fg, fontSize: size * 0.38 }}
-    >
-      {initials(name, 1)}
-    </span>
+      className={`st-dot st-${status}${inline ? " inline" : ""}`}
+      style={{ width: size, height: size }}
+      role="img"
+      aria-label={STATUS_LABEL[status]}
+      title={STATUS_LABEL[status]}
+    />
   );
 }
 

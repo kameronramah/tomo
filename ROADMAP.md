@@ -40,11 +40,12 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 > Objectif : utilisable tous les soirs par le groupe.
 
 - [x] Changer son mot de passe, voir ses appareils connectés
-- [ ] **Profils** (maquettes faites) : photo, bannière, petite phrase, couleur, nom affiché ; fiche profil des autres (jeu en cours, serveurs en commun, volume, message, appel, bloquer)
-- [ ] **Statuts** (maquettes faites) : en ligne / inactif (auto après 10 min) / ne pas déranger / invisible + statut personnalisé avec durée
-- [ ] **Membres du serveur** (maquettes faites) : liste à droite par statut (en vocal, en ligne, hors ligne), recherche, rôles
-- [ ] **Messages hors amis** (maquettes faites) : Paramètres > Confidentialité (amis / + membres de mes serveurs / tout le monde), « Demandes de message » à accepter, blocage
-- [ ] **Nouveaux réglages proposés** : Jeux, Notifications, Démarrage et mises à jour (voir la liste dans la conversation du 8 novembre 2026)
+- [x] **Profils** : photo, bannière, petite phrase, couleur, nom affiché ; fiche profil des autres (jeu en cours, serveurs en commun, volume, message, appel, bloquer)
+- [x] **Statuts** : en ligne / inactif (auto après 10 min) / ne pas déranger / invisible + statut personnalisé avec durée
+- [x] **Membres du serveur** : liste à droite par statut (en vocal, en ligne, hors ligne), recherche, rôles
+- [x] **Messages hors amis** : Paramètres > Confidentialité (amis / + membres de mes serveurs / tout le monde), « Demandes de message » à accepter, blocage
+- [x] **Nouveaux réglages** : notifications Windows / Mac en arrière-plan (contenu masquable), heures calmes, lancer avec l'ordinateur + démarrer réduit, durée des clips (30 s / 1 min / 2 min), Paramètres rangés en Compte / Vocal / Appli
+- [ ] Réglages restants : section Jeux (avec la détection du jeu, V2), push-to-talk / seuil de voix, « baisser les autres quand je parle », mises à jour automatiques
 - [x] **Pièces jointes** : images (aperçu + agrandissement), fichiers (25 Mo max), glisser-déposer, coller une image, **messages vocaux** (2 min max, onde)
 - [x] **GIF** : recherche intégrée via Klipy (Tenor a fermé son API en juin 2026), clé `KLIPY_API_KEY` sur le serveur
 - [x] **Installateurs** Windows (.exe / .msi) et Mac (.dmg universel) fabriqués par GitHub Actions à chaque tag `v*`

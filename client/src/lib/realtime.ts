@@ -5,6 +5,7 @@
 import type { Api } from "./api";
 
 export type RealtimeEvent = { type: string; [key: string]: any };
+const IDLE_AFTER_MS = 10 * 60 * 1000;
 type Listener = (e: RealtimeEvent) => void;
 
 export class Realtime {
@@ -18,7 +19,29 @@ export class Realtime {
   apiPing: number | null = null;
   connected = false;
 
+  /** Inactif = aucune activité clavier / souris depuis 10 min (statut « Inactif » automatique). */
+  private idle = false;
+  private lastActivity = Date.now();
+  private idleTimer: number | undefined;
+  private onActivity = () => {
+    this.lastActivity = Date.now();
+    if (this.idle) this.setIdle(false);
+  };
+
   constructor(private api: Api) {}
+
+  private setIdle(v: boolean) {
+    this.idle = v;
+    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: "idle", idle: v }));
+  }
+
+  private watchIdle() {
+    if (this.idleTimer) return;
+    for (const ev of ["pointermove", "keydown", "pointerdown", "wheel"]) window.addEventListener(ev, this.onActivity, { passive: true });
+    this.idleTimer = window.setInterval(() => {
+      if (!this.idle && Date.now() - this.lastActivity > IDLE_AFTER_MS) this.setIdle(true);
+    }, 30_000);
+  }
 
   on(fn: Listener) {
     this.listeners.add(fn);
@@ -43,6 +66,8 @@ export class Realtime {
       this.emit({ type: "connection", connected: true });
       this.pingTimer = window.setInterval(() => this.ping(), 10_000);
       this.ping();
+      this.watchIdle();
+      if (this.idle) ws.send(JSON.stringify({ type: "idle", idle: true }));
     };
     ws.onmessage = (m) => {
       try {
@@ -73,6 +98,9 @@ export class Realtime {
   stop() {
     this.closed = true;
     clearInterval(this.pingTimer);
+    clearInterval(this.idleTimer);
+    this.idleTimer = undefined;
+    for (const ev of ["pointermove", "keydown", "pointerdown", "wheel"]) window.removeEventListener(ev, this.onActivity);
     clearTimeout(this.retryTimer);
     this.ws?.close();
     this.ws = null;

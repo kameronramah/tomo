@@ -117,11 +117,16 @@ async function startExtras(room: Room, ctx: AudioContext) {
   );
 
   let clipsWanted = getSettings().clips.enabled;
+  let clipLength = getSettings().clips.seconds;
   ex.offs.push(
     onSettingsChange((s) => {
       if (s.clips.enabled !== clipsWanted) {
         clipsWanted = s.clips.enabled;
         setClips(ex, clipsWanted);
+      } else if (s.clips.seconds !== clipLength && clipsWanted) {
+        // Nouvelle durée : on recrée le tampon (les secondes déjà gardées repartent de zéro)
+        clipLength = s.clips.seconds;
+        void setClips(ex, false).then(() => setClips(ex, true));
       }
     }),
   );

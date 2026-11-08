@@ -127,6 +127,10 @@ Build de l'exécutable : `npm run tauri build` dans `client/` (installateur dans
 
 **GIF** : recherche via **Klipy** (Tenor a fermé son API le 30 juin 2026). Clé gratuite dans `server/.env` → `KLIPY_API_KEY=…` (dev et prod). Le serveur fait la recherche et télécharge le GIF choisi comme pièce jointe (`server/api/src/gifs.ts`) ; seules les adresses `*.klipy.com` sont acceptées.
 
+**Profils / statuts / confidentialité** : `server/api/src/profiles.ts` (profil, `PATCH /me/status`, `/me/privacy`, `/users/:id/profile`, `/servers/:id/people`, blocages) ; présence dans `realtime.ts` (`presenceOf` : l'invisible apparaît hors ligne, « inactif » envoyé par le client après 10 min). Messages hors amis : `canMessage()` + table `dm_state` (demande acceptée / ignorée). Photo et bannière = pièces jointes « réservées » (`message_id = 'profile:<id>'`). Côté client, annuaire partagé `lib/people.ts` (`UserAvatar`, `useDisplayName`) ; les adresses `/files/…` sont complétées par `Api.absolutize`. Tests : `test-profiles.ps1` (35).
+
+**Notifications / démarrage** : plugins Tauri `notification` et `autostart` (`lib/desktop.ts`) ; « Démarrer réduit » lit l'argument `--autostart` (commande Rust `launched_at_login`).
+
 **Pièces jointes** : `server/api/src/attachments.ts` (type déduit des octets, adresses signées, nettoyage auto des fichiers orphelins), fichiers dans `DATA_DIR/uploads`.
 
 ---

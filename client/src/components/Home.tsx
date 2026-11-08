@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import type { Channel, Friend, RoomInfo, ServerDetail } from "../lib/api";
+import type { Channel, RoomInfo, ServerDetail } from "../lib/api";
 import { loadDevices } from "../lib/prefs";
-import { Avatar, Icon, Logo } from "./Brand";
+import { Icon, Logo, UserAvatar } from "./Brand";
 
 /** Premier lancement : aucun serveur. */
 export function Welcome({ name, onCreate, onJoin }: { name: string; onCreate: () => void; onJoin: () => void }) {
@@ -109,7 +109,8 @@ type HomeProps = {
   myName: string;
   speaking: ReadonlySet<string>;
   unread: Record<string, number>;
-  friends: Friend[];
+  /** Liste des membres (colonne de droite) */
+  members: ReactNode;
   joiningRoomId?: string;
   onJoin: (room: RoomInfo) => void;
   onInvite: () => void;
@@ -152,7 +153,6 @@ function MoreMenu({ label, onRename, onDelete }: { label: string; onRename: () =
 export function ServerHome(p: HomeProps) {
   const { detail } = p;
   const inVoice = detail.rooms.reduce((n, r) => n + r.participants.length, 0);
-  const online = p.friends.filter((f) => f.status === "friend" && f.online);
 
   return (
     <div className="home">
@@ -211,7 +211,7 @@ export function ServerHome(p: HomeProps) {
                 </div>
                 <div className="piece-people">
                   {busy ? (
-                    people.slice(0, 6).map((x) => <Avatar key={x.identity} name={x.name} size={50} speaking={here && p.speaking.has(x.identity)} />)
+                    people.slice(0, 6).map((x) => <UserAvatar key={x.identity} identity={x.identity} name={x.name} size={50} speaking={here && p.speaking.has(x.identity)} />)
                   ) : (
                     <span className="piece-empty-dot" aria-hidden="true">
                       <Icon name="plus" size={18} />
@@ -262,26 +262,8 @@ export function ServerHome(p: HomeProps) {
         </section>
       </div>
 
-      <aside className="home-side" aria-label="Ce soir">
-        <div className="side-card">
-          <span className="side-title">Ce soir</span>
-          {online.length === 0 ? (
-            <span className="muted small">{p.isGuest ? "Bonne soirée !" : "Aucun ami en ligne pour l'instant."}</span>
-          ) : (
-            online.slice(0, 8).map((f) => (
-              <div key={f.id} className="row gap-10">
-                <span className="avatar-wrap">
-                  <Avatar name={f.username} size={34} />
-                  <span className="status-dot sm" />
-                </span>
-                <span className="col gap-2 grow" style={{ minWidth: 0 }}>
-                  <span className="strong-ish ellipsis">{f.username}</span>
-                  <span className="muted small">en ligne</span>
-                </span>
-              </div>
-            ))
-          )}
-        </div>
+      <aside className="home-side" aria-label="Membres">
+        {p.members}
       </aside>
     </div>
   );

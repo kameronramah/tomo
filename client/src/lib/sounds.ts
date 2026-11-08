@@ -195,9 +195,15 @@ function playNoise(c: Chain, nz: NonNullable<Sound["noise"]>, start: number, out
   src.start(start + nz.t);
 }
 
+/** « Ne pas déranger » : plus de sons de messages ni d'appels (les sons du vocal restent). */
+let quiet = false;
+export const setQuietMode = (v: boolean) => void (quiet = v);
+export const isQuietMode = () => quiet;
+
 export function playSound(name: SoundName, force = false) {
   const s = getSettings().sounds;
   if (!force && (!s.enabled || !s[CATEGORY[name]])) return;
+  if (!force && quiet && CATEGORY[name] !== "voice") return;
   try {
     const c = getChain();
     if (c.ctx.state === "suspended") void c.ctx.resume();

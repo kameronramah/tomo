@@ -4,7 +4,18 @@ import GifPicker from "./GifPicker";
 import type { Realtime } from "../lib/realtime";
 import { errorMessage } from "../lib/ui";
 import { VoiceRecorder, formatDuration, formatSize, MAX_VOICE_MS } from "../lib/voiceNote";
-import { Avatar, Icon } from "./Brand";
+import { Icon, UserAvatar, useDisplayName } from "./Brand";
+
+/** Nom de l'auteur, à jour (nom affiché du profil), cliquable pour ouvrir sa fiche. */
+function AuthorName({ id, name, onOpen }: { id: string | null; name: string; onOpen?: (id: string) => void }) {
+  const shown = useDisplayName(id, name);
+  if (!id || !onOpen) return <strong>{shown}</strong>;
+  return (
+    <button className="plain-btn author" onClick={() => onOpen(id)}>
+      <strong>{shown}</strong>
+    </button>
+  );
+}
 import { AttachmentView, Lightbox } from "./Attachments";
 
 type Props = {
@@ -21,6 +32,12 @@ type Props = {
   header?: ReactNode;
   emptyText?: string;
   compact?: boolean;
+  /** Demande de message : liens désactivés, fichiers masqués */
+  masked?: boolean;
+  /** Pas de champ d'écriture (demande pas encore acceptée) */
+  hideComposer?: boolean;
+  /** Clic sur l'avatar ou le nom de quelqu'un */
+  onOpenProfile?: (userId: string) => void;
 };
 
 const GROUP_MS = 5 * 60 * 1000;
@@ -276,18 +293,25 @@ export default function ChatView(props: Props) {
         {grouped ? (
           <span className="msg-time-gutter">{timeLabel(m.createdAt)}</span>
         ) : (
-          <Avatar name={m.authorName} size={36} />
+          <button className="plain-btn" onClick={() => !m.guest && props.onOpenProfile?.(m.authorId)} aria-label={`Profil de ${m.authorName}`} tabIndex={m.guest ? -1 : 0}>
+            <UserAvatar userId={m.guest ? null : m.authorId} name={m.authorName} size={36} />
+          </button>
         )}
         <div className="msg-body">
           {!grouped && (
             <div className="msg-head">
-              <strong>{m.authorName}</strong>
+              <AuthorName id={m.guest ? null : m.authorId} name={m.authorName} onOpen={props.onOpenProfile} />
               {m.guest && <span className="role-tag">Invité</span>}
               <time>{timeLabel(m.createdAt)}</time>
             </div>
           )}
-          {m.content && <div className="msg-text">{renderContent(m.content)}</div>}
-          {!!m.attachments?.length && (
+          {m.content && <div className={`msg-text${props.masked ? " masked" : ""}`}>{renderContent(m.content)}</div>}
+          {props.masked && !!m.attachments?.length && (
+            <span className="masked-note">
+              {m.attachments.length} fichier{m.attachments.length > 1 ? "s" : ""} masqué{m.attachments.length > 1 ? "s" : ""} jusqu'à ce que tu acceptes
+            </span>
+          )}
+          {!props.masked && !!m.attachments?.length && (
             <div className="msg-attachments">
               {m.attachments.map((a) => (
                 <AttachmentView key={a.id} api={api} att={a} onOpenImage={(src, name) => setLightbox({ src, name })} />
@@ -349,7 +373,7 @@ export default function ChatView(props: Props) {
         {rows}
       </div>
       {error && <p className="error small chat-error">{error}</p>}
-      {pending.length > 0 && (
+      {!props.hideComposer && pending.length > 0 && (
         <div className="pending-list" aria-label="Pièces jointes à envoyer">
           {pending.map((p) => (
             <div key={p.key} className={`pending ${p.status}`} title={p.error ?? p.name}>
@@ -370,7 +394,7 @@ export default function ChatView(props: Props) {
 
       {gifOpen && <GifPicker api={api} onPick={sendGif} onClose={() => setGifOpen(false)} />}
 
-      {recording ? (
+      {props.hideComposer ? null : recording ? (
         <div className="composer recording" role="group" aria-label="Enregistrement d'un message vocal">
           <button type="button" className="icon-btn rec-cancel" onClick={() => stopRecording(false)} aria-label="Annuler l'enregistrement" title="Annuler">
             <Icon name="trash" size={18} />

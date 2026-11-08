@@ -51,8 +51,71 @@ export type GifMedia = { url: string; width: number; height: number };
 export type Gif = { id: string; title: string; preview: GifMedia; full: GifMedia };
 export type UploadMeta = { name: string; durationMs?: number; width?: number; height?: number; waveform?: string };
 export const MAX_FILE_BYTES = 25 * 1024 * 1024;
-export type Friend = { id: string; username: string; status: "friend" | "incoming" | "outgoing"; online: boolean; since: number };
-export type DmSummary = { userId: string; lastMessageAt: number };
+/** Statut vu par les autres. */
+export type Presence = "online" | "idle" | "dnd" | "offline";
+/** Statut choisi (l'invisible apparaît « offline » aux autres). */
+export type ChosenStatus = "online" | "idle" | "dnd" | "invisible";
+export type LightProfile = {
+  id: string;
+  username: string;
+  displayName: string;
+  avatarUrl: string | null;
+  accent: string | null;
+  status: Presence;
+  customStatus: string | null;
+};
+export type FullProfile = LightProfile & {
+  bio: string | null;
+  bannerUrl: string | null;
+  createdAt: number;
+  lastSeen: number | null;
+  self: boolean;
+  friendship: "friend" | "incoming" | "outgoing" | "none";
+  blockedByMe: boolean;
+  commonServers: number;
+  canMessage: boolean;
+  canCall: boolean;
+  canAddFriend: boolean;
+};
+export type Privacy = {
+  dm: "friends" | "servers" | "everyone";
+  call: "friends" | "servers";
+  friend: "everyone" | "servers" | "nobody";
+  showGame: boolean;
+  showLastSeen: boolean;
+};
+export type MyProfile = FullProfile & {
+  chosenStatus: ChosenStatus;
+  customStatusRaw: string | null;
+  customStatusUntil: number | null;
+  privacy: Privacy;
+};
+export type Person = LightProfile & {
+  role: Role;
+  guest: boolean;
+  room: { id: string; label: string } | null;
+  lastSeen: number | null;
+};
+export type Friend = {
+  id: string;
+  username: string;
+  displayName?: string;
+  avatarUrl?: string | null;
+  status: "friend" | "incoming" | "outgoing";
+  presence?: Presence;
+  customStatus?: string | null;
+  online: boolean;
+  since: number;
+};
+export type DmSummary = {
+  userId: string;
+  lastMessageAt: number;
+  request?: boolean;
+  ignored?: boolean;
+  friend?: boolean;
+  profile?: LightProfile;
+};
+export type Blocked = { id: string; username: string; displayName: string; avatarUrl: string | null };
 export type CallInfo = { callId: string; url: string; token: string; with: { id: string; name: string } };
 export type SessionInfo = { createdAt: number; expiresAt: number; userAgent: string | null };
 export type Member = { id: string; username: string; role: Role; joinedAt: number };
@@ -118,7 +181,20 @@ export class Api {
       if (res.status === 401 && !path.startsWith("/auth/login")) this.onSessionLost?.();
       throw new ApiError(data.error ?? `Erreur serveur (${res.status})`, res.status);
     }
-    return data as T;
+    return this.absolutize(data) as T;
+  }
+
+  /** Les photos et bannières arrivent en chemins relatifs (/files/…) : on y ajoute l'adresse de l'instance. */
+  private absolutize(v: unknown): unknown {
+    if (Array.isArray(v)) return v.map((x) => this.absolutize(x));
+    if (v && typeof v === "object") {
+      const o = v as Record<string, unknown>;
+      for (const k of Object.keys(o)) {
+        if ((k === "avatarUrl" || k === "bannerUrl") && typeof o[k] === "string" && (o[k] as string).startsWith("/")) o[k] = this.baseUrl + o[k];
+        else if (o[k] && typeof o[k] === "object") o[k] = this.absolutize(o[k]);
+      }
+    }
+    return v;
   }
 
   /** Renouvelle la session (une seule fois même si plusieurs requêtes échouent en même temps). */
@@ -305,6 +381,22 @@ export class Api {
   acceptCall = (callId: string) => this.request<CallInfo>("POST", `/calls/${callId}/accept`, {});
   declineCall = (callId: string) => this.request("POST", `/calls/${callId}/decline`, {});
   endCall = (callId: string) => this.request("POST", `/calls/${callId}/end`, {});
+
+  // ---- Profils, statut, confidentialité, blocage --------------------------
+  myProfile = () => this.request<MyProfile>("GET", "/me/profile");
+  updateProfile = (p: { displayName?: string | null; bio?: string | null; accent?: string | null; avatarId?: string | null; bannerId?: string | null }) =>
+    this.request<LightProfile>("PATCH", "/me/profile", p);
+  setStatus = (p: { status?: ChosenStatus; customStatus?: string | null; customStatusUntil?: number | null }) =>
+    this.request<LightProfile>("PATCH", "/me/status", p);
+  setPrivacy = (p: Partial<Privacy>) => this.request("PATCH", "/me/privacy", p);
+  userProfile = (id: string) => this.request<FullProfile>("GET", `/users/${id}/profile`);
+  usersBatch = (ids: string[]) => this.request<LightProfile[]>("POST", "/users/batch", { ids });
+  people = (serverId: string) => this.request<Person[]>("GET", `/servers/${serverId}/people`);
+  blocks = () => this.request<Blocked[]>("GET", "/blocks");
+  block = (userId: string) => this.request("POST", `/blocks/${userId}`, {});
+  unblock = (userId: string) => this.request("DELETE", `/blocks/${userId}`);
+  acceptDm = (userId: string) => this.request("POST", `/dm/${userId}/accept`, {});
+  ignoreDm = (userId: string) => this.request("POST", `/dm/${userId}/ignore`, {});
 
   // ---- Outils de test (compte de test, serveur en mode dev uniquement) ----
   devBotToken = (roomId: string, name: string) =>

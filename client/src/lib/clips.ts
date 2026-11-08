@@ -5,8 +5,11 @@
  */
 import { invoke } from "@tauri-apps/api/core";
 import { Room, RoomEvent, Track, type LocalTrackPublication, type RemoteTrack } from "livekit-client";
+import { getSettings } from "./prefs";
 
-export const CLIP_SECONDS = 60;
+/** Durée gardée en mémoire (réglable : Paramètres > Clips). */
+export const clipSeconds = () => getSettings().clips.seconds;
+export const CLIP_CHOICES = [30, 60, 120] as const;
 const SAMPLE_RATE = 48000;
 const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -33,7 +36,7 @@ registerProcessor("tomo-tap", TomoTap);
 export class ClipRecorder {
   private ctx: AudioContext;
   private mix: GainNode;
-  private ring = new Float32Array(CLIP_SECONDS * SAMPLE_RATE);
+  private ring = new Float32Array(clipSeconds() * SAMPLE_RATE);
   private write = 0;
   private filled = 0;
   private sources = new Map<string, MediaStreamAudioSourceNode>();

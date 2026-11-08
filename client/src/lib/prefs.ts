@@ -52,8 +52,22 @@ export type Settings = {
   /** normalize : volume uniformisé (chaque voix reçue ramenée au même niveau) */
   audio: { noiseSuppression: boolean; echoCancellation: boolean; autoGain: boolean; outputVolume: number; normalize: boolean };
   appearance: { zoom: number; reducedMotion: boolean; compact: boolean };
-  notifications: { dmSound: boolean; mentionsOnly: boolean };
-  clips: { enabled: boolean };
+  /**
+   * desktop : notifications Windows / Mac quand Tomo est en arrière-plan (messages privés, demandes, appels)
+   * quiet* : heures calmes (pas de sons ni de notifications sur ce créneau, comme « Ne pas déranger »)
+   */
+  notifications: {
+    dmSound: boolean;
+    mentionsOnly: boolean;
+    desktop: boolean;
+    desktopPreview: boolean;
+    quietEnabled: boolean;
+    quietFrom: string;
+    quietTo: string;
+  };
+  clips: { enabled: boolean; seconds: 30 | 60 | 120 };
+  /** Lancement : réduit quand Tomo démarre avec l'ordinateur ; fermer = réduire */
+  startup: { minimized: boolean };
   spatial: { range: number; showMap: boolean };
   screen: { preset: "game" | "sharp" | "max" | "eco"; audio: boolean };
 };
@@ -62,8 +76,9 @@ export const DEFAULT_SETTINGS: Settings = {
   sounds: { enabled: true, volume: 0.5, voice: true, messages: true, calls: true },
   audio: { noiseSuppression: true, echoCancellation: true, autoGain: true, outputVolume: 1, normalize: true },
   appearance: { zoom: 1, reducedMotion: false, compact: false },
-  notifications: { dmSound: true, mentionsOnly: false },
-  clips: { enabled: true },
+  notifications: { dmSound: true, mentionsOnly: false, desktop: true, desktopPreview: true, quietEnabled: false, quietFrom: "23:00", quietTo: "08:00" },
+  clips: { enabled: true, seconds: 60 },
+  startup: { minimized: true },
   spatial: { range: 25, showMap: true },
   screen: { preset: "game", audio: true },
 };
@@ -79,6 +94,7 @@ let current: Settings = (() => {
     clips: { ...DEFAULT_SETTINGS.clips, ...saved.clips },
     spatial: { ...DEFAULT_SETTINGS.spatial, ...saved.spatial },
     screen: { ...DEFAULT_SETTINGS.screen, ...saved.screen },
+    startup: { ...DEFAULT_SETTINGS.startup, ...saved.startup },
   };
 })();
 const settingsListeners = new Set<(s: Settings) => void>();

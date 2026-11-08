@@ -46,16 +46,29 @@ fn secret_delete(key: String) -> Result<(), String> {
     }
 }
 
+/// Tomo a-t-il été lancé automatiquement au démarrage de l'ordinateur ?
+/// (l'appli peut alors se réduire toute seule si l'option « Démarrer réduit » est cochée)
+#[tauri::command]
+fn launched_at_login() -> bool {
+    std::env::args().any(|a| a == "--autostart")
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--autostart"]),
+        ))
         .setup(|app| {
             // Position du joueur dans son jeu (Mumble Link) pour l'audio spatial
             mumble::spawn(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            launched_at_login,
             secret_get,
             secret_set,
             secret_delete,

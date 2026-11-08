@@ -3,7 +3,9 @@ import { RoomEvent, type Room } from "livekit-client";
 import {
   Api,
   type Channel,
+  type ChosenStatus,
   type DmSummary,
+  type MyProfile,
   type Friend,
   type Message,
   type RoomInfo,
@@ -15,13 +17,18 @@ import { Realtime, type RealtimeEvent } from "./lib/realtime";
 import { getSettings, loadInstance, loadLastServer, normalizeInstance, onSettingsChange, saveInstance, saveLastServer } from "./lib/prefs";
 import { connectVoice, getRecorder, getSpatial, joinRoom, setDeafened as applyDeafen } from "./lib/voice";
 import { clipFileName, clipsSupported, encodeWav, openClipsFolder, saveClip } from "./lib/clips";
-import { playSound, startRinging } from "./lib/sounds";
+import { playSound, setQuietMode, startRinging } from "./lib/sounds";
+import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
+import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
+import ProfileCard from "./components/ProfileCard";
 import { speakingDetector } from "./lib/speaking";
 import { errorMessage } from "./lib/ui";
 import { removeAllBots, setLoopback } from "./lib/dev";
 import AuthScreen from "./components/AuthScreen";
 import ServerRail, { type Mode } from "./components/ServerRail";
-import MessagesView, { type DmView } from "./components/MessagesView";
+import MessagesView, { RequestsView, type DmView } from "./components/MessagesView";
+import DmPanel from "./components/DmPanel";
+import MemberList from "./components/MemberList";
 import VoiceIsland from "./components/VoiceIsland";
 import { NetworkBadge } from "./components/Brand";
 
@@ -34,7 +41,7 @@ import IncomingCall from "./components/IncomingCall";
 import DevPanel from "./components/DevPanel";
 import { ServerHome, Welcome } from "./components/Home";
 import { ConfirmDialog, InviteDialog, ManageServerDialog, PromptDialog } from "./components/Dialogs";
-import { Avatar, Icon, Logo } from "./components/Brand";
+import { Icon, Logo } from "./components/Brand";
 import "./App.css";
 
 type Voice = {
@@ -65,7 +72,6 @@ const SERVERS_POLL_MS = 10_000;
 const DETAIL_POLL_MS = 3_000;
 
 const dmKey = (myId: string, m: Message) => `dm:${m.target.split(":").find((id) => id !== myId)}`;
-const dmTarget = (a: string, b: string) => (a < b ? `${a}:${b}` : `${b}:${a}`);
 
 export default function App() {
   const [api, setApi] = useState(() => new Api(loadInstance()));
@@ -84,6 +90,8 @@ export default function App() {
   const [friends, setFriends] = useState<Friend[]>([]);
   const [dms, setDms] = useState<DmSummary[]>([]);
   const [unread, setUnread] = useState<Record<string, number>>({});
+  const dmsRef = useRef<DmSummary[]>([]);
+  dmsRef.current = dms;
 
   const [voice, setVoice] = useState<Voice | null>(null);
   const [speaking, setSpeaking] = useState<Set<string>>(new Set());
@@ -98,6 +106,7 @@ export default function App() {
   const [toast, setToast] = useState<{ text: string; ok?: boolean; action?: { label: string; run: () => void } }>();
   const [devOpen, setDevOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState<string | undefined>();
 
   const voiceRef = useRef<Voice | null>(null);
   voiceRef.current = voice;
@@ -188,12 +197,50 @@ export default function App() {
     if (!session) return;
     const rt = new Realtime(api);
     setRealtime(rt);
+    setPeopleApi(api);
+    const offPeople = watchPeople(rt);
     rt.start();
     return () => {
+      offPeople();
       rt.stop();
       setRealtime(null);
+      setPeopleApi(null);
     };
   }, [session, api]);
+
+  // ---- Mon profil (photo, statut, confidentialité) ---------------------------------
+  const [me, setMe] = useState<MyProfile | null>(null);
+  const loadMe = useCallback(async () => {
+    if (session?.kind !== "user") return setMe(null);
+    try {
+      const p = await api.myProfile();
+      setMe(p);
+      putPeople([p]);
+    } catch {
+      // réessayé au prochain changement
+    }
+  }, [api, session]);
+  useEffect(() => void loadMe(), [loadMe]);
+  // « Ne pas déranger » ou heures calmes : plus de sons de messages ni d'appels, plus de notifications
+  useEffect(() => {
+    const apply = () => setQuietMode(me?.chosenStatus === "dnd" || inQuietHours());
+    apply();
+    const t = setInterval(apply, 60_000);
+    const off = onSettingsChange(apply);
+    return () => (clearInterval(t), off());
+  }, [me?.chosenStatus]);
+  // Lancé avec l'ordinateur : démarrer réduit si demandé
+  useEffect(() => void applyStartupMinimize(), []);
+  const [profileId, setProfileId] = useState<string | null>(null);
+
+  async function changeStatus(p: { status?: ChosenStatus; customStatus?: string | null; customStatusUntil?: number | null }) {
+    try {
+      await api.setStatus(p);
+      await loadMe();
+    } catch (err) {
+      showError(err);
+    }
+  }
 
   // ---- Serveurs ------------------------------------------------------------------
   const loadServers = useCallback(async () => {
@@ -263,13 +310,15 @@ export default function App() {
     loadFriends();
   }, [loadFriends]);
 
+  /** Conversations : amis + non-amis déjà acceptés (les demandes sont à part). */
   const dmOrder = useMemo(() => {
     const last = new Map(dms.map((d) => [d.userId, d.lastMessageAt]));
-    return friends
-      .filter((f) => f.status === "friend")
-      .sort((a, b) => (last.get(b.id) ?? 0) - (last.get(a.id) ?? 0) || a.username.localeCompare(b.username))
-      .map((f) => f.id);
+    const ids = new Set(friends.filter((f) => f.status === "friend").map((f) => f.id));
+    for (const d of dms) if (!d.request && !d.ignored) ids.add(d.userId);
+    return [...ids].sort((a, b) => (last.get(b) ?? 0) - (last.get(a) ?? 0));
   }, [friends, dms]);
+  const dmRequests = useMemo(() => dms.filter((d) => d.request && !d.ignored), [dms]);
+  useEffect(() => putPeople(dms.flatMap((d) => (d.profile ? [d.profile] : []))), [dms]);
 
   // ---- Ce que l'utilisateur regarde (pour les non-lus) ---------------------------
   const stageVisible =
@@ -301,14 +350,22 @@ export default function App() {
           if (m.authorId === myId) return;
           const key = m.scope === "dm" ? dmKey(myId, m) : `${m.scope}:${m.target}`;
           if (m.scope === "dm") {
+            const other = key.slice(3);
+            // Quelqu'un d'inconnu : on recharge la liste pour savoir si c'est une demande.
+            if (!dmsRef.current.some((d) => d.userId === other)) loadFriends();
             setDms((list) => {
-              const other = key.slice(3);
-              return [{ userId: other, lastMessageAt: m.createdAt }, ...list.filter((d) => d.userId !== other)];
+              const prev = list.find((d) => d.userId === other);
+              return [{ ...prev, userId: other, lastMessageAt: m.createdAt }, ...list.filter((d) => d.userId !== other)];
             });
           }
-          if (viewingRef.current === key) return;
-          setUnread((u) => ({ ...u, [key]: (u[key] ?? 0) + 1 }));
-          if (m.scope === "dm") playSound("message");
+          if (viewingRef.current === key && document.hasFocus()) return;
+          if (viewingRef.current !== key) setUnread((u) => ({ ...u, [key]: (u[key] ?? 0) + 1 }));
+          if (m.scope === "dm") {
+            playSound("message");
+            const known = dmsRef.current.find((d) => d.userId === key.slice(3));
+            if (known?.request) void notify(`Demande de message de ${m.authorName}`, "Ouvre Tomo pour lire et accepter.");
+            else void notify(m.authorName, m.content || (m.attachments?.length ? "a envoyé un fichier" : ""));
+          }
           return;
         }
         case "channels":
@@ -319,16 +376,21 @@ export default function App() {
           if (e.request) {
             setToast({ text: `${e.request.from} veut être ton ami`, ok: true });
             playSound("message");
+            void notify("Demande d'ami", `${e.request.from} veut être ton ami`);
           }
           if (e.accepted) setToast({ text: `${e.accepted.by} a accepté ta demande d'ami 🎉`, ok: true });
           return;
         case "presence":
-          setFriends((list) => list.map((f) => (f.id === e.userId ? { ...f, online: e.online } : f)));
+          setFriends((list) => list.map((f) => (f.id === e.userId ? { ...f, online: e.online, presence: e.status } : f)));
+          return;
+        case "profile":
+          if (e.userId === myId) loadMe();
           return;
         case "callIncoming":
           setIncoming({ callId: e.callId, from: e.from });
           stopRinging();
           stopRingRef.current = startRinging();
+          void notify("Appel entrant", `${e.from.name} t'appelle`);
           return;
         case "callAccepted":
           if (voiceRef.current?.callId === e.callId) {
@@ -358,7 +420,7 @@ export default function App() {
         }
       }
     },
-    [myId, activeId, detail?.id, loadDetail, loadFriends],
+    [myId, activeId, detail?.id, loadDetail, loadFriends, loadMe],
   );
 
   useEffect(() => {
@@ -540,7 +602,7 @@ export default function App() {
   }
 
   // ---- Appels privés ---------------------------------------------------------------
-  async function callFriend(f: Friend) {
+  async function callFriend(f: { id: string }) {
     try {
       await disconnectVoice();
       const info = await api.startCall(f.id);
@@ -668,6 +730,7 @@ export default function App() {
         onInvite={openInvite}
         onLeave={leaveVoice}
         onBack={() => (voice.kind === "room" ? setServerView({ type: "home" }) : setDmView({ type: "friends" }))}
+        onOpenProfile={setProfileId}
         onClip={takeClip}
         onNotice={(text) => setToast({ text })}
         chatOpen={chatOpen}
@@ -682,6 +745,7 @@ export default function App() {
               target={voice.roomId}
               myId={myId}
               canModerate={isManager}
+              onOpenProfile={setProfileId}
               placeholder={`Écrire dans ${voiceRoomInfo?.label ?? voice.roomLabel}`}
               emptyText="Le chat du salon : liens, infos de partie… Les messages restent pour les prochaines fois."
               compact
@@ -696,39 +760,40 @@ export default function App() {
       />
     );
   } else if (mode === "messages") {
+    const peerId = dmView.type === "dm" ? dmView.userId : null;
+    const peerDm = peerId ? dms.find((d) => d.userId === peerId) : undefined;
     const inner =
-      dmView.type === "dm" && dmFriend ? (
-        <ChatView
-          key={dmFriend.id}
+      peerId ? (
+        <DmPanel
+          key={peerId}
           api={api}
           realtime={realtime}
-          scope="dm"
-          target={dmFriend.id}
-          storedTarget={dmTarget(myId, dmFriend.id)}
           myId={myId}
-          placeholder={`Écrire à ${dmFriend.username}`}
-          emptyText={`C'est le début de ta conversation avec ${dmFriend.username}.`}
-          header={
-            <header className="chat-header">
-              <span className="avatar-wrap">
-                <Avatar name={dmFriend.username} size={32} />
-                <span className={`status-dot sm${dmFriend.online ? "" : " off"}`} />
-              </span>
-              <span className="grow col gap-2">
-                <strong>{dmFriend.username}</strong>
-                <span className="muted small">{dmFriend.online ? "En ligne" : "Hors ligne"}</span>
-              </span>
-              {voice?.kind === "call" && voice.peer?.id === dmFriend.id ? (
-                <button className="btn pill active" onClick={goToVoice}>
-                  <Icon name="phone" size={16} /> Retour à l'appel
-                </button>
-              ) : (
-                <button className="btn pill" onClick={() => callFriend(dmFriend)} disabled={!dmFriend.online} title={dmFriend.online ? "Appeler" : "Hors ligne"}>
-                  <Icon name="phone" size={16} /> Appeler
-                </button>
-              )}
-            </header>
+          userId={peerId}
+          friend={!!dmFriend}
+          request={!!peerDm?.request && !peerDm.ignored}
+          inCall={voice?.kind === "call" && voice.peer?.id === peerId}
+          onCall={() => callFriend({ id: peerId })}
+          onGoToCall={goToVoice}
+          onOpenProfile={() => setProfileId(peerId)}
+          onAccept={() => api.acceptDm(peerId).then(loadFriends).catch(showError)}
+          onIgnore={() =>
+            api
+              .ignoreDm(peerId)
+              .then(() => (setDmView({ type: "friends" }), loadFriends()))
+              .catch(showError)
           }
+          onBlock={() =>
+            api
+              .block(peerId)
+              .then(() => (setDmView({ type: "friends" }), loadFriends()))
+              .catch(showError)
+          }
+        />
+      ) : dmView.type === "requests" ? (
+        <RequestsView
+          requests={dmRequests}
+          onOpen={(userId) => setDmView({ type: "dm", userId })}
         />
       ) : (
         <FriendsView
@@ -743,9 +808,11 @@ export default function App() {
       <MessagesView
         friends={friends}
         dmOrder={dmOrder}
+        requests={dmRequests.length}
         dmView={dmView}
         unread={unread}
         onOpenFriends={() => setDmView({ type: "friends" })}
+        onOpenRequests={() => setDmView({ type: "requests" })}
         onOpenDm={(userId) => setDmView({ type: "dm", userId })}
       >
         {inner}
@@ -762,6 +829,7 @@ export default function App() {
         target={openChannel.id}
         myId={myId}
         canModerate={isManager}
+        onOpenProfile={setProfileId}
         placeholder={`Écrire dans #${openChannel.name}`}
         emptyText={`Bienvenue dans #${openChannel.name} ! Lance la conversation.`}
         header={
@@ -791,7 +859,7 @@ export default function App() {
         myName={displayName}
         speaking={speaking}
         unread={unread}
-        friends={friends}
+        members={<MemberList api={api} realtime={realtime} serverId={detail.id} myId={myId} onOpenProfile={setProfileId} />}
         joiningRoomId={joiningRoomId}
         onJoin={enterRoom}
         onInvite={openInvite}
@@ -816,7 +884,9 @@ export default function App() {
   }
 
   const messagesBadge =
-    friends.reduce((n, f) => n + (unread[`dm:${f.id}`] ?? 0), 0) + friends.filter((f) => f.status === "incoming").length;
+    dmOrder.reduce((n, id) => n + (unread[`dm:${id}`] ?? 0), 0) +
+    friends.filter((f) => f.status === "incoming").length +
+    dmRequests.length;
 
   return (
     <div className="app">
@@ -839,7 +909,23 @@ export default function App() {
         onOpenSettings={() => setSettingsOpen(true)}
         onLogout={logout}
         onOpenDev={session.kind === "user" && session.user.isDev ? () => setDevOpen(!devOpen) : undefined}
+        me={me}
+        onSetStatus={changeStatus}
+        onOpenMyProfile={() => (setSettingsSection("profile"), setSettingsOpen(true))}
       />
+
+      {profileId && (
+        <ProfileCard
+          api={api}
+          userId={profileId}
+          room={voice?.room ?? null}
+          onClose={() => setProfileId(null)}
+          onMessage={(id) => (setProfileId(null), setMode("messages"), setDmView({ type: "dm", userId: id }))}
+          onCall={(id) => (setProfileId(null), callFriend({ id }))}
+          onEditMine={() => (setProfileId(null), setSettingsSection("profile"), setSettingsOpen(true))}
+          onChanged={loadFriends}
+        />
+      )}
 
       <div className={`content-wrap${voice && !stageVisible ? " with-island" : ""}`}>
         <main className="content">{main}</main>
@@ -882,7 +968,9 @@ export default function App() {
           voiceRoom={voice?.room ?? null}
           onLogout={logout}
           onLogoutAll={logoutAll}
-          onClose={() => setSettingsOpen(false)}
+          onClose={() => (setSettingsOpen(false), setSettingsSection(undefined))}
+          initialSection={settingsSection}
+          onProfileChanged={loadMe}
         />
       )}
 
