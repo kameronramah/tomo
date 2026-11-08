@@ -107,17 +107,18 @@ export default function Stage(props: Props) {
             onClick={props.onToggleSpatial}
             disabled={!props.canToggleSpatial}
             aria-pressed={props.spatial}
+            aria-label="Audio spatial"
             title={props.canToggleSpatial ? "Active ou coupe l'audio spatial pour tout le salon" : "Réservé aux membres"}
           >
             <Icon name="orbit" size={16} />
-            Audio spatial
+            <span className="pill-label">Audio spatial</span>
             <span className={`switch${props.spatial ? " on" : ""}`} aria-hidden="true">
               <span />
             </span>
           </button>
           {props.canInvite && (
-            <button className="btn pill" onClick={props.onInvite}>
-              <Icon name="userPlus" size={16} /> Inviter
+            <button className="btn pill" onClick={props.onInvite} aria-label="Inviter">
+              <Icon name="userPlus" size={16} /> <span className="pill-label">Inviter</span>
             </button>
           )}
         </div>
@@ -190,7 +191,7 @@ export default function Stage(props: Props) {
             <span className="amber">
               <Icon name="rewind" size={20} />
             </span>
-            Clip 60 s
+            <span className="dock-label">Clip 60 s</span>
           </button>
           <div className="relative">
             <button
@@ -233,7 +234,7 @@ export default function Stage(props: Props) {
           </div>
           <span className="dock-sep" />
           <button className="dock-btn wide leave" onClick={props.onLeave} aria-label="Quitter le salon">
-            <Icon name="leave" size={20} /> Quitter
+            <Icon name="leave" size={20} /> <span className="dock-label">Quitter</span>
           </button>
         </div>
       </div>

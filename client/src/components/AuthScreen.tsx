@@ -110,6 +110,10 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
 
       <section className="auth-form-wrap">
         <form className="auth-form" onSubmit={submit}>
+          <div className="auth-compact-brand row gap-10">
+            <Logo size={34} cut="var(--bg)" />
+            <Wordmark size={20} />
+          </div>
           <div className="col gap-6">
             <h2 className="title">
               {mode === "login" ? "Content de te revoir" : mode === "register" ? "Créer un compte" : "Entrer comme invité"}

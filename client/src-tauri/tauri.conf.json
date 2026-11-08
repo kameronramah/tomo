@@ -15,9 +15,12 @@
         "title": "Tomo",
         "width": 1240,
         "height": 800,
-        "minWidth": 900,
-        "minHeight": 600,
-        "backgroundColor": "#0E1014"
+        "minWidth": 720,
+        "minHeight": 540,
+        "backgroundColor": "#0E1014",
+        "decorations": false,
+        "shadow": true,
+        "center": true
       }
     ],
     "security": {

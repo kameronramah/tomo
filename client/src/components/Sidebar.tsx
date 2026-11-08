@@ -227,13 +227,38 @@ export default function Sidebar(props: Props) {
 
       {/* ---- Profil ---- */}
       <div className="profile">
-        {voice && voice.serverId !== detail?.id && (
-          <button className="voice-elsewhere" onClick={() => props.onSelectServer(voice.serverId)}>
-            <span className="teal">●</span>
-            <span className="grow ellipsis left">
-              En vocal · {voice.roomLabel} / {voice.serverName}
-            </span>
-          </button>
+        {voice && (
+          <div className="voice-card">
+            <button
+              className="voice-card-info"
+              onClick={() => props.onSelectServer(voice.serverId)}
+              title="Aller au salon"
+            >
+              <span className="ok small strong">● En vocal</span>
+              <span className="small soft ellipsis">
+                {voice.roomLabel} / {voice.serverName}
+              </span>
+            </button>
+            <button
+              className={`icon-btn${props.micOn ? "" : " warn"}`}
+              onClick={props.onToggleMic}
+              aria-label={props.micOn ? "Couper le micro" : "Activer le micro"}
+              title={props.micOn ? "Couper le micro" : "Activer le micro"}
+            >
+              <Icon name={props.micOn ? "mic" : "micOff"} />
+            </button>
+            <button
+              className={`icon-btn${props.deafened ? " warn" : ""}`}
+              onClick={props.onToggleDeafen}
+              aria-label={props.deafened ? "Rétablir le son" : "Couper le son"}
+              title={props.deafened ? "Rétablir le son" : "Couper le son"}
+            >
+              <Icon name={props.deafened ? "headphonesOff" : "headphones"} />
+            </button>
+            <button className="icon-btn danger" onClick={props.onLeaveVoice} aria-label="Quitter le vocal" title="Quitter le vocal">
+              <Icon name="leave" />
+            </button>
+          </div>
         )}
         <div className="profile-card">
           <span className="avatar-wrap">
@@ -245,31 +270,9 @@ export default function Sidebar(props: Props) {
             <span className="muted small ellipsis">
               {isGuest
                 ? `Invité · jusqu'à ${formatExpiry(session.guest.expiresAt).replace(/^aujourd'hui à /, "")}`
-                : voice
-                  ? `En vocal · ${voice.roomLabel}`
-                  : "En ligne"}
+                : "En ligne"}
             </span>
           </span>
-          {voice && (
-            <>
-              <button
-                className={`icon-btn${props.micOn ? "" : " warn"}`}
-                onClick={props.onToggleMic}
-                aria-label={props.micOn ? "Couper le micro" : "Activer le micro"}
-                title={props.micOn ? "Couper le micro" : "Activer le micro"}
-              >
-                <Icon name={props.micOn ? "mic" : "micOff"} />
-              </button>
-              <button
-                className={`icon-btn${props.deafened ? " warn" : ""}`}
-                onClick={props.onToggleDeafen}
-                aria-label={props.deafened ? "Rétablir le son" : "Couper le son"}
-                title={props.deafened ? "Rétablir le son" : "Couper le son"}
-              >
-                <Icon name={props.deafened ? "headphonesOff" : "headphones"} />
-              </button>
-            </>
-          )}
           <button className="icon-btn" onClick={() => setProfileOpen(!profileOpen)} aria-label="Mon compte" aria-expanded={profileOpen}>
             <Icon name="more" />
           </button>
@@ -277,11 +280,6 @@ export default function Sidebar(props: Props) {
             <>
               <div className="click-away" onClick={() => setProfileOpen(false)} />
               <div className="popover profile-menu" role="menu">
-                {voice && (
-                  <button role="menuitem" className="menu-item" onClick={() => (setProfileOpen(false), props.onLeaveVoice())}>
-                    <Icon name="leave" size={16} /> Quitter le vocal
-                  </button>
-                )}
                 <button role="menuitem" className="menu-item" onClick={() => (setProfileOpen(false), props.onLogout())}>
                   <Icon name="logout" size={16} /> {isGuest ? "Quitter la soirée" : "Se déconnecter"}
                 </button>
