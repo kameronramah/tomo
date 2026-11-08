@@ -21,6 +21,7 @@ import { clipFileName, clipsSupported, encodeWav, openClipsFolder, saveClip } fr
 import { playSound, setQuietMode, startRinging } from "./lib/sounds";
 import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
 import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
+import UpdateCard from "./components/UpdateCard";
 import { flashIcon, setAppBadge } from "./lib/badge";
 import { mentionsMe } from "./components/MessageParts";
 import ProfileCard from "./components/ProfileCard";
@@ -963,6 +964,7 @@ export default function App() {
 
   return (
     <div className="app">
+      <UpdateCard inVoice={!!voice} />
       <ServerRail
         session={session}
         instance={api.baseUrl}

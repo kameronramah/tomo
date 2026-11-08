@@ -12,6 +12,7 @@ import { MicTester } from "./Home";
 import { CLIP_CHOICES, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
 import { gameLinkSupported, onGameLink, type GameLink } from "../lib/gameLink";
 import { SCREEN_PRESETS } from "../lib/screen";
+import { APP_VERSION, checkForUpdate, getUpdateState, onUpdateState, restartNow, type UpdateState } from "../lib/updater";
 
 type Section =
   | "profile"
@@ -151,7 +152,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           {section === "startup" && <Startup s={s} />}
           {section === "shortcuts" && <Shortcuts />}
           {section === "network" && <Network api={api} realtime={realtime} voiceRoom={voiceRoom} />}
-          {section === "about" && <About />}
+          {section === "about" && <About s={s} />}
         </div>
       </div>
     </div>
@@ -678,16 +679,63 @@ function Network({ api, realtime, voiceRoom }: { api: Api; realtime: Realtime | 
   );
 }
 
-function About() {
+function About({ s }: { s: S }) {
+  const [up, setUp] = useState<UpdateState>(getUpdateState());
+  useEffect(() => onUpdateState(setUp), []);
+  const desktop = inTauri;
   return (
     <>
       <h1 className="title">À propos</h1>
+      <Card title="Mises à jour">
+        <div className="setting-row">
+          <span className="grow col gap-2">
+            <span>tomo {APP_VERSION}</span>
+            <span className="muted small">
+              {!desktop
+                ? "Version navigateur : toujours à jour."
+                : up.kind === "checking"
+                  ? "Recherche en cours…"
+                  : up.kind === "none"
+                    ? "Tu as la dernière version."
+                    : up.kind === "downloading"
+                      ? `Téléchargement de tomo ${up.version}… ${Math.round(up.progress * 100)} %`
+                      : up.kind === "ready"
+                        ? `tomo ${up.version} est prête : redémarre pour l'installer.`
+                        : up.kind === "error"
+                          ? up.message
+                          : "tomo vérifie tout seul au démarrage puis toutes les 6 heures."}
+            </span>
+          </span>
+          {desktop &&
+            (up.kind === "ready" ? (
+              <button className="btn primary small" onClick={() => void restartNow()}>
+                Redémarrer
+              </button>
+            ) : (
+              <button className="btn small" disabled={up.kind === "checking" || up.kind === "downloading"} onClick={() => void checkForUpdate(true)}>
+                Rechercher
+              </button>
+            ))}
+        </div>
+        <Toggle
+          label="Mettre à jour automatiquement"
+          hint="La nouvelle version se télécharge en arrière-plan, puis tomo te propose de redémarrer pour l'installer. Jamais pendant un vocal."
+          checked={s.updates.auto}
+          onChange={(v) => updateSettings("updates", { auto: v })}
+        />
+      </Card>
       <Card title="tomo">
         <p className="text">Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, open source (licence MIT).</p>
         <ul className="list">
           <li>
             <span className="grow">Version</span>
-            <span className="muted">0.5.0</span>
+            <span className="muted">{APP_VERSION}</span>
+          </li>
+          <li>
+            <span className="grow">Télécharger l'installateur</span>
+            <a href="https://github.com/kameronramah/tomo/releases/latest" target="_blank" rel="noreferrer">
+              Dernière version (Windows, Mac)
+            </a>
           </li>
           <li>
             <span className="grow">Code source</span>

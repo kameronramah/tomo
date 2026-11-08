@@ -78,6 +78,8 @@ export type Settings = {
   clips: { enabled: boolean; seconds: 30 | 60 | 120 };
   /** Lancement : réduit quand tomo démarre avec l'ordinateur ; fermer = réduire */
   startup: { minimized: boolean };
+  /** Mise à jour automatique (téléchargée en arrière-plan, installée au redémarrage) */
+  updates: { auto: boolean };
   spatial: { range: number; showMap: boolean };
   screen: { preset: "game" | "sharp" | "max" | "eco"; audio: boolean };
 };
@@ -89,6 +91,7 @@ export const DEFAULT_SETTINGS: Settings = {
   notifications: { dmSound: true, mentionsOnly: false, desktop: true, desktopPreview: true, quietEnabled: false, quietFrom: "23:00", quietTo: "08:00" },
   clips: { enabled: true, seconds: 60 },
   startup: { minimized: true },
+  updates: { auto: true },
   spatial: { range: 25, showMap: true },
   screen: { preset: "game", audio: true },
 };
@@ -110,6 +113,7 @@ let current: Settings = (() => {
     spatial: { ...DEFAULT_SETTINGS.spatial, ...saved.spatial },
     screen: { ...DEFAULT_SETTINGS.screen, ...saved.screen },
     startup: { ...DEFAULT_SETTINGS.startup, ...saved.startup },
+    updates: { ...DEFAULT_SETTINGS.updates, ...saved.updates },
   };
 })();
 const settingsListeners = new Set<(s: Settings) => void>();
