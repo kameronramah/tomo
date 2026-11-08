@@ -1276,3 +1276,16 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .stat-line.match.win { border-left-color: var(--teal, #2DD4BF); }
 .stat-line.match.loss { border-left-color: var(--red, #E5484D); }
 .link-row { display: flex; align-items: center; gap: 12px; }
+
+/* ---- v0.8 - Mode coach ---- */
+.coach-canvas { position: absolute; pointer-events: none; touch-action: none; }
+.coach-canvas.drawing { pointer-events: auto; cursor: crosshair; }
+.coach-bar {
+  position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 6px; align-items: center;
+  padding: 6px; border-radius: 14px; background: rgba(14, 16, 20, .82); border: 1px solid var(--line); backdrop-filter: blur(8px);
+  max-width: calc(100% - 24px); flex-wrap: wrap; justify-content: center;
+}
+.coach-btn { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; font-size: 13px; color: var(--text-soft, var(--text)); }
+.coach-btn:hover { background: var(--surface-3, #232833); }
+.coach-btn.on { background: var(--teal, #2DD4BF); color: #062A26; }
+.coach-hint { font-size: 12px; color: var(--muted); padding: 4px 8px; }

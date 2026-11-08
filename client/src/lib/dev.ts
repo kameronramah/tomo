@@ -132,6 +132,8 @@ export async function addScreenBot(api: Api, roomId: string) {
     videoCodec: "h264",
     screenShareEncoding: { maxBitrate: 8_000_000, maxFramerate: 60 },
   });
+  // Mode coach : le bot laisse annoter son écran (pour tester les annotations).
+  await room.localParticipant.setAttributes({ coach: "all" }).catch(() => {});
 
   // Rangé avec les autres bots (retiré par « Tout retirer »)
   const ctx = new AudioContext();

@@ -822,6 +822,20 @@ export const EN: Record<string, string> = {
   "Steam ne répond pas pour l'instant.": "Steam isn't responding right now.",
   "Riot ne répond pas (clé expirée ?).": "Riot isn't responding (expired key?).",
 
+  // ---- Mode coach ----
+  "Annotations fermées par celui qui partage": "Annotations closed by the sharer",
+  "Annotations ouvertes": "Annotations open",
+  "Capturer": "Capture",
+  "Crayon": "Pen",
+  "Effacer mes traits": "Clear my marks",
+  "Envoyer l'image annotée dans le chat de la pièce": "Send the annotated image to the room chat",
+  "Flèche": "Arrow",
+  "Image annotée envoyée dans le chat de la pièce.": "Annotated image sent to the room chat.",
+  "Laisser tes potes annoter ton écran": "Let your friends draw on your screen",
+  "Mode coach": "Coach mode",
+  "Ouvrir les annotations": "Open annotations",
+  "Ping": "Ping",
+
   // ---- Jeux ----
   "{0} détecté": "{0} detected",
   "{0} sont dans « {1} ». Les rejoindre ?": "{0} are in “{1}”. Join them?",

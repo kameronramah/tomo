@@ -59,6 +59,8 @@ type Props = {
   onToggleChat?: () => void;
   /** Enregistrer les 60 dernières secondes. */
   onClip?: () => void;
+  /** Mode coach : image annotée à envoyer dans le chat de la pièce */
+  onCapture?: (png: Blob) => void;
   /** Message à afficher (ex. erreur de partage d'écran). */
   onNotice?: (text: string) => void;
 };
@@ -225,7 +227,7 @@ export default function Stage(props: Props) {
       {props.warning && <p className="warning banner">{props.warning}</p>}
 
       {shares.length > 0 ? (
-        <ScreenView room={room} shares={shares} onStopMine={stopShare} />
+        <ScreenView room={room} shares={shares} onStopMine={stopShare} onCapture={props.onCapture} />
       ) : showMap && engine ? (
         <MapView room={room} engine={engine} />
       ) : (

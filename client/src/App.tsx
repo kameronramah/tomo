@@ -862,6 +862,19 @@ export default function App() {
         onBack={() => (voice.kind === "room" ? setServerView({ type: "home" }) : setDmView({ type: "friends" }))}
         onOpenProfile={setProfileId}
         onClip={takeClip}
+        onCapture={
+          voice.kind === "room" && !isGuest
+            ? async (png) => {
+                try {
+                  const att = await api.uploadAttachment(png, { name: "coach.png" });
+                  await api.sendMessage("room", voice.roomId, "", [att.id]);
+                  setToast({ text: t("Image annotée envoyée dans le chat de la pièce."), ok: true });
+                } catch (err) {
+                  showError(err);
+                }
+              }
+            : undefined
+        }
         onNotice={(text) => setToast({ text })}
         chatOpen={chatOpen}
         onToggleChat={() => setChatOpen(!chatOpen)}

@@ -6,6 +6,7 @@ import { screenVolumeMemory, setScreenVolume } from "../lib/voice";
 import { Avatar, Icon } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
 import { t } from "../lib/i18n";
+import CoachLayer from "./CoachLayer";
 
 const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -13,10 +14,12 @@ type Props = {
   room: Room;
   shares: Share[];
   onStopMine: () => void;
+  onCapture?: (png: Blob) => void;
 };
 
 /** Grand écran pour regarder un partage (choix si plusieurs, plein écran, qualité reçue). */
-export default function ScreenView({ room, shares, onStopMine }: Props) {
+export default function ScreenView({ room, shares, onStopMine, onCapture }: Props) {
+  const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
   const [full, setFull] = useState(false);
   const [stats, setStats] = useState<{ w: number; h: number; fps: number }>({ w: 0, h: 0, fps: 0 });
@@ -109,8 +112,18 @@ export default function ScreenView({ room, shares, onStopMine }: Props) {
       </div>
 
       <div className="screen-stage" onDoubleClick={() => setFull(!full)}>
-        <video ref={videoRef} autoPlay playsInline muted className="screen-video" />
+        <video
+          ref={(el) => {
+            videoRef.current = el;
+            if (el !== videoEl) setVideoEl(el);
+          }}
+          autoPlay
+          playsInline
+          muted
+          className="screen-video"
+        />
         {current.isLocal && <span className="screen-note">{t("Aperçu de ce que voient tes potes")}</span>}
+        <CoachLayer key={current.participant.identity} room={room} share={current.participant.identity} isMine={current.isLocal} video={videoEl} onCapture={onCapture} />
       </div>
 
       {shares.length > 1 && (
