@@ -49,7 +49,8 @@ export const saveLastServer = (id: string | null) => write(KEYS.lastServer, id);
 // ---------------------------------------------------------------------------
 export type Settings = {
   sounds: { enabled: boolean; volume: number; voice: boolean; messages: boolean; calls: boolean };
-  audio: { noiseSuppression: boolean; echoCancellation: boolean; autoGain: boolean; outputVolume: number };
+  /** normalize : volume uniformisé (chaque voix reçue ramenée au même niveau) */
+  audio: { noiseSuppression: boolean; echoCancellation: boolean; autoGain: boolean; outputVolume: number; normalize: boolean };
   appearance: { zoom: number; reducedMotion: boolean; compact: boolean };
   notifications: { dmSound: boolean; mentionsOnly: boolean };
   clips: { enabled: boolean };
@@ -59,7 +60,7 @@ export type Settings = {
 
 export const DEFAULT_SETTINGS: Settings = {
   sounds: { enabled: true, volume: 0.5, voice: true, messages: true, calls: true },
-  audio: { noiseSuppression: true, echoCancellation: true, autoGain: true, outputVolume: 1 },
+  audio: { noiseSuppression: true, echoCancellation: true, autoGain: true, outputVolume: 1, normalize: true },
   appearance: { zoom: 1, reducedMotion: false, compact: false },
   notifications: { dmSound: true, mentionsOnly: false },
   clips: { enabled: true },

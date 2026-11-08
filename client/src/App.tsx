@@ -20,7 +20,12 @@ import { speakingDetector } from "./lib/speaking";
 import { errorMessage } from "./lib/ui";
 import { removeAllBots, setLoopback } from "./lib/dev";
 import AuthScreen from "./components/AuthScreen";
-import Sidebar, { type DmView, type Mode, type ServerView } from "./components/Sidebar";
+import ServerRail, { type Mode } from "./components/ServerRail";
+import MessagesView, { type DmView } from "./components/MessagesView";
+import VoiceIsland from "./components/VoiceIsland";
+import { NetworkBadge } from "./components/Brand";
+
+type ServerView = { type: "home" } | { type: "voice" } | { type: "channel"; id: string };
 import Stage from "./components/Stage";
 import ChatView from "./components/ChatView";
 import FriendsView from "./components/FriendsView";
@@ -239,7 +244,7 @@ export default function App() {
   function selectServer(id: string) {
     setActiveId(id);
     setMode("servers");
-    setServerView({ type: voiceRef.current?.serverId === id ? "voice" : "home" });
+    setServerView({ type: "home" });
   }
 
   // ---- Amis et messages privés ---------------------------------------------------
@@ -269,7 +274,7 @@ export default function App() {
   // ---- Ce que l'utilisateur regarde (pour les non-lus) ---------------------------
   const stageVisible =
     !!voice &&
-    ((voice.kind === "room" && mode === "servers" && voice.serverId === detail?.id && serverView.type !== "channel") ||
+    ((voice.kind === "room" && mode === "servers" && voice.serverId === detail?.id && serverView.type === "voice") ||
       (voice.kind === "call" && mode === "messages" && dmView.type === "call"));
 
   const viewingKey =
@@ -662,6 +667,7 @@ export default function App() {
         onToggleSpatial={toggleSpatial}
         onInvite={openInvite}
         onLeave={leaveVoice}
+        onBack={() => (voice.kind === "room" ? setServerView({ type: "home" }) : setDmView({ type: "friends" }))}
         onClip={takeClip}
         onNotice={(text) => setToast({ text })}
         chatOpen={chatOpen}
@@ -690,7 +696,7 @@ export default function App() {
       />
     );
   } else if (mode === "messages") {
-    main =
+    const inner =
       dmView.type === "dm" && dmFriend ? (
         <ChatView
           key={dmFriend.id}
@@ -733,8 +739,21 @@ export default function App() {
           onCall={callFriend}
         />
       );
+    main = (
+      <MessagesView
+        friends={friends}
+        dmOrder={dmOrder}
+        dmView={dmView}
+        unread={unread}
+        onOpenFriends={() => setDmView({ type: "friends" })}
+        onOpenDm={(userId) => setDmView({ type: "dm", userId })}
+      >
+        {inner}
+      </MessagesView>
+    );
   } else if (openChannel && detail) {
     main = (
+      <section className="panel">
       <ChatView
         key={openChannel.id}
         api={api}
@@ -747,24 +766,43 @@ export default function App() {
         emptyText={`Bienvenue dans #${openChannel.name} ! Lance la conversation.`}
         header={
           <header className="chat-header">
-            <span className="muted">
-              <Icon name="hash" size={20} />
-            </span>
+            <button className="icon-btn" onClick={() => setServerView({ type: "home" })} aria-label="Retour aux pièces" title="Retour aux pièces">
+              <Icon name="chevronLeft" size={18} />
+            </button>
+            <span className="fil-hash sm">#</span>
             <strong className="grow">{openChannel.name}</strong>
             <span className="muted small">{detail.name}</span>
           </header>
         }
       />
+      </section>
     );
   } else if (detail) {
     main = (
       <ServerHome
-        name={displayName}
         detail={detail}
-        canInvite={!isGuest}
+        isGuest={isGuest}
+        isManager={isManager}
+        voice={
+          voice?.kind === "room" && voice.serverId === detail.id
+            ? { roomId: voice.roomId, identity: voice.room.localParticipant.identity, ping: <NetworkBadge room={voice.room} /> }
+            : null
+        }
+        myName={displayName}
+        speaking={speaking}
+        unread={unread}
+        friends={friends}
         joiningRoomId={joiningRoomId}
         onJoin={enterRoom}
         onInvite={openInvite}
+        onManage={() => active && setDialog({ kind: "manage", server: active })}
+        onAddRoom={() => setDialog({ kind: "addRoom", serverId: detail.id })}
+        onRenameRoom={(room) => setDialog({ kind: "renameRoom", room })}
+        onDeleteRoom={(room) => setDialog({ kind: "deleteRoom", room })}
+        onOpenChannel={(c) => setServerView({ type: "channel", id: c.id })}
+        onAddChannel={() => setDialog({ kind: "addChannel", serverId: detail.id })}
+        onRenameChannel={(channel) => setDialog({ kind: "renameChannel", channel })}
+        onDeleteChannel={(channel) => setDialog({ kind: "deleteChannel", channel })}
       />
     );
   } else if (servers.length === 0 && !isGuest) {
@@ -777,68 +815,48 @@ export default function App() {
     );
   }
 
+  const messagesBadge =
+    friends.reduce((n, f) => n + (unread[`dm:${f.id}`] ?? 0), 0) + friends.filter((f) => f.status === "incoming").length;
+
   return (
     <div className="app">
-      <Sidebar
+      <ServerRail
         session={session}
+        instance={api.baseUrl}
         displayName={displayName}
         mode={mode}
         onMode={(m) => {
           setMode(m);
           if (m === "messages" && dmView.type === "call" && voice?.kind !== "call") setDmView({ type: "friends" });
         }}
-        unread={unread}
         servers={servers}
-        active={active}
-        detail={detail}
-        serverView={serverView}
-        joiningRoomId={joiningRoomId}
+        activeId={active?.id ?? null}
+        voiceServerId={voice?.kind === "room" ? voice.serverId : null}
+        messagesBadge={messagesBadge}
         onSelectServer={selectServer}
         onCreateServer={() => setDialog({ kind: "createServer" })}
         onJoinServer={() => setDialog({ kind: "joinServer" })}
-        onManageServer={() => active && setDialog({ kind: "manage", server: active })}
-        onJoinRoom={enterRoom}
-        onAddRoom={() => active && setDialog({ kind: "addRoom", serverId: active.id })}
-        onRenameRoom={(room) => setDialog({ kind: "renameRoom", room })}
-        onDeleteRoom={(room) => setDialog({ kind: "deleteRoom", room })}
-        onOpenChannel={(c) => {
-          setMode("servers");
-          setServerView({ type: "channel", id: c.id });
-        }}
-        onAddChannel={() => active && setDialog({ kind: "addChannel", serverId: active.id })}
-        onRenameChannel={(channel) => setDialog({ kind: "renameChannel", channel })}
-        onDeleteChannel={(channel) => setDialog({ kind: "deleteChannel", channel })}
-        friends={friends}
-        dmOrder={dmOrder}
-        dmView={dmView}
-        onOpenFriends={() => setDmView({ type: "friends" })}
-        onOpenDm={(userId) => setDmView({ type: "dm", userId })}
-        voice={
-          voice
-            ? {
-                kind: voice.kind,
-                serverId: voice.serverId,
-                serverName: voice.serverName,
-                roomId: voice.roomId,
-                roomLabel: voice.roomLabel,
-                identity: voice.room.localParticipant.identity,
-                speaking,
-                room: voice.room,
-              }
-            : null
-        }
-        micOn={micOn}
-        deafened={deafened}
-        onGoToVoice={goToVoice}
-        onToggleMic={toggleMic}
-        onToggleDeafen={toggleDeafen}
-        onLeaveVoice={leaveVoice}
         onOpenSettings={() => setSettingsOpen(true)}
         onLogout={logout}
         onOpenDev={session.kind === "user" && session.user.isDev ? () => setDevOpen(!devOpen) : undefined}
       />
 
-      <main className="content">{main}</main>
+      <div className={`content-wrap${voice && !stageVisible ? " with-island" : ""}`}>
+        <main className="content">{main}</main>
+        {voice && !stageVisible && (
+          <VoiceIsland
+            room={voice.room}
+            label={voice.kind === "call" ? `Appel · ${voice.roomLabel}` : (voiceRoomInfo?.label ?? voice.roomLabel)}
+            isCall={voice.kind === "call"}
+            micOn={micOn}
+            deafened={deafened}
+            onOpen={goToVoice}
+            onToggleMic={toggleMic}
+            onToggleDeafen={toggleDeafen}
+            onLeave={leaveVoice}
+          />
+        )}
+      </div>
 
       {devOpen && session.kind === "user" && session.user.isDev && (
         <DevPanel

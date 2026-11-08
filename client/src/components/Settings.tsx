@@ -268,6 +268,12 @@ function Audio({ s }: { s: S }) {
           />
           <span className="value">{Math.round(s.audio.outputVolume * 100)} %</span>
         </label>
+        <Toggle
+          label="Volume uniformisé"
+          hint="Tout le monde au même niveau : les voix trop faibles sont remontées, les trop fortes baissées, sans rien régler. S'applique tout de suite."
+          checked={s.audio.normalize}
+          onChange={(v) => updateSettings("audio", { normalize: v })}
+        />
       </Card>
 
       <Card title="Traitement du micro">

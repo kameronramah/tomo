@@ -45,6 +45,8 @@ type Props = {
   onToggleSpatial: () => void;
   onInvite: () => void;
   onLeave: () => void;
+  /** Revenir à l'accueil du serveur (sans quitter le vocal). */
+  onBack?: () => void;
   /** Appel privé : pas d'audio spatial ni d'invitation. */
   isCall?: boolean;
   /** Chat du salon (affiché à droite quand il est ouvert). */
@@ -168,7 +170,14 @@ export default function Stage(props: Props) {
       <div className="stage-main">
       <header className="stage-header">
         <div className="col gap-4">
-          <h1 className="title">{props.roomLabel}</h1>
+          <div className="row gap-8">
+            {props.onBack && (
+              <button className="icon-btn sm stage-back" onClick={props.onBack} aria-label="Retour" title="Retour">
+                <Icon name="chevronLeft" size={18} />
+              </button>
+            )}
+            <h1 className="title">{props.roomLabel}</h1>
+          </div>
           <span className="muted small">
             {props.serverName} · {participants.length} participant{participants.length > 1 ? "s" : ""} ·{" "}
             {room.state === ConnectionState.Reconnecting ? <span className="amber">reconnexion…</span> : <NetworkBadge room={room} showLabel />}

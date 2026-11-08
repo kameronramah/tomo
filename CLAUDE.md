@@ -45,11 +45,15 @@ Tomo/
 │   │   ├── App.tsx         Chef d'orchestre : session, serveurs, vocal, appels, messagerie, fenêtres
 │   │   ├── App.css         Toute la charte (variables CSS en haut, sections par version en bas)
 │   │   ├── main.tsx        Fenêtre + barre de titre intégrée
-│   │   ├── components/     AuthScreen, Sidebar, Stage (scène vocale + dock), MapView (carte spatiale),
-│   │   │                   ScreenView (partage d'écran), ChatView, FriendsView, Settings, Dialogs,
-│   │   │                   IncomingCall, DevPanel (outils de test), Home, TitleBar, Brand (logo, icônes)
+│   │   ├── components/     AuthScreen, ServerRail (colonne des serveurs + dossiers), Home (accueil d'un
+│   │   │                   serveur : pièces en cartes, fils, « Ce soir »), Stage (scène vocale en bulles +
+│   │   │                   dock), VoiceIsland (vocal en cours, flottant), MessagesView, MapView, ScreenView,
+│   │   │                   ChatView (bulles, pièces jointes, vocaux), Attachments, GifPicker, FriendsView,
+│   │   │                   Settings, Dialogs, IncomingCall, DevPanel, TitleBar, Brand (logo, icônes)
 │   │   └── lib/            api.ts (client REST + renouvellement de session), realtime.ts (WebSocket),
-│   │                       voice.ts (LiveKit, volumes, extras), spatial.ts (moteur 3D), gameLink.ts
+│   │                       voice.ts (LiveKit, volumes, extras), spatial.ts (moteur 3D), leveler.ts (volume
+│   │                       uniformisé), speaking.ts (« qui parle » mesuré localement), folders.ts (dossiers
+│   │                       de serveurs, localStorage), voiceNote.ts (messages vocaux), gameLink.ts
 │   │                       (Mumble Link), clips.ts, screen.ts, sounds.ts (sons synthétisés), prefs.ts
 │   │                       (réglages locaux), secure.ts (coffre-fort), dev.ts (bots), ui.ts
 │   ├── src-tauri/src/      lib.rs (commandes), clips.rs (fichiers de clips), mumble.rs (lecture Mumble Link)
@@ -72,7 +76,8 @@ Tomo/
 **Modèle** : une *instance* (= un VPS) héberge des comptes et des serveurs. Rôles par serveur : `owner` (créateur) / `admin` / `member` ; les **invités** ont un jeton limité à un serveur. Aucun serveur par défaut.
 
 Points techniques notables :
-- Toutes les voix passent par un **AudioContext** (`webAudioMix` de LiveKit) → c'est ce qui permet l'audio spatial (`PannerNode` HRTF via `setWebAudioPlugins`). Seul le **micro** est spatialisé, jamais le son d'un partage d'écran.
+- Toutes les voix passent par un **AudioContext** (`webAudioMix` de LiveKit). Chaîne par voix (`setWebAudioPlugins`, en ligne droite) : **volume uniformisé** (`leveler.ts` : gain auto + compresseur + limiteur + correction du « makeup gain » du navigateur) puis **audio spatial** (`PannerNode` HRTF) si activé. Seul le **micro** est traité, jamais le son d'un partage d'écran.
+- « Qui parle » : mesuré localement toutes les 40 ms (`speaking.ts`), pas l'info lissée du serveur LiveKit (qui arrivait ~0,5 s en retard).
 - Positions spatiales échangées sur le **canal de données LiveKit**, sujet `pos` (~10/s). Sources `map` et `game` ne se mélangent jamais (repli : voix au centre, plein volume).
 - Clips : `AudioWorklet` → tampon circulaire 60 s en mémoire → WAV ; envoi binaire à Rust (`invoke` avec `Uint8Array`). Attribut LiveKit `clips=1` visible par les autres.
 - « Rester connecté » : jeton de renouvellement dans le **Gestionnaire d'identification Windows** (crate `keyring`).

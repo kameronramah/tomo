@@ -3,6 +3,7 @@ import type { Api } from "./api";
 import { getSettings, loadDevices, onSettingsChange } from "./prefs";
 import { SpatialEngine, type Pose } from "./spatial";
 import { ClipRecorder } from "./clips";
+import { VoiceLeveler } from "./leveler";
 import { onGameLink } from "./gameLink";
 
 /** Volumes choisis par personne (par pseudo), gardés le temps de la session. */
@@ -55,15 +56,23 @@ function audioContainer(): HTMLElement {
 // ---------------------------------------------------------------------------
 // Extras de la connexion vocale en cours : audio spatial + clip
 // ---------------------------------------------------------------------------
-type Extras = { room: Room; spatial: SpatialEngine; recorder: ClipRecorder | null; ctx: AudioContext; offs: (() => void)[] };
+type Extras = {
+  room: Room;
+  spatial: SpatialEngine;
+  leveler: VoiceLeveler;
+  recorder: ClipRecorder | null;
+  ctx: AudioContext;
+  offs: (() => void)[];
+};
 let extras: Extras | null = null;
 const extrasListeners = new Set<() => void>();
 
 export const getSpatial = () => extras?.spatial ?? null;
+export const getLeveler = () => extras?.leveler ?? null;
 export const getRecorder = () => extras?.recorder ?? null;
 
 // Mode développement uniquement : accès console pour déboguer l'audio (absent du build final).
-if (import.meta.env.DEV) (window as unknown as { __tomo: object }).__tomo = { getSpatial, getRecorder };
+if (import.meta.env.DEV) (window as unknown as { __tomo: object }).__tomo = { getSpatial, getRecorder, getLeveler };
 export function onExtrasChange(fn: () => void) {
   extrasListeners.add(fn);
   return () => void extrasListeners.delete(fn);
@@ -88,8 +97,9 @@ async function setClips(ex: Extras, on: boolean) {
 }
 
 async function startExtras(room: Room, ctx: AudioContext) {
-  const spatial = new SpatialEngine(room, ctx);
-  const ex: Extras = { room, spatial, recorder: null, ctx, offs: [] };
+  const leveler = new VoiceLeveler(ctx);
+  const spatial = new SpatialEngine(room, ctx, leveler);
+  const ex: Extras = { room, spatial, leveler, recorder: null, ctx, offs: [] };
   extras = ex;
 
   // Position du jeu (Mumble Link) prioritaire sur la carte quand un jeu compatible tourne.
@@ -124,6 +134,7 @@ async function stopExtras(room: Room) {
   extras = null;
   ex.offs.forEach((f) => f());
   ex.spatial.dispose();
+  ex.leveler.dispose();
   await ex.recorder?.stop();
   await ex.ctx.close().catch(() => {});
   extrasListeners.forEach((l) => l());

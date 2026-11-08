@@ -272,7 +272,7 @@ export default function ChatView(props: Props) {
     const grouped = !newDay && prev && prev.authorId === m.authorId && m.createdAt - prev.createdAt < GROUP_MS;
     const canDelete = m.authorId === myId || props.canModerate;
     rows.push(
-      <div key={m.id} className={`msg${grouped ? " grouped" : ""}`}>
+      <div key={m.id} className={`msg${grouped ? " grouped" : ""}${m.authorId === myId ? " mine" : ""}`}>
         {grouped ? (
           <span className="msg-time-gutter">{timeLabel(m.createdAt)}</span>
         ) : (

@@ -47,7 +47,8 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [ ] Signer l'app Mac (compte Apple Developer, payant → voir « Mis de côté ») et l'app Windows
 - [ ] Modifier un message, réactions, mentions @pseudo
 - [ ] Réordonner les salons par glisser-déposer
-- [ ] **Volume normalisé automatiquement** (compresseur / AGC sur chaque voix reçue)
+- [x] **Volume uniformisé automatiquement** : chaque voix reçue ramenée au même niveau (mesure pendant la parole, gain −12/+18 dB, compresseur + limiteur), activé par défaut, interrupteur dans Paramètres > Audio
+- [x] **Nouveau design « Pièces & bulles »** : colonne des serveurs avec **dossiers** (glisser un serveur sur un autre), pièces vocales en cartes, fils, bulle « Ce soir », scène en bulles, discussions en bulles, vocal en cours dans une île flottante
 - [ ] Suppression de bruit (RNNoise ou celle du navigateur)
 - [x] **Clip audio après coup** : tampon de 60 s en mémoire, bouton du dock ou Ctrl+Maj+C → fichier `.wav` dans Musique\Tomo Clips, liste et écoute dans Paramètres > Clips, icône visible par les autres quand les clips sont activés
 - [x] Chat texte par salon (salons textuels + chat des salons vocaux)

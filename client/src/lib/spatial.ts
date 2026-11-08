@@ -10,6 +10,7 @@
  */
 import { Room, RoomEvent, Track, type RemoteParticipant, type RemoteTrack, type RemoteAudioTrack } from "livekit-client";
 import { getSettings, onSettingsChange } from "./prefs";
+import type { VoiceLeveler } from "./leveler";
 
 export type Pose = { x: number; y: number; yaw: number };
 export type PoseSource = "map" | "game";
@@ -43,9 +44,11 @@ export class SpatialEngine {
   constructor(
     private room: Room,
     private ctx: AudioContext,
+    /** Volume uniformisé : placé AVANT la spatialisation sur chaque voix. */
+    private leveler: VoiceLeveler | null = null,
   ) {
     const onSub = (track: RemoteTrack, _pub: unknown, p: RemoteParticipant) => {
-      // Seule la voix (micro) est spatialisée ; le son d'un partage d'écran reste normal.
+      // Seule la voix (micro) est traitée ; le son d'un partage d'écran reste tel quel.
       if (track.kind !== Track.Kind.Audio || track.source !== Track.Source.Microphone) return;
       this.tracks.set(p.identity, track as RemoteAudioTrack);
       this.applyPlugins(p.identity);
@@ -54,7 +57,9 @@ export class SpatialEngine {
       if (t.source !== Track.Source.Microphone) return;
       this.tracks.delete(p.identity);
       this.panners.delete(p.identity);
+      this.leveler?.forget(p.identity);
     };
+    if (leveler) leveler.onToggle = () => this.tracks.forEach((_, id) => this.applyPlugins(id));
     const onLeft = (p: RemoteParticipant) => {
       this.remotes.delete(p.identity);
       this.emit();
@@ -99,6 +104,7 @@ export class SpatialEngine {
         if (pub.track && pub.source === Track.Source.Microphone) this.tracks.set(p.identity, pub.track as RemoteAudioTrack);
       }),
     );
+    this.tracks.forEach((_, id) => this.applyPlugins(id));
   }
 
   // ---- Activation ----------------------------------------------------------
@@ -123,8 +129,9 @@ export class SpatialEngine {
   private applyPlugins(id: string) {
     const track = this.tracks.get(id);
     if (!track) return;
+    const level = this.leveler?.nodesFor(id) ?? [];
     if (!this.enabled) {
-      track.setWebAudioPlugins([]);
+      track.setWebAudioPlugins(level);
       return;
     }
     let panner = this.panners.get(id);
@@ -139,7 +146,7 @@ export class SpatialEngine {
       this.panners.set(id, panner);
     }
     this.updatePanner(id);
-    track.setWebAudioPlugins([panner]);
+    track.setWebAudioPlugins([...level, panner]);
   }
 
   // ---- Positions -------------------------------------------------------------
