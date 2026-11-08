@@ -1316,3 +1316,9 @@ html.overlay-mode, html.overlay-mode body, html.overlay-mode #root { background:
 .ov-chat strong { color: #2DD4BF; }
 .ov-caption strong { color: #FFB020; }
 .ov-dim { color: #9aa1b2; font-size: 11px; }
+
+/* ---- v0.8 - Mode coach : demandes et annotations sur l'écran réel ---- */
+.coach-requests { display: flex; flex-direction: column; gap: 8px; margin: 0 clamp(18px, 2vw, 30px); }
+.coach-request { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 14px; background: rgba(45, 212, 191, .1); border: 1px solid rgba(45, 212, 191, .35); }
+.coach-screen-canvas { position: fixed; inset: 0; width: 100vw; height: 100vh; pointer-events: none; }
+.coach-screen-banner { position: fixed; top: 16px; left: 50%; transform: translateX(-50%); padding: 8px 14px; border-radius: 12px; background: rgba(14, 16, 20, .85); color: #ECEEF3; font: 600 14px Inter, sans-serif; border: 1px solid rgba(45, 212, 191, .5); }

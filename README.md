@@ -28,7 +28,7 @@ Ensuite, tomo **se met à jour tout seul** (Paramètres › À propos). Au premi
 - **Suppression de bruit avancée** (RNNoise, calculée sur ton PC) + porte de bruit, avec test « s'écouter » avant / après.
 - **Audio spatial** : carte de la pièce ou **position lue dans le jeu** (Mumble Link : Minecraft avec mod, Guild Wars 2, Arma… ; Valheim devrait marcher avec le mod PositionalAudio, pas encore testé).
 - **Clips** des 30 s / 1 min / 2 min passées, en un clic (Ctrl+Maj+C).
-- **Partage d'écran** jusqu'en 4K, son du PC, plein écran, et **mode coach** : tes potes annotent ton écran (crayon, flèche, ping), capture envoyée dans le chat.
+- **Partage d'écran** jusqu'en 4K, son du PC, plein écran, et **mode coach** : un pote demande à annoter, tu acceptes, et ses traits (crayon, flèche, ping) apparaissent directement sur ton écran ; capture envoyée dans le chat.
 - **Sous-titres en direct + traduction** français ⇄ anglais, calculés sur ton PC (Whisper, Opus-MT).
 - **Overlay en jeu** : qui parle, chat de la pièce et sous-titres par-dessus ton jeu (les clics le traversent).
 

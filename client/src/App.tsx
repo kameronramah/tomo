@@ -24,6 +24,7 @@ import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
 import { currentGame, gamePrefs, onGame, publicGame, startGameWatch, type RunningGame } from "./lib/games";
 import GameCard from "./components/GameCard";
 import { overlayChat, startOverlay } from "./lib/overlay";
+import { startCoachScreen } from "./lib/coachScreen";
 import LegendsView from "./components/LegendsView";
 import ChallengesView from "./components/ChallengesView";
 import UpdateCard from "./components/UpdateCard";
@@ -388,6 +389,8 @@ export default function App() {
   const voiceLabelRef = useRef("");
   voiceLabelRef.current = voice ? voice.roomLabel : "";
   useEffect(() => (voiceRoom ? startOverlay(voiceRoom, () => voiceLabelRef.current) : undefined), [voiceRoom]);
+  // Mode coach : les annotations des potes s'affichent sur mon écran quand je le partage
+  useEffect(() => (voiceRoom ? startCoachScreen(voiceRoom) : undefined), [voiceRoom]);
 
   /** Épingler un message au mur des légendes du serveur. */
   async function pinLegend(serverId: string, messageId: string) {

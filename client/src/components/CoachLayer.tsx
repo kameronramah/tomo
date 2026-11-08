@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef, useState } from "react";
 import { RoomEvent, type Room } from "livekit-client";
-import { Coach, coachOpen, drawMarks, setCoachOpen, type Tool } from "../lib/coach";
+import { canAnnotate, coachActive, coachFor, drawMarks, type Tool } from "../lib/coach";
 import { Icon } from "./Brand";
 import { t } from "../lib/i18n";
 
@@ -14,6 +14,21 @@ function contentRect(v: HTMLVideoElement) {
   const w = vw * s;
   const h = vh * s;
   return { x: (W - w) / 2, y: (H - h) / 2, w, h };
+}
+
+/** Re-rend quand le mode coach ou les autorisations changent. */
+function useCoach(room: Room) {
+  const coach = coachFor(room);
+  const [, tick] = useReducer((x: number) => x + 1, 0);
+  useEffect(() => {
+    const off = coach.on(tick);
+    room.on(RoomEvent.ParticipantAttributesChanged, tick);
+    return () => {
+      off();
+      room.off(RoomEvent.ParticipantAttributesChanged, tick);
+    };
+  }, [coach, room]);
+  return coach;
 }
 
 /**
@@ -34,25 +49,19 @@ export default function CoachLayer({
   onCapture?: (png: Blob) => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [coach] = useState(() => new Coach(room));
+  const coach = useCoach(room);
   const [tool, setTool] = useState<Tool | null>(null);
-  const [, setTick] = useState(0);
   const drawing = useRef<{ id: string; pts: [number, number][]; last: number } | null>(null);
-  useEffect(() => () => coach.dispose(), [coach]);
 
-  // Le partageur a-t-il ouvert les annotations ? (attribut LiveKit, suivi en direct)
-  const sharer = share === room.localParticipant.identity ? room.localParticipant : room.remoteParticipants.get(share);
-  const open = coachOpen(sharer);
+  const me = room.localParticipant.identity;
+  const sharer = share === me ? room.localParticipant : room.remoteParticipants.get(share);
+  const allowed = canAnnotate(sharer, me);
+  const asked = coach.asked.get(share);
   useEffect(() => {
-    const re = () => setTick((x) => x + 1);
-    room.on(RoomEvent.ParticipantAttributesChanged, re);
-    return () => void room.off(RoomEvent.ParticipantAttributesChanged, re);
-  }, [room]);
-  useEffect(() => {
-    if (!open) setTool(null);
-  }, [open]);
+    if (!allowed) setTool(null);
+  }, [allowed]);
 
-  // Dessin : ~30 images/s tant qu'il y a des marques
+  // Dessin : ~60 images/s
   useEffect(() => {
     let raf = 0;
     const loop = () => {
@@ -82,7 +91,7 @@ export default function CoachLayer({
   };
 
   function down(e: React.PointerEvent) {
-    if (!tool || !open) return;
+    if (!tool || !allowed) return;
     e.preventDefault();
     e.stopPropagation();
     const id = crypto.randomUUID();
@@ -126,11 +135,14 @@ export default function CoachLayer({
     c.toBlob((b) => b && onCapture(b), "image/png");
   }
 
+  const openAll = isMine && coach.allowed() === "all";
+  const allowedNames = isMine && coach.allowed() !== "all" ? (coach.allowed() as string[]).map((id) => ({ id, name: room.remoteParticipants.get(id)?.name || id })) : [];
+
   return (
     <>
       <canvas
         ref={canvasRef}
-        className={`coach-canvas${tool && open ? " drawing" : ""}`}
+        className={`coach-canvas${tool && allowed ? " drawing" : ""}`}
         onPointerDown={down}
         onPointerMove={move}
         onPointerUp={up}
@@ -139,12 +151,32 @@ export default function CoachLayer({
       />
       <div className="coach-bar" role="toolbar" aria-label={t("Mode coach")}>
         {isMine && (
-          <button className={`coach-btn${open ? " on" : ""}`} onClick={() => void setCoachOpen(room, !open)} title={t("Laisser tes potes annoter ton écran")}>
-            <Icon name="pen" size={15} /> {open ? t("Annotations ouvertes") : t("Ouvrir les annotations")}
-          </button>
+          <>
+            <button className={`coach-btn${openAll ? " on" : ""}`} onClick={() => void coach.setOpenToAll(!openAll)} title={t("Tout le monde peut annoter sans demander")}>
+              <Icon name="users" size={15} /> {openAll ? t("Ouvert à tous") : t("Ouvrir à tous")}
+            </button>
+            {allowedNames.map((p) => (
+              <button key={p.id} className="coach-btn on" onClick={() => void coach.revoke(p.id)} title={t("Retirer l'autorisation de {0}", { 0: p.name })}>
+                {p.name} <Icon name="x" size={13} />
+              </button>
+            ))}
+          </>
         )}
-        {!isMine && !open && <span className="coach-hint">{t("Annotations fermées par celui qui partage")}</span>}
-        {open && (
+        {!isMine && !allowed && (
+          <>
+            {asked === "pending" ? (
+              <span className="coach-hint">{t("Demande envoyée, en attente de réponse…")}</span>
+            ) : (
+              <>
+                {asked === "refused" && <span className="coach-hint">{t("Demande refusée.")}</span>}
+                <button className="coach-btn" onClick={() => coach.ask(share)}>
+                  <Icon name="pen" size={15} /> {asked === "refused" ? t("Redemander") : t("Demander à annoter")}
+                </button>
+              </>
+            )}
+          </>
+        )}
+        {allowed && (
           <>
             {(
               [
@@ -160,14 +192,39 @@ export default function CoachLayer({
             <button className="coach-btn" onClick={() => coach.clearMine(share)} title={t("Effacer mes traits")}>
               <Icon name="x" size={15} />
             </button>
-            {onCapture && (
-              <button className="coach-btn" onClick={() => void capture()} title={t("Envoyer l'image annotée dans le chat de la pièce")}>
-                <Icon name="image" size={15} /> {t("Capturer")}
-              </button>
-            )}
           </>
+        )}
+        {onCapture && (allowed || coachActive(sharer)) && (
+          <button className="coach-btn" onClick={() => void capture()} title={t("Envoyer l'image annotée dans le chat de la pièce")}>
+            <Icon name="image" size={15} /> {t("Capturer")}
+          </button>
         )}
       </div>
     </>
+  );
+}
+
+/**
+ * Demandes d'annotation reçues quand je partage mon écran : « Mila veut annoter ton écran ».
+ * Affiché dans la scène vocale, quel que soit l'affichage en cours.
+ */
+export function CoachRequests({ room }: { room: Room }) {
+  const coach = useCoach(room);
+  if (!coach.requests.length) return null;
+  return (
+    <div className="coach-requests" role="alert">
+      {coach.requests.map((r) => (
+        <div key={r.identity} className="coach-request">
+          <Icon name="pen" size={16} />
+          <span className="grow">{t("{0} veut annoter ton écran", { 0: r.name })}</span>
+          <button className="btn primary small" onClick={() => void coach.answer(r.identity, true)}>
+            {t("Autoriser")}
+          </button>
+          <button className="btn small" onClick={() => void coach.answer(r.identity, false)}>
+            {t("Refuser")}
+          </button>
+        </div>
+      ))}
+    </div>
   );
 }

@@ -27,6 +27,8 @@
     "core:window:allow-show",
     "core:window:allow-hide",
     "core:window:allow-set-position",
-    "core:window:allow-primary-monitor"
+    "core:window:allow-primary-monitor",
+    "core:window:allow-available-monitors",
+    "core:window:allow-set-size"
   ]
 }

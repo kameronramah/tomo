@@ -867,6 +867,19 @@ export const EN: Record<string, string> = {
   "Traduire dans ma langue": "Translate into my language",
   "Traduire": "Translate",
 
+  // ---- Mode coach : autorisations ----
+  "{0} veut annoter ton écran : réponds dans tomo": "{0} wants to draw on your screen: answer in tomo",
+  "{0} veut annoter ton écran": "{0} wants to draw on your screen",
+  "Autoriser": "Allow",
+  "Demande envoyée, en attente de réponse…": "Request sent, waiting for an answer…",
+  "Demande refusée.": "Request declined.",
+  "Demander à annoter": "Ask to draw",
+  "Ouvert à tous": "Open to everyone",
+  "Ouvrir à tous": "Open to everyone",
+  "Redemander": "Ask again",
+  "Retirer l'autorisation de {0}": "Remove {0}'s permission",
+  "Tout le monde peut annoter sans demander": "Everyone can draw without asking",
+
   // ---- Mode coach ----
   "Annotations fermées par celui qui partage": "Annotations closed by the sharer",
   "Annotations ouvertes": "Annotations open",

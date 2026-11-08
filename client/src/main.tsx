@@ -3,13 +3,19 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import TitleBar, { inDesktopApp } from "./components/TitleBar";
 import Overlay from "./components/Overlay";
+import CoachScreen from "./components/CoachScreen";
 
 // La fenêtre « overlay » (par-dessus le jeu) charge la même page avec ?overlay=1.
-const isOverlay = new URLSearchParams(location.search).has("overlay");
+const params = new URLSearchParams(location.search);
+const isOverlay = params.has("overlay");
+// Fenêtre « coach-screen » : les annotations des potes sur l'écran que je partage
+const isCoach = params.has("coach");
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
-    {isOverlay ? (
+    {isCoach ? (
+      <CoachScreen />
+    ) : isOverlay ? (
       <Overlay />
     ) : (
       <div className="window">

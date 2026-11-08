@@ -15,7 +15,7 @@ Ce qui existe (v0.8) :
 - **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils, invitations (membre + **invité d'un soir sans compte**).
 - **Messagerie** temps réel : fils, chat de chaque pièce, amis, messages privés (demandes hors amis), **appels privés** ; pièces jointes, messages vocaux, GIF (Klipy), **modifier, réactions, mentions** @pseudo / @vocal / @tous.
 - **Profils, statuts, confidentialité, blocage**, membres du serveur, notifications système, pastilles de non-lus.
-- **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **partage d'écran** HD + **mode coach** (annotations), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
+- **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **partage d'écran** HD + **mode coach** (annotations sur demande, affichées sur l'écran de celui qui partage), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
 - **Jeux** : détection du jeu lancé (« joue à … »), réglages par jeu (pièce auto, mode focus, spatial, overlay, masquer), proposition de rejoindre les potes, **stats Steam / League of Legends**.
 - **Social** : **mur des légendes** (citations, images, clips), **défis à points** (sans paris), classement du mois.
 - **Appli** : français / anglais, **mise à jour automatique** (GitHub Releases signées), installateurs Windows + Mac, Paramètres complets.
@@ -58,7 +58,7 @@ tomo/
 │   │   │                   Overlay, Settings (+ SettingsProfile, SettingsGames, SettingsOverlay),
 │   │   │                   Dialogs, IncomingCall, DevPanel, TitleBar, Brand (logo, icônes, avatars)
 │   │   └── lib/            api.ts, realtime.ts, voice.ts, leveler.ts (volume uniformisé), spatial.ts,
-│   │                       speaking.ts, denoise.ts (RNNoise), clips.ts, screen.ts, coach.ts,
+│   │                       speaking.ts, denoise.ts (RNNoise), clips.ts, screen.ts, coach.ts + coachScreen.ts,
 │   │                       captions.ts + captions.worker.ts (Whisper / Opus-MT), games.ts (jeux lancés),
 │   │                       gameLink.ts (Mumble Link), overlay.ts, updater.ts, i18n.ts + i18n-en.ts,
 │   │                       people.ts (annuaire), desktop.ts (notifications, démarrage), badge.ts,
@@ -88,7 +88,7 @@ tomo/
 Points techniques notables :
 - **Chaîne par voix reçue** (`setWebAudioPlugins`, en ligne droite) : volume uniformisé puis audio spatial. **Micro** : RNNoise + porte de bruit via `setProcessor` (`denoise.ts`), suivent les réglages en direct.
 - « Qui parle » : mesuré localement toutes les 40 ms (`speaking.ts`).
-- **Attributs LiveKit** du participant : `clips=1`, `cc=1` (sous-titres), `coach=all` (annotations ouvertes), `lang` (fr/en, langue de transcription). Toujours les écrire avec `{ ...attributes, clé: valeur }`.
+- **Attributs LiveKit** du participant : `clips=1`, `cc=1` (sous-titres), `coach` (`all` ou identités autorisées à annoter mon écran, après demande acceptée), `lang` (fr/en, langue de transcription). Toujours les écrire avec `{ ...attributes, clé: valeur }`.
 - **Canaux de données LiveKit** : `pos` (positions spatiales, ~10/s), `coach` (annotations).
 - **Jeux** : Rust `running_programs` (crate `sysinfo`, noms des programmes seulement) → `games.ts` (liste connue + jeux ajoutés) → WebSocket `{type:"game"}` → serveur en mémoire (`gameOf`, respecte `show_game`).
 - **Sous-titres** : Transformers.js 3.7 dans un Web Worker ; modèles `onnx-community/whisper-*` et `Xenova/opus-mt-fr-en` / `en-fr` téléchargés depuis Hugging Face au premier usage ; WebGPU si dispo.

@@ -70,7 +70,7 @@ Une seconde fenêtre Tauri (`label: overlay`), transparente, toujours au-dessus,
 Un fil de calcul (`captions.worker.ts`) charge **Whisper** (reconnaissance) et **Opus-MT** (traduction FR ⇄ EN) avec Transformers.js, sur la carte graphique (WebGPU) ou le processeur. Les modèles sont téléchargés une fois depuis Hugging Face puis gardés en cache. Chaque voix reçue est découpée en phrases (silence de 0,7 s) puis transcrite dans la langue de la personne (attribut LiveKit `lang`). Rien ne sort du PC.
 
 ### Mode coach
-Annotations (crayon, flèche, ping) sur un partage d'écran, échangées sur le canal de données LiveKit (sujet `coach`) en coordonnées 0..1 de l'image. Celui qui partage les ouvre ou les ferme (attribut `coach`). « Capturer » envoie l'image annotée dans le chat de la pièce.
+Annotations (crayon, flèche, ping) sur un partage d'écran, échangées sur le canal de données LiveKit (sujet `coach`) en coordonnées 0..1 de l'image. Un pote **demande** à annoter (message `ask`), celui qui partage **accepte ou refuse** ; les personnes autorisées sont dans son attribut `coach` (`all` ou liste d'identités) et les traits des autres sont ignorés par tout le monde. Chez celui qui partage, les traits s'affichent **sur son écran réel** : fenêtre Tauri `coach-screen` plein écran, transparente, traversée par les clics, posée sur l'écran partagé (reconnu à sa taille ; pour un partage de fenêtre, seulement dans tomo). « Capturer » envoie l'image annotée dans le chat de la pièce.
 
 ### Clips
 `AudioWorklet` → tampon circulaire en mémoire (30 s à 2 min) → WAV écrit par Rust dans Musique\tomo Clips. Un clip peut être mis au **mur des légendes** (envoyé comme pièce jointe).

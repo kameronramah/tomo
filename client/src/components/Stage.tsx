@@ -16,6 +16,7 @@ import { SCREEN_PRESETS, listShares, screenShareError, startScreenShare, stopScr
 import { t } from "../lib/i18n";
 import { getCaptions, onCaptions, startCaptions, stopCaptions } from "../lib/captions";
 import CaptionsBar from "./CaptionsBar";
+import { CoachRequests } from "./CoachLayer";
 
 const REFRESH_EVENTS = [
   RoomEvent.TrackPublished,
@@ -241,6 +242,7 @@ export default function Stage(props: Props) {
       </header>
 
       {props.warning && <p className="warning banner">{props.warning}</p>}
+      <CoachRequests room={room} />
 
       {shares.length > 0 ? (
         <ScreenView room={room} shares={shares} onStopMine={stopShare} onCapture={props.onCapture} />

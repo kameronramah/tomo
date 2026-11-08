@@ -52,7 +52,7 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] Proposition de rejoindre les potes qui jouent au même jeu en vocal
 - [x] **Overlay en jeu** : qui parle, chat de la pièce, sous-titres (Paramètres › Overlay en jeu)
 - [x] **Sous-titres en direct + traduction** FR ⇄ EN calculés sur le PC (Whisper + Opus-MT), icône CC, transcription enregistrable
-- [x] **Mode coach** : annotations sur un partage d'écran (crayon, flèche, ping), capture envoyée dans le chat
+- [x] **Mode coach** : annotations sur un partage d'écran (crayon, flèche, ping) **sur demande acceptée par celui qui partage** (ou ouvert à tous), affichées **directement sur son écran** (fenêtre transparente), capture envoyée dans le chat
 - [x] **Mur des légendes** : citations, images, clips épinglés, réactions
 - [x] **Défis à points** (sans paris) : validation par les participants, classement du mois
 - [x] **Stats de jeu** : Steam (OpenID, heures jouées) et League of Legends (Riot ID : rang, dernières parties), Paramètres › Comptes de jeu
@@ -100,6 +100,8 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Recherche dans les messages
 - [ ] Mettre à jour les maquettes « Connexion » et « Créer un compte »
 - [ ] Mode coach : barre d'outils en icônes seules quand la fenêtre est petite
+- [ ] Mode coach : partage d'une seule fenêtre → retrouver sa position pour afficher aussi les traits sur l'écran (aujourd'hui : seulement dans tomo)
+- [ ] Mode coach : répondre à une demande depuis l'overlay (aujourd'hui : notification + réponse dans tomo)
 - [ ] Quelques textes restent en français en mode anglais (notifications système, messages d'erreur rares du serveur) : à traduire au fil de l'eau
 - [ ] Le mur des légendes affiche le pseudo de l'époque (pas le nom affiché actuel)
 
