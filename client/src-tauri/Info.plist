@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Ajouté automatiquement à l'app Mac par Tauri : sans ces phrases, macOS refuse le micro. -->
+<plist version="1.0">
+<dict>
+  <key>NSMicrophoneUsageDescription</key>
+  <string>Tomo utilise ton micro pour le chat vocal et les messages vocaux.</string>
+  <key>NSCameraUsageDescription</key>
+  <string>Tomo n'utilise pas la caméra pour l'instant.</string>
+</dict>
+</plist>

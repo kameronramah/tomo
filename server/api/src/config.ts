@@ -31,6 +31,8 @@ export const config = {
     process.env.DEV_USERNAME && process.env.DEV_PASSWORD
       ? { username: process.env.DEV_USERNAME, password: process.env.DEV_PASSWORD }
       : null,
+  /** Clé Klipy (recherche de GIF, gratuite : https://partner.klipy.com). Sans clé, pas de recherche de GIF. */
+  klipyKey: process.env.KLIPY_API_KEY?.trim() || null,
   livekit: {
     url: requireEnv("LIVEKIT_URL"), // wss://… donné aux clients
     httpUrl: process.env.LIVEKIT_HTTP_URL ?? requireEnv("LIVEKIT_URL").replace(/^ws/, "http"),

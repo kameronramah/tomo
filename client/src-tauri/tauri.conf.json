@@ -30,6 +30,15 @@
   "bundle": {
     "active": true,
     "targets": "all",
+    "publisher": "Tomo",
+    "shortDescription": "Le vocal pour jouer entre potes",
+    "windows": {
+      "nsis": { "languages": ["French"], "displayLanguageSelector": false, "installMode": "currentUser" }
+    },
+    "macOS": {
+      "minimumSystemVersion": "11.0",
+      "signingIdentity": "-"
+    },
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

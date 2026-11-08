@@ -7,7 +7,7 @@ import { config } from "./config.js";
 import { areFriends, pair } from "./access.js";
 import { requireUser } from "./security.js";
 import { isOnline, sendToUser } from "./realtime.js";
-import { createMessage, listMessages } from "./routes-chat.js";
+import { createMessage, listMessages, type MessageBody } from "./routes-chat.js";
 import { closeRooms } from "./livekit.js";
 
 type FriendRow = { user_a: string; user_b: string; status: string; requested_by: string; created_at: number };
@@ -144,14 +144,14 @@ export default async function socialRoutes(app: FastifyInstance) {
     return listMessages("dm", pair(me.id, req.params.userId).join(":"), before);
   });
 
-  app.post<{ Params: { userId: string }; Body: { content?: unknown } }>(
+  app.post<{ Params: { userId: string }; Body: MessageBody }>(
     "/dm/:userId/messages",
     { config: { rateLimit: { max: 20, timeWindow: "10 seconds" } } },
     async (req, reply) => {
       const me = await requireUser(req, reply);
       if (!me) return;
       if (!areFriends(me.id, req.params.userId)) return reply.code(403).send({ error: "Vous devez être amis pour discuter." });
-      const msg = createMessage(me, "dm", pair(me.id, req.params.userId).join(":"), req.body?.content);
+      const msg = createMessage(me, "dm", pair(me.id, req.params.userId).join(":"), req.body);
       if (typeof msg === "string") return reply.code(400).send({ error: msg });
       const event = { type: "message", message: msg };
       sendToUser(req.params.userId, event);

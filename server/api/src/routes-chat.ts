@@ -1,7 +1,8 @@
 /** Salons textuels, chat des salons vocaux, et outils communs aux messages. */
 import type { FastifyInstance, FastifyReply } from "fastify";
 import { randomUUID } from "node:crypto";
-import { db } from "./db.js";
+import { db, tx } from "./db.js";
+import { attachmentsFor, checkAttachments, linkAttachments, sweepAttachments, type Attachment } from "./attachments.js";
 import { accessOf, isManager } from "./access.js";
 import { authenticate, cleanLabel, requireUser, type Principal } from "./security.js";
 import { sendToServer, sendToUser } from "./realtime.js";
@@ -16,6 +17,7 @@ export type Message = {
   guest: boolean;
   content: string;
   createdAt: number;
+  attachments: Attachment[];
 };
 
 const MAX_LENGTH = 2000;
@@ -32,7 +34,7 @@ type Row = {
   content: string;
   created_at: number;
 };
-const toMessage = (r: Row): Message => ({
+const toMessage = (r: Row, attachments: Attachment[] = []): Message => ({
   id: r.id,
   scope: r.scope,
   target: r.target,
@@ -41,6 +43,7 @@ const toMessage = (r: Row): Message => ({
   guest: !!r.guest,
   content: r.content,
   createdAt: r.created_at,
+  attachments,
 });
 
 /** Les 50 derniers messages (ou ceux avant `before`), du plus ancien au plus récent. */
@@ -50,29 +53,41 @@ export function listMessages(scope: Scope, target: string, before?: number): Mes
       "SELECT * FROM messages WHERE scope = ? AND target = ? AND created_at < ? ORDER BY created_at DESC LIMIT ?",
     )
     .all(scope, target, before ?? Number.MAX_SAFE_INTEGER, PAGE) as Row[];
-  return rows.reverse().map(toMessage);
+  const files = attachmentsFor(rows.map((r) => r.id));
+  return rows.reverse().map((r) => toMessage(r, files.get(r.id)));
 }
 
+/** Corps d'un message envoyé par le client : texte et/ou pièces jointes. */
+export type MessageBody = { content?: unknown; attachments?: unknown };
+
 /** Vérifie et enregistre un message. Renvoie une erreur lisible ou le message. */
-export function createMessage(who: Principal, scope: Scope, target: string, content: unknown): Message | string {
+export function createMessage(who: Principal, scope: Scope, target: string, body: MessageBody | undefined): Message | string {
+  const content = body?.content ?? "";
   if (typeof content !== "string") return "Message vide.";
   const text = content.replace(/\r\n/g, "\n").trim();
-  if (!text) return "Message vide.";
+  const files = checkAttachments(who, body?.attachments);
+  if (typeof files === "string") return files;
+  if (!text && files.length === 0) return "Message vide.";
   if (text.length > MAX_LENGTH) return `Message trop long (${MAX_LENGTH} caractères maximum).`;
-  const msg: Message = {
-    id: randomUUID(),
+  const id = randomUUID();
+  const createdAt = Date.now();
+  const attachments = tx(() => {
+    db.prepare(
+      "INSERT INTO messages (id, scope, target, author_id, author_name, guest, content, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    ).run(id, scope, target, who.id, who.name, who.kind === "guest" ? 1 : 0, text, createdAt);
+    return linkAttachments(id, files);
+  });
+  return {
+    id,
     scope,
     target,
     authorId: who.id,
     authorName: who.name,
     guest: who.kind === "guest",
     content: text,
-    createdAt: Date.now(),
+    createdAt,
+    attachments,
   };
-  db.prepare(
-    "INSERT INTO messages (id, scope, target, author_id, author_name, guest, content, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-  ).run(msg.id, scope, target, msg.authorId, msg.authorName, msg.guest ? 1 : 0, msg.content, msg.createdAt);
-  return msg;
 }
 
 const parseBefore = (v: unknown) => (typeof v === "string" && /^\d+$/.test(v) ? Number(v) : undefined);
@@ -152,6 +167,7 @@ export default async function chatRoutes(app: FastifyInstance) {
     if (!isManager(accessOf(me, ch.server_id))) return reply.code(403).send({ error: "Seuls les admins du serveur peuvent faire ça." });
     db.prepare("DELETE FROM messages WHERE scope = 'channel' AND target = ?").run(ch.id);
     db.prepare("DELETE FROM channels WHERE id = ?").run(ch.id);
+    sweepAttachments();
     sendToServer(ch.server_id, { type: "channels", serverId: ch.server_id });
     return { ok: true };
   });
@@ -168,7 +184,7 @@ export default async function chatRoutes(app: FastifyInstance) {
     },
   );
 
-  app.post<{ Params: { channelId: string }; Body: { content?: unknown } }>(
+  app.post<{ Params: { channelId: string }; Body: MessageBody }>(
     "/channels/:channelId/messages",
     writeLimit,
     async (req, reply) => {
@@ -176,7 +192,7 @@ export default async function chatRoutes(app: FastifyInstance) {
       if (!me) return;
       const ch = serverOfChannel(req.params.channelId);
       if (!ch || !accessOf(me, ch.server_id)) return notFound(reply);
-      const msg = createMessage(me, "channel", ch.id, req.body?.content);
+      const msg = createMessage(me, "channel", ch.id, req.body);
       if (typeof msg === "string") return reply.code(400).send({ error: msg });
       sendToServer(ch.server_id, { type: "message", serverId: ch.server_id, message: msg });
       return msg;
@@ -192,7 +208,7 @@ export default async function chatRoutes(app: FastifyInstance) {
     return listMessages("room", room.id, parseBefore(req.query.before));
   });
 
-  app.post<{ Params: { roomId: string }; Body: { content?: unknown } }>(
+  app.post<{ Params: { roomId: string }; Body: MessageBody }>(
     "/rooms/:roomId/messages",
     writeLimit,
     async (req, reply) => {
@@ -200,7 +216,7 @@ export default async function chatRoutes(app: FastifyInstance) {
       if (!me) return;
       const room = serverOfRoom(req.params.roomId);
       if (!room || !accessOf(me, room.server_id)) return notFound(reply);
-      const msg = createMessage(me, "room", room.id, req.body?.content);
+      const msg = createMessage(me, "room", room.id, req.body);
       if (typeof msg === "string") return reply.code(400).send({ error: msg });
       sendToServer(room.server_id, { type: "message", serverId: room.server_id, message: msg });
       return msg;
@@ -220,6 +236,7 @@ export default async function chatRoutes(app: FastifyInstance) {
     const canModerate = serverId ? isManager(accessOf(me, serverId)) : false;
     if (!mine && !canModerate) return reply.code(403).send({ error: "Tu ne peux pas supprimer ce message." });
     db.prepare("DELETE FROM messages WHERE id = ?").run(row.id);
+    sweepAttachments(); // ses fichiers partent avec lui
     const event = { type: "messageDeleted", scope: row.scope, target: row.target, id: row.id };
     if (serverId) sendToServer(serverId, event);
     else if (row.scope === "dm") row.target.split(":").forEach((u) => sendToUser(u, event));

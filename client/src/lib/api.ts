@@ -31,7 +31,26 @@ export type Message = {
   guest: boolean;
   content: string;
   createdAt: number;
+  attachments?: Attachment[];
 };
+export type Attachment = {
+  id: string;
+  kind: "image" | "audio" | "file";
+  name: string;
+  mime: string;
+  size: number;
+  width?: number;
+  height?: number;
+  durationMs?: number;
+  /** Message vocal : niveaux 0-9 pour dessiner l'onde. */
+  waveform?: string;
+  /** Chemin relatif à l'instance (voir Api.fileUrl). */
+  url: string;
+};
+export type GifMedia = { url: string; width: number; height: number };
+export type Gif = { id: string; title: string; preview: GifMedia; full: GifMedia };
+export type UploadMeta = { name: string; durationMs?: number; width?: number; height?: number; waveform?: string };
+export const MAX_FILE_BYTES = 25 * 1024 * 1024;
 export type Friend = { id: string; username: string; status: "friend" | "incoming" | "outgoing"; online: boolean; since: number };
 export type DmSummary = { userId: string; lastMessageAt: number };
 export type CallInfo = { callId: string; url: string; token: string; with: { id: string; name: string } };
@@ -232,10 +251,48 @@ export class Api {
     const base = scope === "channel" ? `/channels/${target}` : scope === "room" ? `/rooms/${target}` : `/dm/${target}`;
     return this.request<Message[]>("GET", `${base}/messages${before ? `?before=${before}` : ""}`);
   }
-  sendMessage(scope: Message["scope"], target: string, content: string) {
+  sendMessage(scope: Message["scope"], target: string, content: string, attachments: string[] = []) {
     const base = scope === "channel" ? `/channels/${target}` : scope === "room" ? `/rooms/${target}` : `/dm/${target}`;
-    return this.request<Message>("POST", `${base}/messages`, { content });
+    return this.request<Message>("POST", `${base}/messages`, attachments.length ? { content, attachments } : { content });
   }
+
+  /** Envoie un fichier (corps binaire brut) ; renvoie la pièce jointe à mettre dans un message. */
+  async uploadAttachment(file: Blob, meta: UploadMeta, retry = true): Promise<Attachment> {
+    if (file.size > MAX_FILE_BYTES) throw new ApiError("Fichier trop lourd (25 Mo maximum).", 413);
+    const q = new URLSearchParams({ name: meta.name });
+    if (meta.durationMs) q.set("durationMs", String(Math.round(meta.durationMs)));
+    if (meta.width) q.set("width", String(meta.width));
+    if (meta.height) q.set("height", String(meta.height));
+    if (meta.waveform) q.set("waveform", meta.waveform);
+    let res: Response;
+    try {
+      res = await fetch(`${this.baseUrl}/attachments?${q}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/octet-stream",
+          ...(this.access ? { Authorization: `Bearer ${this.access}` } : {}),
+        },
+        body: file,
+      });
+    } catch {
+      throw new ApiError("Envoi du fichier impossible. Vérifie ta connexion.", 0);
+    }
+    if (res.status === 401 && retry && this.refresh && (await this.renew())) return this.uploadAttachment(file, meta, false);
+    const data = await res.json().catch(() => ({}));
+    if (res.status === 413) throw new ApiError("Fichier trop lourd (25 Mo maximum).", 413);
+    if (!res.ok) throw new ApiError(data.error ?? `Erreur serveur (${res.status})`, res.status);
+    return data as Attachment;
+  }
+
+  /** GIF : tendances (sans recherche) ou résultats d'une recherche, via Klipy. */
+  gifs = (q: string, page = 1) =>
+    this.request<{ gifs: Gif[]; hasNext: boolean }>("GET", `/gifs?${new URLSearchParams({ q, page: String(page) })}`);
+  /** Le serveur récupère le GIF choisi et le range comme pièce jointe. */
+  attachGif = (g: Gif) =>
+    this.request<Attachment>("POST", "/gifs/attach", { url: g.full.url, title: g.title, width: g.full.width, height: g.full.height });
+
+  /** Adresse complète d'une pièce jointe. */
+  fileUrl = (a: Attachment) => `${this.baseUrl}${a.url}`;
   deleteMessage = (id: string) => this.request("DELETE", `/messages/${id}`);
 
   // ---- Amis, messages privés, appels ---------------------------------------

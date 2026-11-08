@@ -109,11 +109,20 @@ powershell -ExecutionPolicy Bypass -File server\api\tests\test-api.ps1
 powershell -ExecutionPolicy Bypass -File server\api\tests\test-social.ps1
 ```
 ```bash
+powershell -ExecutionPolicy Bypass -File server\api\tests\test-attachments.ps1
+```
+```bash
 cd client/src-tauri && cargo test --lib mumble
 ```
 Après une modification de l'API : `docker compose -f docker-compose.dev.yml up -d --build api` (dans `server/`).
 
 Build de l'exécutable : `npm run tauri build` dans `client/` (installateur dans `src-tauri/target/release/bundle/`).
+
+**Installateurs Windows + Mac** : `.github/workflows/installateurs.yml`. Pousser un tag (`git tag v0.6.0` puis `git push origin v0.6.0`) crée une Release brouillon sur GitHub avec le `.exe`, le `.msi` et le `.dmg` universel. L'app Mac n'est pas signée par Apple (compte payant) : premier lancement par clic droit > Ouvrir. `client/src-tauri/Info.plist` contient la phrase d'autorisation du micro, obligatoire sur Mac.
+
+**GIF** : recherche via **Klipy** (Tenor a fermé son API le 30 juin 2026). Clé gratuite dans `server/.env` → `KLIPY_API_KEY=…` (dev et prod). Le serveur fait la recherche et télécharge le GIF choisi comme pièce jointe (`server/api/src/gifs.ts`) ; seules les adresses `*.klipy.com` sont acceptées.
+
+**Pièces jointes** : `server/api/src/attachments.ts` (type déduit des octets, adresses signées, nettoyage auto des fichiers orphelins), fichiers dans `DATA_DIR/uploads`.
 
 ---
 

@@ -21,6 +21,8 @@ services:
       LIVEKIT_HTTP_URL: http://livekit:7880   # adresse vue depuis le conteneur
       LIVEKIT_API_KEY: devkey
       LIVEKIT_API_SECRET: secret
+      # Recherche de GIF : mets KLIPY_API_KEY=… dans server/.env (jamais dans ce fichier, il est sur GitHub)
+      KLIPY_API_KEY: ${KLIPY_API_KEY:-}
       # Outils de test + compte de test (dev uniquement, jamais dans le docker-compose.yml de prod)
       DEV_TOOLS: "1"
       DEV_USERNAME: testeur

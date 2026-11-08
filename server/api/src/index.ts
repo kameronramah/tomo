@@ -7,6 +7,8 @@ import authRoutes from "./routes-auth.js";
 import serverRoutes from "./routes-servers.js";
 import chatRoutes from "./routes-chat.js";
 import socialRoutes from "./routes-social.js";
+import attachmentRoutes from "./attachments.js";
+import gifRoutes from "./gifs.js";
 import realtimeRoutes from "./realtime.js";
 import websocket from "@fastify/websocket";
 
@@ -30,6 +32,8 @@ await app.register(authRoutes);
 await app.register(serverRoutes);
 await app.register(chatRoutes);
 await app.register(socialRoutes);
+await app.register(attachmentRoutes);
+await app.register(gifRoutes);
 
 // Outils de test : uniquement si DEV_TOOLS=1 (serveur de dev). Absents en production.
 if (config.devTools) {

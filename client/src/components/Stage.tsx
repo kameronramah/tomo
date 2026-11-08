@@ -9,6 +9,7 @@ import {
 import { getSettings, loadDevices, onSettingsChange, saveDevices, updateSettings } from "../lib/prefs";
 import { getRecorder, getSpatial, onExtrasChange, setParticipantVolume, volumeMemory } from "../lib/voice";
 import { Avatar, Icon, NetworkBadge, SpeakingBars } from "./Brand";
+import { useSpeaking } from "../lib/speaking";
 import MapView from "./MapView";
 import ScreenView from "./ScreenView";
 import { SCREEN_PRESETS, listShares, screenShareError, startScreenShare, stopScreenShare, type ScreenPresetId } from "../lib/screen";
@@ -18,7 +19,6 @@ const REFRESH_EVENTS = [
   RoomEvent.TrackUnpublished,
   RoomEvent.ParticipantConnected,
   RoomEvent.ParticipantDisconnected,
-  RoomEvent.ActiveSpeakersChanged,
   RoomEvent.TrackMuted,
   RoomEvent.TrackUnmuted,
   RoomEvent.TrackSubscribed,
@@ -153,6 +153,7 @@ export default function Stage(props: Props) {
     refresh();
   }
 
+  const speaking = useSpeaking(room);
   const me = room.localParticipant;
   const participants: Participant[] = [me, ...room.remoteParticipants.values()];
   const engine = getSpatial();
@@ -228,8 +229,9 @@ export default function Stage(props: Props) {
           const muted = !p.isMicrophoneEnabled;
           const guest = p.identity.startsWith("g:");
           const bot = p.identity.startsWith("bot:");
+          const talking = speaking.has(p.identity);
           return (
-            <div key={p.identity} className={`tile${p.isSpeaking ? " speaking" : ""}`}>
+            <div key={p.identity} className={`tile${talking ? " speaking" : ""}`}>
               {muted && (
                 <span className="tile-badge amber-badge">
                   <Icon name="micOff" size={13} /> Micro coupé
@@ -250,11 +252,11 @@ export default function Stage(props: Props) {
               {props.spatial && engine && !isMe && (
                 <span className="tile-distance">{engine.isPlaced(p.identity) ? `${Math.round(engine.distanceTo(p.identity) ?? 0)} m` : (engine.unplacedReason(p.identity) ?? "")}</span>
               )}
-              <Avatar name={label} size={92} speaking={p.isSpeaking} className="big" />
+              <Avatar name={label} size={92} speaking={talking} className="big" />
               <span className="tile-name">
                 {label}
                 {isMe && <span className="muted"> (toi)</span>}
-                {p.isSpeaking && <SpeakingBars />}
+                {talking && <SpeakingBars />}
               </span>
               {!isMe && (
                 <label className="volume">

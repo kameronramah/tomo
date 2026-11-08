@@ -41,7 +41,11 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 
 - [x] Changer son mot de passe, voir ses appareils connectés
 - [ ] Changer son pseudo, photo de profil
-- [ ] Modifier un message, réactions, mentions @pseudo, envoi d'images
+- [x] **Pièces jointes** : images (aperçu + agrandissement), fichiers (25 Mo max), glisser-déposer, coller une image, **messages vocaux** (2 min max, onde)
+- [x] **GIF** : recherche intégrée via Klipy (Tenor a fermé son API en juin 2026), clé `KLIPY_API_KEY` sur le serveur
+- [x] **Installateurs** Windows (.exe / .msi) et Mac (.dmg universel) fabriqués par GitHub Actions à chaque tag `v*`
+- [ ] Signer l'app Mac (compte Apple Developer, payant → voir « Mis de côté ») et l'app Windows
+- [ ] Modifier un message, réactions, mentions @pseudo
 - [ ] Réordonner les salons par glisser-déposer
 - [ ] **Volume normalisé automatiquement** (compresseur / AGC sur chaque voix reçue)
 - [ ] Suppression de bruit (RNNoise ou celle du navigateur)

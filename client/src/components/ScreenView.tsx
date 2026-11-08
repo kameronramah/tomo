@@ -4,6 +4,7 @@ import type { RemoteParticipant, Room } from "livekit-client";
 import type { Share } from "../lib/screen";
 import { screenVolumeMemory, setScreenVolume } from "../lib/voice";
 import { Avatar, Icon } from "./Brand";
+import { useSpeaking } from "../lib/speaking";
 
 const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window;
 
@@ -19,6 +20,7 @@ export default function ScreenView({ room, shares, onStopMine }: Props) {
   const [full, setFull] = useState(false);
   const [stats, setStats] = useState<{ w: number; h: number; fps: number }>({ w: 0, h: 0, fps: 0 });
   const [, setTick] = useState(0);
+  const speaking = useSpeaking(room);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   // Par défaut : le partage d'un autre (pas le mien)
@@ -72,7 +74,7 @@ export default function ScreenView({ room, shares, onStopMine }: Props) {
     <div className={`screen-view${full ? " full" : ""}`}>
       <div className="screen-bar">
         <span className="row gap-8 grow">
-          <Avatar name={who} size={26} speaking={current.participant.isSpeaking} />
+          <Avatar name={who} size={26} speaking={speaking.has(current.participant.identity)} />
           <strong className="ellipsis">{current.isLocal ? "Ton écran" : `Écran de ${who}`}</strong>
           <span className="screen-quality" title="Qualité reçue">
             {quality}
@@ -128,7 +130,7 @@ export default function ScreenView({ room, shares, onStopMine }: Props) {
       <div className="screen-people">
         {[room.localParticipant, ...room.remoteParticipants.values()].map((p) => (
           <span key={p.identity} className="screen-person" title={p.name || p.identity}>
-            <Avatar name={p.name || p.identity} size={30} speaking={p.isSpeaking} />
+            <Avatar name={p.name || p.identity} size={30} speaking={speaking.has(p.identity)} />
             {!p.isMicrophoneEnabled && (
               <span className="mini-muted">
                 <Icon name="micOff" size={10} />

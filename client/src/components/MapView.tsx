@@ -3,6 +3,7 @@ import { RoomEvent, type Room } from "livekit-client";
 import { MAP_HALF, type SpatialEngine } from "../lib/spatial";
 import { getSettings, updateSettings } from "../lib/prefs";
 import { Avatar, Icon } from "./Brand";
+import { useSpeaking } from "../lib/speaking";
 
 type Props = { room: Room; engine: SpatialEngine };
 
@@ -14,13 +15,14 @@ export default function MapView({ room, engine }: Props) {
   const [, refresh] = useReducer((x: number) => x + 1, 0);
   const areaRef = useRef<HTMLDivElement>(null);
   const dragging = useRef(false);
+  const speaking = useSpeaking(room);
 
   useEffect(() => {
     const off = engine.on(refresh);
-    room.on(RoomEvent.ActiveSpeakersChanged, refresh).on(RoomEvent.ParticipantConnected, refresh).on(RoomEvent.ParticipantDisconnected, refresh);
+    room.on(RoomEvent.ParticipantConnected, refresh).on(RoomEvent.ParticipantDisconnected, refresh);
     return () => {
       off();
-      room.off(RoomEvent.ActiveSpeakersChanged, refresh).off(RoomEvent.ParticipantConnected, refresh).off(RoomEvent.ParticipantDisconnected, refresh);
+      room.off(RoomEvent.ParticipantConnected, refresh).off(RoomEvent.ParticipantDisconnected, refresh);
     };
   }, [room, engine]);
 
@@ -97,7 +99,7 @@ export default function MapView({ room, engine }: Props) {
           const audible = d <= range;
           return (
             <span key={p.identity} className={`map-pin${audible ? "" : " far"}`} style={toPct(r.x, r.y)} title={`${p.name || p.identity} · ${Math.round(d)} m`}>
-              <Avatar name={p.name || p.identity} size={38} speaking={p.isSpeaking && audible} />
+              <Avatar name={p.name || p.identity} size={38} speaking={speaking.has(p.identity) && audible} />
               <span className="map-label">
                 {p.name || p.identity}
                 <em>{Math.round(d)} m</em>
@@ -108,7 +110,7 @@ export default function MapView({ room, engine }: Props) {
 
         <span className="map-pin me" style={toPct(engine.me.x, engine.me.y)}>
           {game && <span className="map-facing" style={{ transform: `rotate(${engine.me.yaw}rad)` }} />}
-          <Avatar name={me.name || me.identity} size={44} speaking={me.isSpeaking} />
+          <Avatar name={me.name || me.identity} size={44} speaking={speaking.has(me.identity)} />
           <span className="map-label">Toi</span>
         </span>
       </div>

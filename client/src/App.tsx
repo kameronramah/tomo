@@ -16,6 +16,7 @@ import { getSettings, loadInstance, loadLastServer, normalizeInstance, onSetting
 import { connectVoice, getRecorder, getSpatial, joinRoom, setDeafened as applyDeafen } from "./lib/voice";
 import { clipFileName, clipsSupported, encodeWav, openClipsFolder, saveClip } from "./lib/clips";
 import { playSound, startRinging } from "./lib/sounds";
+import { speakingDetector } from "./lib/speaking";
 import { errorMessage } from "./lib/ui";
 import { removeAllBots, setLoopback } from "./lib/dev";
 import AuthScreen from "./components/AuthScreen";
@@ -427,18 +428,20 @@ export default function App() {
       return;
     }
     const room = voice.room;
-    const onSpeakers = () => setSpeaking(new Set(room.activeSpeakers.map((p) => p.identity)));
+    // « Qui parle » mesuré localement (instantané), pas l'info lissée du serveur.
+    const detector = speakingDetector(room);
+    setSpeaking(new Set(detector.speaking));
+    const offSpeaking = detector.onChange((s) => setSpeaking(new Set(s)));
     const onDisconnected = () => setVoice((v) => (v?.room === room ? null : v));
     const onJoin = () => playSound("userJoin");
     const onLeave = () => playSound("userLeave");
     room
-      .on(RoomEvent.ActiveSpeakersChanged, onSpeakers)
       .on(RoomEvent.Disconnected, onDisconnected)
       .on(RoomEvent.ParticipantConnected, onJoin)
       .on(RoomEvent.ParticipantDisconnected, onLeave);
     return () => {
+      offSpeaking();
       room
-        .off(RoomEvent.ActiveSpeakersChanged, onSpeakers)
         .off(RoomEvent.Disconnected, onDisconnected)
         .off(RoomEvent.ParticipantConnected, onJoin)
         .off(RoomEvent.ParticipantDisconnected, onLeave);

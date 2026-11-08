@@ -254,7 +254,7 @@ input[type="range"] { height: auto; padding: 0; border: none; background: none; 
 
 .avatar {
   flex-shrink: 0; border-radius: 50%; display: grid; place-items: center;
-  font-family: var(--font-display); font-weight: 700; transition: box-shadow 0.15s;
+  font-family: var(--font-display); font-weight: 700; transition: box-shadow 0.06s;
 }
 .avatar.speaking { box-shadow: 0 0 0 2px var(--teal); }
 
@@ -574,6 +574,76 @@ input[type="range"] { height: auto; padding: 0; border: none; background: none; 
 }
 .composer .send { color: var(--teal); }
 .composer .send:disabled { color: var(--faint); cursor: default; background: none; }
+.composer { padding-left: 6px; }
+.composer .send.ready:not(:disabled) { background: var(--teal); color: var(--teal-ink); }
+
+/* Pièces jointes dans les messages */
+.chat { position: relative; }
+.msg-attachments { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; margin-top: 4px; }
+.att-image { position: relative; padding: 0; border: none; background: var(--surface); border-radius: 14px; overflow: hidden; cursor: zoom-in; display: block; max-width: 100%; }
+.att-image img { display: block; max-width: 100%; height: auto; object-fit: cover; }
+.gif-tag { position: absolute; left: 8px; bottom: 8px; padding: 2px 6px; border-radius: 6px; background: rgba(0, 0, 0, 0.6); font: 700 10px var(--font); letter-spacing: 0.04em; }
+.att-file { display: flex; align-items: center; gap: 12px; width: min(300px, 100%); padding: 10px 10px 10px 10px; background: var(--surface); border-radius: 14px; }
+.att-file-icon { width: 38px; height: 38px; border-radius: 12px; background: var(--amber-bg); color: var(--amber-soft); display: grid; place-items: center; flex-shrink: 0; }
+
+/* Message vocal */
+.voice-note-player { display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 7px; background: var(--surface); border-radius: 999px; max-width: 100%; }
+.voice-note-player .play { width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--teal); color: var(--teal-ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
+.voice-note-player .play:hover { background: var(--teal-strong); }
+.voice-note-player .seek { border: none; background: none; padding: 0; cursor: pointer; min-width: 0; }
+.voice-note-player .dur { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 34px; }
+.wave { display: flex; align-items: center; gap: 2px; height: 26px; }
+.wave span { width: 3px; border-radius: 2px; background: var(--line-2); transition: background 0.1s; }
+.wave span.on { background: var(--teal); }
+
+/* Fichiers en attente d'envoi */
+.pending-list { display: flex; gap: 8px; flex-wrap: wrap; margin: 4px clamp(12px, 2vw, 32px) 0; }
+.chat.compact .pending-list { margin: 4px 12px 0; }
+.pending { display: flex; align-items: center; gap: 10px; width: 220px; padding: 6px 6px 6px 8px; background: var(--surface); border-radius: 12px; color: var(--muted); }
+.pending img { width: 36px; height: 36px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+.pending.uploading { opacity: 0.7; }
+.pending.error { box-shadow: inset 0 0 0 1px rgba(229, 72, 77, 0.5); }
+
+/* Enregistrement d'un vocal */
+.composer.recording { align-items: center; border-color: rgba(229, 72, 77, 0.55); padding: 6px; gap: 10px; }
+.rec-cancel { color: #ff8a8e; }
+.rec-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--red); box-shadow: 0 0 10px var(--red); animation: rec-blink 1.2s ease-in-out infinite; flex-shrink: 0; }
+@keyframes rec-blink { 50% { opacity: 0.35; } }
+.rec-time { font-weight: 600; font-variant-numeric: tabular-nums; }
+.rec-wave { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 2px; height: 28px; overflow: hidden; }
+.rec-wave span { width: 3px; border-radius: 2px; background: #ff8a8e; flex-shrink: 0; transition: height 0.05s; }
+.chat.compact .rec-left { display: none; }
+
+/* GIF */
+.gif-btn {
+  height: 36px; padding: 0 9px; border-radius: 10px; border: none; background: transparent; color: var(--muted);
+  font: 700 11px var(--font); letter-spacing: 0.05em; cursor: pointer; flex-shrink: 0;
+}
+.gif-btn:hover, .gif-btn.on { background: var(--surface-3); color: var(--text); }
+.gif-picker {
+  position: absolute; right: clamp(12px, 2vw, 32px); bottom: 76px; z-index: 6; width: min(380px, calc(100% - 24px)); height: min(440px, 70%);
+  display: flex; flex-direction: column; gap: 10px; padding: 12px; background: var(--surface-2); border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--line-2);
+}
+.chat.compact .gif-picker { right: 12px; }
+.gif-search { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 12px; background: var(--bg); color: var(--faint); }
+.gif-search input { flex: 1; border: none; background: transparent; color: var(--text); font: inherit; outline: none; }
+.gif-grid { flex: 1; min-height: 0; overflow-y: auto; display: flex; gap: 6px; align-items: flex-start; }
+.gif-col { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.gif-item { padding: 0; border: none; border-radius: 10px; overflow: hidden; background: var(--surface-3); cursor: pointer; display: block; }
+.gif-item img { display: block; width: 100%; height: auto; }
+.gif-item:hover { outline: 2px solid var(--teal); outline-offset: -2px; }
+.gif-credit { font-size: 10px; color: var(--faint); text-align: right; letter-spacing: 0.04em; }
+
+/* Glisser-déposer + image en grand */
+.drop-hint {
+  position: absolute; inset: 8px; z-index: 5; display: flex; align-items: center; justify-content: center; gap: 10px;
+  border-radius: 18px; border: 2px dashed var(--teal); background: rgba(14, 16, 20, 0.85); color: var(--teal-strong); font-weight: 600; pointer-events: none;
+}
+.lightbox { position: fixed; inset: 0; z-index: 100; background: rgba(6, 7, 10, 0.88); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 32px; }
+.lightbox img { max-width: 100%; max-height: calc(100% - 64px); border-radius: 12px; object-fit: contain; }
+.lightbox-bar { display: flex; align-items: center; gap: 12px; max-width: 640px; width: 100%; color: var(--text-soft); }
+.lightbox-bar .ellipsis { flex: 1; }
 
 /* Amis */
 .friends { height: 100%; display: flex; flex-direction: column; }
