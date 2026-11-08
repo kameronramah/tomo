@@ -62,7 +62,7 @@ Plus de détails dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```
 T2M/
-├── client/          # Application de bureau (Tauri + React) — à initialiser
+├── client/          # Application de bureau (Tauri + React)
 ├── server/
 │   ├── api/         # API Node/TypeScript : génération des tokens LiveKit
 │   ├── docker-compose.yml

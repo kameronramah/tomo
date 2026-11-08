@@ -1,0 +1,26 @@
+# Serveur de développement LOCAL (Windows / macOS / Linux) — pas pour la production.
+#   docker compose -f docker-compose.dev.yml up --build
+# Puis dans le client : API = http://localhost:3000, code d'invitation = test
+services:
+  livekit:
+    image: livekit/livekit-server:latest
+    # --dev : clés "devkey" / "secret", un seul port UDP (7882)
+    command: --dev --bind 0.0.0.0 --node-ip 127.0.0.1
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882/udp"
+
+  api:
+    build: ./api
+    environment:
+      PORT: 3000
+      LIVEKIT_URL: ws://localhost:7880        # adresse donnée aux clients
+      LIVEKIT_HTTP_URL: http://livekit:7880   # adresse vue depuis le conteneur
+      LIVEKIT_API_KEY: devkey
+      LIVEKIT_API_SECRET: secret
+      INVITE_CODE: test
+    ports:
+      - "3000:3000"
+    depends_on:
+      - livekit

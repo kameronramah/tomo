@@ -8,10 +8,13 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 > Objectif : deux amis peuvent se parler à travers le serveur.
 
 - [ ] Serveur déployé sur le VPS (LiveKit + Caddy + API) via `docker compose`
-- [ ] API : génération d'un token LiveKit (accès protégé par un code d'invitation)
-- [ ] Client Tauri : écran de connexion (pseudo + code d'invitation)
-- [ ] Client : rejoindre un salon vocal et entendre les autres
-- [ ] Choix du micro et de la sortie audio
+- [x] Serveur de dev local (`server/docker-compose.dev.yml`)
+- [x] API : génération d'un token LiveKit (accès protégé par un code d'invitation)
+- [x] Client Tauri : écran de connexion (pseudo + code d'invitation)
+- [x] Client : rejoindre un salon vocal et entendre les autres
+- [x] Choix du micro et de la sortie audio
+- [x] Bonus : volume par personne + indicateur « qui parle »
+- [ ] Test à plusieurs avec de vrais micros
 
 ## V1 — MVP « on lâche Discord »
 > Objectif : utilisable tous les soirs par le groupe.

@@ -9,6 +9,7 @@
     "dev": "node --watch --env-file=../.env --experimental-strip-types src/index.ts"
   },
   "dependencies": {
+    "@fastify/cors": "^11.4.1",
     "fastify": "^5.2.0",
     "livekit-server-sdk": "^2.9.0"
   },

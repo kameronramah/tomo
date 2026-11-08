@@ -13,6 +13,9 @@ client/src-tauri/target/
 *.sqlite
 *.db
 
+# Outils locaux
+.claude/
+
 # Divers
 .DS_Store
 Thumbs.db

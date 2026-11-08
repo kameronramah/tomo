@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import cors from "@fastify/cors";
 import { randomUUID, timingSafeEqual } from "node:crypto";
 import { AccessToken, RoomServiceClient } from "livekit-server-sdk";
 
@@ -21,8 +22,9 @@ const LIVEKIT_API_SECRET = requireEnv("LIVEKIT_API_SECRET");
 const INVITE_CODE = requireEnv("INVITE_CODE");
 
 // L'API d'administration LiveKit parle HTTP(S) sur la même adresse que le WebSocket.
+// LIVEKIT_HTTP_URL permet de passer par le réseau interne (ex. http://livekit:7880 en dev).
 const roomService = new RoomServiceClient(
-  LIVEKIT_URL.replace(/^ws/, "http"),
+  process.env.LIVEKIT_HTTP_URL ?? LIVEKIT_URL.replace(/^ws/, "http"),
   LIVEKIT_API_KEY,
   LIVEKIT_API_SECRET,
 );
@@ -43,6 +45,10 @@ function inviteIsValid(candidate: unknown): boolean {
 // Routes
 // ---------------------------------------------------------------------------
 const app = Fastify({ logger: true });
+
+// Le client de bureau (origine tauri.localhost) et le serveur de dev (localhost:1420)
+// appellent l'API depuis un autre domaine. L'accès reste protégé par le code d'invitation.
+await app.register(cors, { origin: true });
 
 app.get("/health", async () => ({ ok: true }));
 
