@@ -23,6 +23,8 @@ import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
 import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
 import { currentGame, gamePrefs, onGame, publicGame, startGameWatch, type RunningGame } from "./lib/games";
 import GameCard from "./components/GameCard";
+import LegendsView from "./components/LegendsView";
+import ChallengesView from "./components/ChallengesView";
 import UpdateCard from "./components/UpdateCard";
 import { flashIcon, setAppBadge } from "./lib/badge";
 import { mentionsMe } from "./components/MessageParts";
@@ -39,7 +41,7 @@ import ServerPlan from "./components/ServerPlan";
 import VoiceIsland from "./components/VoiceIsland";
 import { NetworkBadge } from "./components/Brand";
 
-type ServerView = { type: "home" } | { type: "voice" } | { type: "channel"; id: string };
+type ServerView = { type: "home" } | { type: "voice" } | { type: "channel"; id: string } | { type: "legends" } | { type: "challenges" };
 import Stage from "./components/Stage";
 import ChatView from "./components/ChatView";
 import FriendsView from "./components/FriendsView";
@@ -379,6 +381,16 @@ export default function App() {
         .map((p) => ({ id: p.id, name: p.displayName, hint: p.room ? t("en vocal") : p.status === "offline" ? t("hors ligne") : undefined })),
     [serverPeople],
   );
+
+  /** Épingler un message au mur des légendes du serveur. */
+  async function pinLegend(serverId: string, messageId: string) {
+    try {
+      await api.pinLegend(serverId, messageId);
+      setToast({ text: t("Épinglé au mur des légendes."), ok: true });
+    } catch (err) {
+      showError(err);
+    }
+  }
 
   // ---- Jeu lancé : pièce automatique et proposition de rejoindre les potes ----------
   const [game, setGame] = useState<RunningGame | null>(null);
@@ -866,6 +878,7 @@ export default function App() {
               onOpenProfile={setProfileId}
               mentionables={mentionables}
               inVoiceHere
+              onPinLegend={isGuest || !voice.serverId ? undefined : (id) => void pinLegend(voice.serverId!, id)}
               placeholder={t("Écrire dans {0}", { 0: voiceRoomInfo?.label ?? voice.roomLabel })}
               emptyText={t("Le chat du salon : liens, infos de partie… Les messages restent pour les prochaines fois.")}
               compact
@@ -952,6 +965,7 @@ export default function App() {
         onOpenProfile={setProfileId}
         mentionables={mentionables}
         inVoiceHere={voice?.kind === "room" && voice.serverId === detail.id}
+        onPinLegend={isGuest ? undefined : (id) => void pinLegend(detail.id, id)}
         placeholder={t("Écrire dans #{0}", { 0: openChannel.name })}
         emptyText={t("Bienvenue dans #{0} ! Lance la conversation.", { 0: openChannel.name })}
         header={
@@ -966,6 +980,31 @@ export default function App() {
         }
       />
       </section>
+    );
+  } else if (detail && serverView.type === "legends") {
+    main = (
+      <LegendsView
+        api={api}
+        realtime={realtime}
+        serverId={detail.id}
+        serverName={detail.name}
+        myId={myId}
+        isManager={isManager}
+        onBack={() => setServerView({ type: "home" })}
+        onOpenProfile={setProfileId}
+      />
+    );
+  } else if (detail && serverView.type === "challenges") {
+    main = (
+      <ChallengesView
+        api={api}
+        realtime={realtime}
+        serverId={detail.id}
+        serverName={detail.name}
+        myId={myId}
+        isManager={isManager}
+        onBack={() => setServerView({ type: "home" })}
+      />
     );
   } else if (detail) {
     main = (
@@ -991,6 +1030,8 @@ export default function App() {
         onRenameRoom={(room) => setDialog({ kind: "renameRoom", room })}
         onDeleteRoom={(room) => setDialog({ kind: "deleteRoom", room })}
         onOpenChannel={(c) => setServerView({ type: "channel", id: c.id })}
+        onOpenLegends={() => setServerView({ type: "legends" })}
+        onOpenChallenges={() => setServerView({ type: "challenges" })}
         onAddChannel={() => setDialog({ kind: "addChannel", serverId: detail.id })}
         onRenameChannel={(channel) => setDialog({ kind: "renameChannel", channel })}
         onDeleteChannel={(channel) => setDialog({ kind: "deleteChannel", channel })}

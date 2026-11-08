@@ -14,7 +14,7 @@
  */
 import type { FastifyInstance } from "fastify";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
-import { mkdirSync, createReadStream, existsSync, unlinkSync } from "node:fs";
+import { mkdirSync, createReadStream, existsSync, unlinkSync, copyFileSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { join } from "node:path";
 import { db } from "./db.js";
@@ -106,6 +106,7 @@ function sniff(buf: Buffer): { kind: Attachment["kind"]; mime: string } {
   if (hex.startsWith("52494646") && buf.subarray(8, 12).toString("latin1") === "WEBP") return { kind: "image", mime: "image/webp" };
   if (hex.startsWith("1a45dfa3")) return { kind: "audio", mime: "audio/webm" }; // WebM (Opus) : messages vocaux
   if (hex.startsWith("4f676753")) return { kind: "audio", mime: "audio/ogg" };
+  if (hex.startsWith("52494646") && buf.subarray(8, 12).toString("latin1") === "WAVE") return { kind: "audio", mime: "audio/wav" }; // clips
   return { kind: "file", mime: "application/octet-stream" };
 }
 
@@ -213,15 +214,51 @@ export function claimProfileImage(userId: string, attachmentId: string): string 
   return null;
 }
 
+/**
+ * Réserve un fichier envoyé pour une légende (clip du mur des légendes) : `holder` = « legend:<id> ».
+ * Renvoie la pièce jointe, ou un message d'erreur.
+ */
+export function claimForHolder(userId: string, attachmentId: string, holder: string, kinds: Attachment["kind"][]): Attachment | string {
+  const r = db.prepare("SELECT * FROM attachments WHERE id = ?").get(attachmentId) as Row | undefined;
+  if (!r || r.owner_id !== userId || r.message_id) return "Fichier introuvable (renvoie-le).";
+  if (!kinds.includes(r.kind)) return "Type de fichier non accepté ici.";
+  db.prepare("UPDATE attachments SET message_id = ? WHERE id = ?").run(holder, attachmentId);
+  return toAttachment({ ...r, message_id: holder });
+}
+
+/** Copie un fichier existant pour un autre usage (ex. : l'image d'un message épinglée au mur). */
+export function copyAttachment(attachmentId: string, holder: string): Attachment | null {
+  const r = db.prepare("SELECT * FROM attachments WHERE id = ?").get(attachmentId) as Row | undefined;
+  if (!r || !existsSync(join(uploadDir, r.id))) return null;
+  const id = randomUUID();
+  copyFileSync(join(uploadDir, r.id), join(uploadDir, id));
+  const row: Row = { ...r, id, message_id: holder, created_at: Date.now() };
+  db.prepare(
+    `INSERT INTO attachments (id, owner_id, message_id, kind, name, mime, size, width, height, duration_ms, waveform, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(row.id, row.owner_id, row.message_id, row.kind, row.name, row.mime, row.size, row.width, row.height, row.duration_ms, row.waveform, row.created_at);
+  return toAttachment(row);
+}
+
+export function attachmentById(id: string | null | undefined): Attachment | null {
+  if (!id) return null;
+  const r = db.prepare("SELECT * FROM attachments WHERE id = ?").get(id) as Row | undefined;
+  return r ? toAttachment(r) : null;
+}
+
 /** Efface les fichiers orphelins : message supprimé, image de profil remplacée, ou jamais envoyé après 24 h. */
 export function sweepAttachments() {
+  const legends = db.prepare("SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'legends'").get()
+    ? "SELECT 'legend:' || id FROM legends"
+    : "SELECT NULL";
   const rows = db
     .prepare(
       `SELECT id FROM attachments
-       WHERE (message_id IS NOT NULL AND message_id NOT LIKE 'profile:%' AND message_id NOT IN (SELECT id FROM messages))
+       WHERE (message_id IS NOT NULL AND message_id NOT LIKE 'profile:%' AND message_id NOT LIKE 'legend:%' AND message_id NOT IN (SELECT id FROM messages))
           OR (message_id LIKE 'profile:%' AND id NOT IN (
                 SELECT avatar_id FROM users WHERE avatar_id IS NOT NULL
                 UNION SELECT banner_id FROM users WHERE banner_id IS NOT NULL))
+          OR (message_id LIKE 'legend:%' AND message_id NOT IN (${legends}))
           OR (message_id IS NULL AND created_at < ?)`,
     )
     .all(Date.now() - UNLINKED_TTL_MS) as { id: string }[];

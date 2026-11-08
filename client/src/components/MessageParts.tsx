@@ -82,7 +82,7 @@ export function Reactions({ reactions, myId, onToggle, onAdd }: { reactions: Rea
     <div className="reactions">
       {reactions.map((r) => {
         const mine = r.userIds.includes(myId);
-        const who = r.userIds.map((id) => (id === myId ? "toi" : getPerson(id)?.displayName ?? "quelqu'un")).join(", ");
+        const who = r.userIds.map((id) => (id === myId ? t("toi") : getPerson(id)?.displayName ?? t("quelqu'un"))).join(", ");
         return (
           <button key={r.emoji} className={`react${mine ? " mine" : ""}`} aria-pressed={mine} title={who} onClick={() => onToggle(r.emoji)}>
             <span className="react-emoji">{r.emoji}</span> {r.count}
@@ -126,6 +126,7 @@ export function MessageToolbar({
   onEdit,
   onDelete,
   onMention,
+  onPin,
 }: {
   mine: boolean;
   canDelete: boolean;
@@ -134,6 +135,7 @@ export function MessageToolbar({
   onEdit: () => void;
   onDelete: () => void;
   onMention?: () => void;
+  onPin?: () => void;
 }) {
   return (
     <div className="msg-toolbar" role="toolbar" aria-label={t("Actions sur le message")}>
@@ -149,6 +151,11 @@ export function MessageToolbar({
       {!mine && onMention && (
         <button className="tb-btn" onClick={onMention} aria-label={t("Mentionner")} title={t("Mentionner")}>
           @
+        </button>
+      )}
+      {onPin && (
+        <button className="tb-btn" onClick={onPin} aria-label={t("Épingler au mur des légendes")} title={t("Épingler au mur des légendes")}>
+          <Icon name="star" size={15} />
         </button>
       )}
       {mine && (

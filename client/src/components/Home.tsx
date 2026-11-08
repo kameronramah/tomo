@@ -122,6 +122,8 @@ type HomeProps = {
   onRenameRoom: (room: RoomInfo) => void;
   onDeleteRoom: (room: RoomInfo) => void;
   onOpenChannel: (c: Channel) => void;
+  onOpenLegends: () => void;
+  onOpenChallenges: () => void;
   onAddChannel: () => void;
   onRenameChannel: (c: Channel) => void;
   onDeleteChannel: (c: Channel) => void;
@@ -170,6 +172,14 @@ export function ServerHome(p: HomeProps) {
             </span>
           </div>
           <div className="row gap-8 wrap">
+            <button className="btn soft" onClick={p.onOpenLegends} title={t("Mur des légendes")}>
+              <Icon name="star" size={16} /> {t("Légendes")}
+            </button>
+            {!p.isGuest && (
+              <button className="btn soft" onClick={p.onOpenChallenges} title={t("Défis")}>
+                <Icon name="trophy" size={16} /> {t("Défis")}
+              </button>
+            )}
             {!p.isGuest && (
               <button className="btn soft" onClick={p.onInvite}>
                 <Icon name="userPlus" size={16} /> {t("Inviter")}

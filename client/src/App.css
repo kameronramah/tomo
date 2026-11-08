@@ -1233,3 +1233,37 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .game-opts select { padding: 4px 8px; font-size: 13px; }
 .game-add { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .game-add input { flex: 1 1 160px; }
+
+/* ---- v0.8 - Mur des légendes et défis ---- */
+.legends, .challenges { display: flex; flex-direction: column; min-height: 0; }
+.legends-body, .challenges-body { flex: 1; overflow: auto; padding: 18px 22px 28px; }
+.legends-filter { width: max-content; margin-bottom: 16px; }
+.legends-grid { columns: 3 280px; column-gap: 14px; }
+.legend {
+  break-inside: avoid; margin: 0 0 14px; padding: 14px; border-radius: 16px; position: relative;
+  background: var(--surface-2); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px;
+}
+.legend.clip { border-color: rgba(45, 212, 191, .35); }
+.legend.quote { border-color: rgba(255, 176, 32, .3); }
+.legend-kind { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.legend-title { font: 600 16px "Space Grotesk", sans-serif; }
+.legend-quote { margin: 0; font: 500 17px/1.4 "Space Grotesk", sans-serif; color: var(--text); }
+.legend-image img { width: 100%; border-radius: 12px; display: block; }
+.legend-foot { display: flex; align-items: center; gap: 6px; }
+.legends-empty { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 48px 16px; color: var(--muted); max-width: 460px; margin: 0 auto; }
+.challenges-body { display: flex; gap: 20px; align-items: flex-start; }
+.challenge { padding: 14px 16px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.challenge.claimed { border-color: rgba(255, 176, 32, .45); }
+.challenge.done, .challenge.cancelled, .challenge.expired { opacity: .7; }
+.challenge.new { border-style: dashed; }
+.challenge-title { font: 600 16px "Space Grotesk", sans-serif; }
+.points-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 176, 32, .14); color: var(--amber, #FFB020); font-weight: 600; font-size: 13px; }
+.points-pill.sm { padding: 2px 8px; font-size: 12px; }
+.avatars { display: inline-flex; }
+.avatars > * + * { margin-left: -6px; }
+.leaderboard { width: 260px; flex: none; display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 16px; background: var(--surface-2); border: 1px solid var(--line); position: sticky; top: 0; }
+.rank { display: flex; align-items: center; gap: 10px; padding: 6px 4px; border-radius: 10px; }
+.rank.me { background: rgba(45, 212, 191, .08); }
+.rank-n { width: 18px; text-align: center; color: var(--muted); font-weight: 600; }
+@media (max-width: 900px) { .challenges-body { flex-direction: column; } .leaderboard { width: 100%; position: static; } }
+.pin-clip { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 12px; background: var(--surface-3, var(--surface-2)); }

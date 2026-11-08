@@ -96,6 +96,36 @@ export type MyProfile = FullProfile & {
   customStatusUntil: number | null;
   privacy: Privacy;
 };
+export type Legend = {
+  id: string;
+  kind: "clip" | "quote" | "image";
+  title: string | null;
+  text: string | null;
+  context: string | null;
+  authorId: string | null;
+  authorName: string;
+  pinnedBy: string;
+  momentAt: number;
+  createdAt: number;
+  attachment: Attachment | null;
+  reactions: Reaction[];
+};
+export type Challenge = {
+  id: string;
+  title: string;
+  reward: number;
+  endsAt: number | null;
+  createdBy: string;
+  createdAt: number;
+  status: "open" | "claimed" | "done" | "cancelled" | "expired";
+  claimedBy: string | null;
+  winnerId: string | null;
+  players: string[];
+  needed: number;
+  approvals: string[];
+  rejections: string[];
+};
+export type ChallengeBoard = { challenges: Challenge[]; leaderboard: { userId: string; points: number }[]; monthStart: number };
 export type Person = LightProfile & {
   role: Role;
   guest: boolean;
@@ -378,6 +408,23 @@ export class Api {
   deleteMessage = (id: string) => this.request("DELETE", `/messages/${id}`);
   editMessage = (id: string, content: string) => this.request<Message>("PATCH", `/messages/${id}`, { content });
   react = (id: string, emoji: string) => this.request<{ reactions: Reaction[] }>("POST", `/messages/${id}/reactions`, { emoji });
+
+  // ---- Mur des légendes et défis ---------------------------------------------
+  legends = (serverId: string) => this.request<Legend[]>("GET", `/servers/${serverId}/legends`);
+  pinLegend = (serverId: string, messageId: string, title?: string) =>
+    this.request<Legend>("POST", `/servers/${serverId}/legends`, { messageId, ...(title ? { title } : {}) });
+  pinClip = (serverId: string, attachmentId: string, title: string, momentAt?: number) =>
+    this.request<Legend>("POST", `/servers/${serverId}/legends/clip`, { attachmentId, title, momentAt });
+  unpinLegend = (id: string) => this.request("DELETE", `/legends/${id}`);
+  reactLegend = (id: string, emoji: string) => this.request<Legend>("POST", `/legends/${id}/reactions`, { emoji });
+  challenges = (serverId: string) => this.request<ChallengeBoard>("GET", `/servers/${serverId}/challenges`);
+  createChallenge = (serverId: string, title: string, reward: number, endsAt?: number) =>
+    this.request<Challenge>("POST", `/servers/${serverId}/challenges`, { title, reward, ...(endsAt ? { endsAt } : {}) });
+  joinChallenge = (id: string) => this.request<Challenge>("POST", `/challenges/${id}/join`);
+  leaveChallenge = (id: string) => this.request<Challenge>("DELETE", `/challenges/${id}/join`);
+  claimChallenge = (id: string) => this.request<Challenge>("POST", `/challenges/${id}/claim`);
+  voteChallenge = (id: string, approve: boolean) => this.request<Challenge>("POST", `/challenges/${id}/vote`, { approve });
+  cancelChallenge = (id: string) => this.request("DELETE", `/challenges/${id}`);
 
   // ---- Amis, messages privés, appels ---------------------------------------
   friends = () => this.request<Friend[]>("GET", "/friends");

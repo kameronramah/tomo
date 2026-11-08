@@ -182,6 +182,15 @@ export const clipsSupported = inTauri;
 export const listClips = () => (inTauri ? invoke<ClipFile[]>("list_clips") : Promise.resolve([]));
 export const deleteClip = (name: string) => invoke("delete_clip", { name });
 export const openClipsFolder = () => invoke("open_clips_folder");
+/** Fichier d'un clip (pour l'envoyer au mur des légendes) + sa durée lue dans l'en-tête WAV. */
+export async function clipBlob(name: string): Promise<{ blob: Blob; durationMs: number }> {
+  const bytes = await invoke<ArrayBuffer>("read_clip", { name });
+  const view = new DataView(bytes);
+  const byteRate = bytes.byteLength > 44 ? view.getUint32(28, true) : 0;
+  const durationMs = byteRate ? Math.round(((bytes.byteLength - 44) / byteRate) * 1000) : 0;
+  return { blob: new Blob([bytes], { type: "audio/wav" }), durationMs };
+}
+
 export async function clipUrl(name: string): Promise<string> {
   const bytes = await invoke<ArrayBuffer>("read_clip", { name });
   return URL.createObjectURL(new Blob([bytes], { type: "audio/wav" }));

@@ -1,6 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { Room } from "livekit-client";
-import type { Api, SessionInfo, User } from "../lib/api";
+import type { Api, ServerSummary, SessionInfo, User } from "../lib/api";
 import type { Realtime } from "../lib/realtime";
 import { getSettings, loadDevices, onSettingsChange, saveDevices, updateSettings, type Settings as S } from "../lib/prefs";
 import { playSound, type SoundName } from "../lib/sounds";
@@ -10,7 +10,7 @@ import { MyProfileSection, PrivacySection } from "./SettingsProfile";
 import SettingsGames from "./SettingsGames";
 import { autostartEnabled, inTauri, setAutostart } from "../lib/desktop";
 import { MicTester } from "./Home";
-import { CLIP_CHOICES, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
+import { CLIP_CHOICES, clipBlob, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
 import { gameLinkSupported, onGameLink, type GameLink } from "../lib/gameLink";
 import { SCREEN_PRESETS } from "../lib/screen";
 import { APP_VERSION, checkForUpdate, getUpdateState, onUpdateState, restartNow, type UpdateState } from "../lib/updater";
@@ -149,7 +149,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           {section === "account" && <Account api={api} user={user} onLogoutAll={onLogoutAll} />}
           {section === "audio" && <Audio s={s} />}
           {section === "spatial" && <Spatial s={s} />}
-          {section === "clips" && <Clips s={s} />}
+          {section === "clips" && <Clips s={s} api={api} />}
           {section === "screen" && <ScreenSettings s={s} />}
           {section === "games" && <SettingsGames api={api} />}
           {section === "sounds" && <Sounds s={s} />}
@@ -813,8 +813,12 @@ function Spatial({ s }: { s: S }) {
 }
 
 // ---------------------------------------------------------------------------
-function Clips({ s }: { s: S }) {
+function Clips({ s, api }: { s: S; api: Api }) {
   const [clips, setClips] = useState<ClipFile[]>([]);
+  const [servers, setServers] = useState<ServerSummary[]>([]);
+  const [pinning, setPinning] = useState<{ name: string; title: string; serverId: string } | null>(null);
+  const [pinned, setPinned] = useState<string | null>(null);
+  useEffect(() => void api.servers().then(setServers).catch(() => {}), [api]);
   const [playing, setPlaying] = useState<{ name: string; url: string } | null>(null);
   const [error, setError] = useState<string>();
   const reload = () => listClips().then(setClips).catch((e) => setError(errorMessage(e)));
@@ -846,7 +850,7 @@ function Clips({ s }: { s: S }) {
           <select value={s.clips.seconds} onChange={(e) => updateSettings("clips", { seconds: Number(e.target.value) as 30 | 60 | 120 })}>
             {CLIP_CHOICES.map((x) => (
               <option key={x} value={x}>
-                {x < 60 ? `${x} secondes` : `${x / 60} minute${x > 60 ? "s" : ""}`}
+                {x < 60 ? t("{0} secondes", { 0: x }) : x > 60 ? t("{0} minutes", { 0: x / 60 }) : t("1 minute")}
               </option>
             ))}
           </select>
@@ -881,6 +885,9 @@ function Clips({ s }: { s: S }) {
                   <span className="ellipsis">{c.name.replace(/\.wav$/, "")}</span>
                   <span className="muted small">{(c.size / 1024 / 1024).toFixed(1)} {t("Mo")}</span>
                 </span>
+                <button className="btn small" onClick={() => setPinning({ name: c.name, title: "", serverId: servers[0]?.id ?? "" })} disabled={!servers.length}>
+                  <Icon name="star" size={14} /> {t("Mettre au mur")}
+                </button>
                 <button
                   className="icon-btn danger"
                   aria-label={t("Supprimer {0}", { 0: c.name })}
@@ -893,6 +900,43 @@ function Clips({ s }: { s: S }) {
             ))}
           </ul>
         )}
+        {pinning && (
+          <form
+            className="pin-clip"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setError(undefined);
+              try {
+                const { blob, durationMs } = await clipBlob(pinning.name);
+                const att = await api.uploadAttachment(blob, { name: pinning.name, durationMs });
+                await api.pinClip(pinning.serverId, att.id, pinning.title.trim());
+                setPinning(null);
+                setPinned(pinning.name);
+              } catch (err) {
+                setError(errorMessage(err));
+              }
+            }}
+          >
+            <strong className="small">{t("Mettre « {0} » au mur des légendes", { 0: pinning.name.replace(/\.wav$/, "") })}</strong>
+            <div className="row gap-8 wrap">
+              <input value={pinning.title} onChange={(e) => setPinning({ ...pinning, title: e.target.value })} maxLength={80} placeholder={t("Titre, ex. : le clutch à 1 contre 4")} autoFocus />
+              <select value={pinning.serverId} onChange={(e) => setPinning({ ...pinning, serverId: e.target.value })} aria-label={t("Serveur")}>
+                {servers.map((x) => (
+                  <option key={x.id} value={x.id}>
+                    {x.name}
+                  </option>
+                ))}
+              </select>
+              <button className="btn primary small" disabled={!pinning.title.trim() || !pinning.serverId}>
+                {t("Épingler")}
+              </button>
+              <button type="button" className="btn small" onClick={() => setPinning(null)}>
+                {t("Annuler")}
+              </button>
+            </div>
+          </form>
+        )}
+        {pinned && <p className="ok small">{t("« {0} » est sur le mur des légendes.", { 0: pinned.replace(/\.wav$/, "") })}</p>}
         {playing && (
           <div className="col gap-4">
             <span className="small muted">{playing.name}</span>

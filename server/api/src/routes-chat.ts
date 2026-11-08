@@ -27,7 +27,7 @@ export type Reaction = { emoji: string; count: number; userIds: string[] };
 const MAX_LENGTH = 2000;
 const MAX_REACTIONS_PER_MESSAGE = 20;
 /** Un emoji (ou une petite séquence d'emojis) : pas de texte libre dans les réactions. */
-const EMOJI_RE = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|[‍️⃣#*0-9]|\p{Emoji_Modifier}){1,12}$/u;
+export const EMOJI_RE = /^(?:\p{Extended_Pictographic}|\p{Regional_Indicator}|[‍️⃣#*0-9]|\p{Emoji_Modifier}){1,12}$/u;
 const PAGE = 50;
 const MAX_CHANNELS = 30;
 

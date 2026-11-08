@@ -54,6 +54,8 @@ type Props = {
   mentionables?: Mentionable[];
   /** Je suis en vocal dans ce serveur (les @vocal me concernent) */
   inVoiceHere?: boolean;
+  /** Épingler un message au mur des légendes (fils et pièces d'un serveur) */
+  onPinLegend?: (messageId: string) => void;
 };
 
 const GROUP_MS = 5 * 60 * 1000;
@@ -439,6 +441,7 @@ export default function ChatView(props: Props) {
             onEdit={() => startEdit(m)}
             onDelete={remove}
             onMention={!m.guest && !props.hideComposer ? () => mentionAuthor(m) : undefined}
+            onPin={props.onPinLegend ? () => props.onPinLegend!(m.id) : undefined}
           />
         )}
       </div>,
