@@ -477,8 +477,8 @@ function About() {
           </li>
           <li>
             <span className="grow">Code source</span>
-            <a href="https://github.com/kameronramah/T2M" target="_blank" rel="noreferrer">
-              github.com/kameronramah/T2M
+            <a href="https://github.com/kameronramah/Tomo" target="_blank" rel="noreferrer">
+              github.com/kameronramah/Tomo
             </a>
           </li>
         </ul>

@@ -52,8 +52,8 @@ Si le VPS a déjà un domaine, on peut aussi utiliser des sous-domaines de celui
 curl -fsSL https://get.docker.com | sh
 
 # 2. Récupérer le projet
-git clone https://github.com/<toi>/T2M.git
-cd T2M/server
+git clone https://github.com/kameronramah/Tomo.git
+cd Tomo/server
 
 # 3. Configurer
 cp .env.example .env
@@ -81,7 +81,7 @@ Si le VPS a déjà un nginx ou un Caddy :
 
 ## Mises à jour
 ```bash
-cd T2M && git pull
+cd Tomo && git pull
 cd server && docker compose up -d --build
 ```
 

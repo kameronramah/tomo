@@ -54,7 +54,7 @@ Plus de détails dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 ## 📁 Structure du dépôt
 
 ```
-T2M/
+Tomo/
 ├── client/                  # Application de bureau Tomo (Tauri + React)
 ├── server/
 │   ├── api/                 # API Node/TypeScript

@@ -69,7 +69,7 @@ npm run tauri build
 ```
 L'installateur se trouve ensuite dans `src-tauri/target/release/bundle/`.
 
-> Si l'édition de liens échoue avec `LNK1104` : le chemin du projet est trop long pour Windows. Place le projet dans un dossier court (ex. `C:\dev\T2M`) ou définis `CARGO_TARGET_DIR` vers un chemin court.
+> Si l'édition de liens échoue avec `LNK1104` : le chemin du projet est trop long pour Windows. Place le projet dans un dossier court (ex. `C:\dev\Tomo`) ou définis `CARGO_TARGET_DIR` vers un chemin court.
 
 ## Structure
 ```

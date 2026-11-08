@@ -1,7 +1,8 @@
-# CLAUDE.md — Contexte du projet Tomo (dépôt T2M)
+# CLAUDE.md — Contexte du projet Tomo
 
 > Fichier lu automatiquement par Claude Code. Il résume tout ce qu'il faut savoir pour reprendre le projet.
-> Dépôt : https://github.com/kameronramah/T2M — branche `main`. Version actuelle : **0.5.0**.
+> Dépôt : https://github.com/kameronramah/Tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.5.0**.
+> Copie locale du propriétaire : `C:\Users\Kameron\Documents\Tomo`.
 
 ---
 
@@ -38,7 +39,7 @@ La feuille de route complète est dans [ROADMAP.md](ROADMAP.md) (avec une sectio
 ## 3. Architecture
 
 ```
-T2M/
+Tomo/
 ├── client/                 Appli de bureau Tauri 2 (Rust) + React 19 + TypeScript + Vite
 │   ├── src/
 │   │   ├── App.tsx         Chef d'orchestre : session, serveurs, vocal, appels, messagerie, fenêtres
@@ -119,7 +120,7 @@ Build de l'exécutable : `npm run tauri build` dans `client/` (installateur dans
 ## 5. Pièges déjà rencontrés (à connaître)
 
 - **Windows PowerShell 5.1** : pas de `&&` (utiliser `;` ou des commandes séparées) ; l'**exécution de scripts .ps1 est bloquée** sur le PC → passer par les `.cmd` (`powershell -ExecutionPolicy Bypass -File …`), ne pas modifier la politique système.
-- **Chemin du projet trop long** → erreur `LNK1104` à l'édition de liens Rust : définir `CARGO_TARGET_DIR` vers un chemin court (les scripts le font). Mieux : cloner le dépôt dans un dossier court (`C:\dev\T2M`).
+- **Chemin du projet trop long** → erreur `LNK1104` à l'édition de liens Rust : définir `CARGO_TARGET_DIR` vers un chemin court (les scripts le font). Mieux : cloner le dépôt dans un dossier court (`C:\dev\Tomo`).
 - **PowerShell** : les noms de variables sont **insensibles à la casse** (`$a` = `$A`) ; dans `@( 'a' + "b", 'c' )` la **virgule passe avant le `+`** ; dans une chaîne `"…"`, `${…}` et `` ` `` sont interprétés (casse les template literals TypeScript) → pour éditer du code, préférer l'outil d'édition de fichiers aux remplacements PowerShell.
 - **CORS** : `@fastify/cors` n'autorise que GET/HEAD/POST par défaut → `methods` est explicitement configuré (PATCH/DELETE).
 - **Requêtes POST sans corps** envoyées par PowerShell : l'API a un parseur « * » qui les accepte.
