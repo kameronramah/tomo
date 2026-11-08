@@ -1213,3 +1213,23 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
   background: var(--surface-2); border: 1px solid var(--line); box-shadow: 0 18px 40px rgba(0,0,0,.45);
 }
 .update-notes { margin: 0; padding-left: 18px; color: var(--text-soft, var(--muted)); font-size: 13px; display: grid; gap: 2px; }
+
+/* ---- v0.8 - Jeux ---- */
+.game-card { bottom: 20px; }
+.update-card + .game-card { bottom: 150px; }
+.game-badge {
+  flex: none; width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center;
+  font: 700 14px "Space Grotesk", sans-serif; background: var(--amber-bg, rgba(255,176,32,.14)); color: var(--amber, #FFB020);
+}
+.game-badge.sm { width: 28px; height: 28px; border-radius: 9px; font-size: 11px; }
+.plays { color: var(--teal, #2DD4BF); }
+.piece-games { display: flex; gap: 6px; flex-wrap: wrap; }
+.profile-game { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px; background: var(--surface-2); }
+.game-row { display: flex; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.game-row:first-of-type { border-top: 0; }
+.game-row.hidden { opacity: .6; }
+.game-opts { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; font-size: 13px; color: var(--muted); }
+.game-opts label { display: inline-flex; align-items: center; gap: 6px; }
+.game-opts select { padding: 4px 8px; font-size: 13px; }
+.game-add { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.game-add input { flex: 1 1 160px; }

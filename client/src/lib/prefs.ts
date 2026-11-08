@@ -80,6 +80,20 @@ export type Settings = {
   startup: { minimized: boolean };
   /** Mise à jour automatique (téléchargée en arrière-plan, installée au redémarrage) */
   updates: { auto: boolean };
+  /**
+   * Jeux : detect (lire la liste des programmes), propose (proposer de rejoindre les potes),
+   * perGame (réglages par jeu), custom (jeux ajoutés à la main), seen (jeux déjà détectés)
+   */
+  games: {
+    detect: boolean;
+    propose: boolean;
+    perGame: Record<
+      string,
+      { spatial: boolean; overlay: boolean; focus: boolean; hidden: boolean; autoRoom: { serverId: string; roomId: string; label: string } | null }
+    >;
+    custom: { exe: string; name: string }[];
+    seen: { id: string; name: string }[];
+  };
   spatial: { range: number; showMap: boolean };
   screen: { preset: "game" | "sharp" | "max" | "eco"; audio: boolean };
 };
@@ -92,6 +106,7 @@ export const DEFAULT_SETTINGS: Settings = {
   clips: { enabled: true, seconds: 60 },
   startup: { minimized: true },
   updates: { auto: true },
+  games: { detect: true, propose: true, perGame: {}, custom: [], seen: [] },
   spatial: { range: 25, showMap: true },
   screen: { preset: "game", audio: true },
 };
@@ -114,6 +129,7 @@ let current: Settings = (() => {
     screen: { ...DEFAULT_SETTINGS.screen, ...saved.screen },
     startup: { ...DEFAULT_SETTINGS.startup, ...saved.startup },
     updates: { ...DEFAULT_SETTINGS.updates, ...saved.updates },
+    games: { ...DEFAULT_SETTINGS.games, ...saved.games },
   };
 })();
 const settingsListeners = new Set<(s: Settings) => void>();

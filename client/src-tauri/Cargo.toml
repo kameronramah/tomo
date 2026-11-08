@@ -30,6 +30,7 @@ tauri-plugin-notification = "2"
 tauri-plugin-autostart = "2"
 tauri-plugin-updater = "2"
 tauri-plugin-process = "2"
+sysinfo = { version = "0.37", default-features = false, features = ["system"] }
 
 # Lecture de la mémoire partagée « Mumble Link » (position du joueur dans son jeu)
 [target.'cfg(windows)'.dependencies]

@@ -80,6 +80,13 @@ export function watchPeople(realtime: Realtime) {
       if (!map.has(e.userId)) ensurePeople([e.userId]);
     }
     if (e.type === "profile" && typeof e.userId === "string") refreshPerson(e.userId);
+    if (e.type === "game" && typeof e.userId === "string") {
+      const p = map.get(e.userId);
+      if (p) {
+        map.set(e.userId, { ...p, game: (e.game as LightProfile["game"]) ?? null });
+        emit();
+      }
+    }
   });
 }
 

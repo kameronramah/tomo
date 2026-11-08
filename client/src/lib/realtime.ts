@@ -30,6 +30,13 @@ export class Realtime {
 
   constructor(private api: Api) {}
 
+  /** Jeu en cours (renvoyé à chaque reconnexion). */
+  private game: { name: string; since: number } | null = null;
+  setGame(game: { name: string; since: number } | null) {
+    this.game = game;
+    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: "game", game }));
+  }
+
   private setIdle(v: boolean) {
     this.idle = v;
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: "idle", idle: v }));
@@ -68,6 +75,7 @@ export class Realtime {
       this.ping();
       this.watchIdle();
       if (this.idle) ws.send(JSON.stringify({ type: "idle", idle: true }));
+      if (this.game) ws.send(JSON.stringify({ type: "game", game: this.game }));
     };
     ws.onmessage = (m) => {
       try {

@@ -3,7 +3,8 @@ import type { RemoteParticipant, Room } from "livekit-client";
 import type { Api, FullProfile } from "../lib/api";
 import { STATUS_LABEL, putPeople } from "../lib/people";
 import { setParticipantVolume, volumeMemory } from "../lib/voice";
-import { errorMessage } from "../lib/ui";
+import { errorMessage, initials } from "../lib/ui";
+import { sinceLabel } from "../lib/games";
 import { Avatar, Icon } from "./Brand";
 import { locale, t } from "../lib/i18n";
 
@@ -37,6 +38,15 @@ export function ProfileView({ p, children }: { p: FullProfile; children?: React.
             {p.status === "offline" && p.lastSeen ? <> {t("· vu")} {lastSeenLabel(p.lastSeen)}</> : null}
           </span>
         </div>
+        {p.game && (
+          <div className="profile-game">
+            <span className="game-badge sm">{initials(p.game.name)}</span>
+            <span className="col gap-2">
+              <strong>{t("Joue à {0}", { 0: p.game.name })}</strong>
+              <span className="muted small">{t("depuis {0}", { 0: sinceLabel(p.game.since) })}</span>
+            </span>
+          </div>
+        )}
         {p.bio && <p className="profile-bio">{p.bio}</p>}
         <div className="profile-meta">
           <span>

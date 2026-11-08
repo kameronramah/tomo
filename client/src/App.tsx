@@ -21,6 +21,8 @@ import { clipFileName, clipsSupported, encodeWav, openClipsFolder, saveClip } fr
 import { playSound, setQuietMode, startRinging } from "./lib/sounds";
 import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
 import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
+import { currentGame, gamePrefs, onGame, publicGame, startGameWatch, type RunningGame } from "./lib/games";
+import GameCard from "./components/GameCard";
 import UpdateCard from "./components/UpdateCard";
 import { flashIcon, setAppBadge } from "./lib/badge";
 import { mentionsMe } from "./components/MessageParts";
@@ -221,7 +223,15 @@ export default function App() {
     setPeopleApi(api);
     const offPeople = watchPeople(rt);
     rt.start();
+    // Jeu lancé → « joue à … » pour les potes (si on l'autorise)
+    const stopGames = startGameWatch();
+    const sendGame = () => rt.setGame(publicGame(currentGame()));
+    const offGame = onGame(sendGame);
+    const offGameSettings = onSettingsChange(sendGame);
     return () => {
+      offGame();
+      offGameSettings();
+      stopGames();
       offPeople();
       rt.stop();
       setRealtime(null);
@@ -370,6 +380,33 @@ export default function App() {
     [serverPeople],
   );
 
+  // ---- Jeu lancé : pièce automatique et proposition de rejoindre les potes ----------
+  const [game, setGame] = useState<RunningGame | null>(null);
+  useEffect(() => onGame(setGame), []);
+  const autoJoinRef = useRef<{ serverId: string; roomId: string } | null>(null);
+  useEffect(() => {
+    if (!game || voiceRef.current) return;
+    const auto = gamePrefs(game.id).autoRoom;
+    if (auto && servers.some((s) => s.id === auto.serverId)) {
+      autoJoinRef.current = { serverId: auto.serverId, roomId: auto.roomId };
+      if (activeId !== auto.serverId) selectServer(auto.serverId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [game?.id]);
+  useEffect(() => {
+    const want = autoJoinRef.current;
+    if (!want || !detail || detail.id !== want.serverId) return;
+    autoJoinRef.current = null;
+    const room = detail.rooms.find((r) => r.id === want.roomId);
+    if (room && !voiceRef.current) void enterRoom(room);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [detail]);
+  /** Potes en vocal dans ce serveur qui jouent au même jeu que moi. */
+  const gameMates = useMemo(
+    () => (game ? serverPeople.filter((p) => p.id !== myId && p.room && p.game?.name === game.name) : []),
+    [game, serverPeople, myId],
+  );
+
   /** Serveur de chaque clé de non-lus (pour le point gris sur la colonne des serveurs). */
   const keyServerRef = useRef<Record<string, string>>({});
   const serverDots = useMemo(() => {
@@ -421,6 +458,13 @@ export default function App() {
           // Mention (@toi, @tous, ou @vocal si je suis en vocal dans ce serveur)
           const v = voiceRef.current;
           const inVoiceThere = v?.kind === "room" && v.serverId === e.serverId;
+          // Mode focus : pendant un jeu, seuls mes coéquipiers (même pièce vocale) me dérangent.
+          const g = currentGame();
+          const focused = !!g && gamePrefs(g.id).focus && !(v?.room.remoteParticipants.has(`u:${m.authorId}`) ?? false);
+          if (focused) {
+            if (viewingRef.current !== key) setUnread((u) => ({ ...u, [key]: (u[key] ?? 0) + 1 }));
+            return;
+          }
           if (m.scope !== "dm" && mentionsMe(m.content, myId, inVoiceThere)) {
             if (viewingRef.current !== key || !document.hasFocus()) {
               setMentions((x) => ({ ...x, [key]: (x[key] ?? 0) + 1 }));
@@ -966,6 +1010,15 @@ export default function App() {
   return (
     <div className="app">
       <UpdateCard inVoice={!!voice} />
+      <GameCard
+        game={game}
+        mates={gameMates}
+        inVoice={!!voice}
+        onJoin={(roomId) => {
+          const room = detail?.rooms.find((r) => r.id === roomId);
+          if (room) void enterRoom(room);
+        }}
+      />
       <ServerRail
         session={session}
         instance={api.baseUrl}

@@ -5,6 +5,7 @@ import { SpatialEngine, type Pose } from "./spatial";
 import { ClipRecorder } from "./clips";
 import { VoiceLeveler } from "./leveler";
 import { onGameLink } from "./gameLink";
+import { currentGame, gamePrefs } from "./games";
 import { applyMicProcessing, watchMicProcessing } from "./denoise";
 import { t } from "./i18n";
 
@@ -107,7 +108,10 @@ async function startExtras(room: Room, ctx: AudioContext) {
   // Position du jeu (Mumble Link) prioritaire sur la carte quand un jeu compatible tourne.
   let mapPose: Pose = spatial.me;
   ex.offs.push(
-    onGameLink((g) => {
+    onGameLink((raw) => {
+      // Audio spatial coupé pour ce jeu (Paramètres › Jeux) : on reste sur la carte.
+      const running = currentGame();
+      const g = raw && !(running && !gamePrefs(running.id).spatial) ? raw : null;
       if (g) {
         if (spatial.mySource === "map") mapPose = spatial.me;
         const yaw = Math.atan2(g.front[0], g.front[2]);

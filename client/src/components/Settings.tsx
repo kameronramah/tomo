@@ -7,6 +7,7 @@ import { playSound, type SoundName } from "../lib/sounds";
 import { errorMessage } from "../lib/ui";
 import { Icon, NetworkBadge, UserAvatar, type IconName } from "./Brand";
 import { MyProfileSection, PrivacySection } from "./SettingsProfile";
+import SettingsGames from "./SettingsGames";
 import { autostartEnabled, inTauri, setAutostart } from "../lib/desktop";
 import { MicTester } from "./Home";
 import { CLIP_CHOICES, clipUrl, clipsSupported, deleteClip, listClips, openClipsFolder, type ClipFile } from "../lib/clips";
@@ -23,6 +24,7 @@ type Section =
   | "spatial"
   | "clips"
   | "screen"
+  | "games"
   | "sounds"
   | "appearance"
   | "startup"
@@ -46,6 +48,7 @@ const GROUPS: { title: string; items: { id: Section; label: string; icon: IconNa
       { id: "spatial", label: t("Audio spatial"), icon: "orbit" },
       { id: "clips", label: t("Clips"), icon: "rewind" },
       { id: "screen", label: t("Partage d'écran"), icon: "screenShare" },
+      { id: "games", label: t("Jeux"), icon: "gamepad" },
     ],
   },
   {
@@ -148,6 +151,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           {section === "spatial" && <Spatial s={s} />}
           {section === "clips" && <Clips s={s} />}
           {section === "screen" && <ScreenSettings s={s} />}
+          {section === "games" && <SettingsGames api={api} />}
           {section === "sounds" && <Sounds s={s} />}
           {section === "appearance" && <Appearance s={s} />}
           {section === "startup" && <Startup s={s} />}

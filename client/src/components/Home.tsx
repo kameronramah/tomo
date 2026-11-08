@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Channel, RoomInfo, ServerDetail } from "../lib/api";
 import { loadDevices } from "../lib/prefs";
+import { getPerson, usePeople, userIdOf } from "../lib/people";
 import { Icon, Logo, UserAvatar } from "./Brand";
 import { t } from "../lib/i18n";
 
@@ -154,6 +155,7 @@ function MoreMenu({ label, onRename, onDelete }: { label: string; onRename: () =
 /** Accueil d'un serveur : les pièces vocales en cartes, les fils, et qui est là ce soir. */
 export function ServerHome(p: HomeProps) {
   const { detail } = p;
+  usePeople(detail.rooms.flatMap((r) => r.participants.map((x) => userIdOf(x.identity))));
   const inVoice = detail.rooms.reduce((n, r) => n + r.participants.length, 0);
 
   return (
@@ -221,6 +223,23 @@ export function ServerHome(p: HomeProps) {
                   )}
                   {people.length > 6 && <span className="piece-more">+{people.length - 6}</span>}
                 </div>
+                {(() => {
+                  // Jeux en cours dans la pièce : « Valorant · 2 », « Minecraft · 1 »
+                  const counts = new Map<string, number>();
+                  for (const x of people) {
+                    const g = getPerson(userIdOf(x.identity))?.game;
+                    if (g) counts.set(g.name, (counts.get(g.name) ?? 0) + 1);
+                  }
+                  return counts.size > 0 ? (
+                    <div className="piece-games">
+                      {[...counts].map(([name, n]) => (
+                        <span key={name} className="chip">
+                          <Icon name="gamepad" size={13} /> {name} · {n}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null;
+                })()}
                 <div className="piece-foot">
                   <span className="small soft ellipsis grow">{people.map((x) => x.name + (x.guest ? " (invité)" : "")).join(", ")}</span>
                   <button

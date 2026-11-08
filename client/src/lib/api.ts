@@ -67,6 +67,8 @@ export type LightProfile = {
   accent: string | null;
   status: Presence;
   customStatus: string | null;
+  /** « Joue à … » (absent sur les vieux serveurs) */
+  game?: { name: string; since: number } | null;
 };
 export type FullProfile = LightProfile & {
   bio: string | null;

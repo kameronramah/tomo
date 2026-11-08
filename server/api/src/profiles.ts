@@ -12,7 +12,7 @@ import { db } from "./db.js";
 import { accessOf, areFriends, isBlocked, pair, shareServer } from "./access.js";
 import { authenticate, cleanLabel, requireUser, type Principal } from "./security.js";
 import { attachmentUrl, claimProfileImage, sweepAttachments } from "./attachments.js";
-import { presenceOf, refreshPresence, sendToAudience, sendToUser, isConnected, type Presence } from "./realtime.js";
+import { gameOf, presenceOf, refreshGame, refreshPresence, sendToAudience, sendToUser, isConnected, type Game, type Presence } from "./realtime.js";
 import { identityOf, liveParticipants } from "./livekit.js";
 
 export type DmPolicy = "friends" | "servers" | "everyone";
@@ -48,6 +48,8 @@ export type LightProfile = {
   accent: string | null;
   status: Presence;
   customStatus: string | null;
+  /** « Joue à … » (si la personne l'autorise) */
+  game: Game | null;
 };
 
 const ACCENT_RE = /^#[0-9a-f]{6}$/i;
@@ -76,6 +78,7 @@ export function lightProfile(u: UserRow): LightProfile {
     status,
     // Un statut personnalisé ne s'affiche pas quand la personne apparaît hors ligne.
     customStatus: status === "offline" ? null : customOf(u),
+    game: gameOf(u.id),
   };
 }
 
@@ -295,6 +298,7 @@ export default async function profileRoutes(app: FastifyInstance) {
         vals.push(v ? 1 : 0);
       }
       if (sets.length) db.prepare(`UPDATE users SET ${sets.join(", ")} WHERE id = ?`).run(...vals, me.id);
+      refreshGame(me.id);
       return { ok: true };
     },
   );
@@ -350,6 +354,7 @@ export default async function profileRoutes(app: FastifyInstance) {
             accent: null,
             status: "online",
             customStatus: null,
+            game: null,
             role: "guest",
             guest: true,
             room: r,

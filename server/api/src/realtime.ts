@@ -10,7 +10,9 @@ import { verifyAccessToken, type Principal } from "./security.js";
 import { coMemberIds, friendIds, memberIds } from "./access.js";
 import { db } from "./db.js";
 
-type Conn = { socket: WebSocket; who: Principal; idle: boolean };
+/** Jeu en cours, signalé par l'appli de bureau (détection locale des programmes lancés). */
+export type Game = { name: string; since: number };
+type Conn = { socket: WebSocket; who: Principal; idle: boolean; game: Game | null };
 const conns = new Set<Conn>();
 
 export type RealtimeEvent = { type: string; [key: string]: unknown };
@@ -40,6 +42,24 @@ export function presenceOf(userId: string): Presence {
   if (chosen === "dnd") return "dnd";
   if (chosen === "idle") return "idle";
   return mine.every((c) => c.idle) ? "idle" : "online";
+}
+
+/** « Joue à … » vu par les autres : rien si hors ligne / invisible ou si l'option est coupée. */
+export function gameOf(userId: string): Game | null {
+  if (presenceOf(userId) === "offline") return null;
+  const row = db.prepare("SELECT show_game FROM users WHERE id = ?").get(userId) as { show_game: number } | undefined;
+  if (!row?.show_game) return null;
+  return userConns(userId).find((c) => c.game)?.game ?? null;
+}
+
+const lastGame = new Map<string, string>();
+/** Prévient les potes si le jeu affiché a changé. */
+export function refreshGame(userId: string) {
+  const g = gameOf(userId);
+  const key = g ? `${g.name}|${g.since}` : "";
+  if ((lastGame.get(userId) ?? "") === key) return;
+  lastGame.set(userId, key);
+  sendToAudience(userId, { type: "game", userId, game: g });
 }
 
 /** En ligne aux yeux des autres (pour les amis, les appels…). */
@@ -85,6 +105,7 @@ export function refreshPresence(userId: string, force = false) {
   if (!force && lastPresence.get(userId) === now) return;
   lastPresence.set(userId, now);
   sendToAudience(userId, { type: "presence", userId, status: now, online: now !== "offline" });
+  refreshGame(userId);
 }
 
 export default async function realtimeRoutes(app: FastifyInstance) {
@@ -94,7 +115,7 @@ export default async function realtimeRoutes(app: FastifyInstance) {
       socket.close(4401, "unauthorized");
       return;
     }
-    const conn: Conn = { socket, who, idle: false };
+    const conn: Conn = { socket, who, idle: false, game: null };
     conns.add(conn);
     if (who.kind === "user") refreshPresence(who.id);
     send(conn, { type: "hello" });
@@ -109,6 +130,13 @@ export default async function realtimeRoutes(app: FastifyInstance) {
           conn.idle = msg.idle;
           if (who.kind === "user") refreshPresence(who.id);
         }
+        // Jeu lancé / quitté (null = plus de jeu). Nom nettoyé, 40 caractères max.
+        if (msg?.type === "game" && who.kind === "user") {
+          const name = typeof msg.game?.name === "string" ? msg.game.name.replace(/[\u0000-\u001f]/g, "").trim().slice(0, 40) : "";
+          const since = typeof msg.game?.since === "number" && msg.game.since <= Date.now() + 60_000 ? Math.floor(msg.game.since) : Date.now();
+          conn.game = name ? { name, since } : null;
+          refreshGame(who.id);
+        }
       } catch {
         // message illisible : ignoré
       }
@@ -119,7 +147,10 @@ export default async function realtimeRoutes(app: FastifyInstance) {
       if (who.kind === "user" && !isConnected(who.id)) {
         db.prepare("UPDATE users SET last_seen = ? WHERE id = ?").run(Date.now(), who.id);
       }
-      if (who.kind === "user") refreshPresence(who.id);
+      if (who.kind === "user") {
+        refreshPresence(who.id);
+        refreshGame(who.id);
+      }
     });
   });
 }

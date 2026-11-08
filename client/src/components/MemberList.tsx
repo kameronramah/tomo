@@ -9,11 +9,11 @@ const ROLE_TAG: Record<string, string | undefined> = { owner: "CRÉATEUR", admin
 
 function seen(ts: number) {
   const min = Math.round((Date.now() - ts) / 60000);
-  if (min < 60) return `vu il y a ${Math.max(1, min)} min`;
+  if (min < 60) return t("vu il y a {0} min", { 0: Math.max(1, min) });
   const h = Math.round(min / 60);
-  if (h < 24) return `vu il y a ${h} h`;
+  if (h < 24) return t("vu il y a {0} h", { 0: h });
   const d = Math.round(h / 24);
-  return d === 1 ? "vu hier" : `vu il y a ${d} jours`;
+  return d === 1 ? t("vu hier") : t("vu il y a {0} jours", { 0: d });
 }
 
 /** Membres d'un serveur, rangés par « en vocal / en ligne / hors ligne », avec recherche. */
@@ -69,9 +69,10 @@ export default function MemberList({
 
   const row = (p: Person) => {
     const tag = ROLE_TAG[p.role];
+    const playing = p.game ? t("joue à {0}", { 0: p.game.name }) : null;
     const sub = p.room
-      ? `${p.status === "dnd" ? "Ne pas déranger · " : ""}${p.room.label}`
-      : p.customStatus ?? (p.status === "offline" ? (p.lastSeen ? seen(p.lastSeen) : "hors ligne") : STATUS_LABEL[p.status]);
+      ? `${p.status === "dnd" ? t("Ne pas déranger") + " · " : ""}${p.room.label}${playing ? " · " + playing : ""}`
+      : playing ?? p.customStatus ?? (p.status === "offline" ? (p.lastSeen ? seen(p.lastSeen) : t("hors ligne")) : STATUS_LABEL[p.status]);
     return (
       <button key={p.id} className={`member${p.status === "offline" && !p.room ? " off" : ""}`} onClick={() => !p.guest && onOpenProfile(p.id)} disabled={p.guest}>
         <UserAvatar userId={p.guest ? null : p.id} name={p.displayName} size={36} showStatus={!p.guest} />
@@ -81,7 +82,7 @@ export default function MemberList({
             {p.id === myId && <span className="muted small"> {t("(toi)")}</span>}
             {tag && <span className={`role-tag${p.role === "admin" || p.role === "owner" ? " admin" : ""}`}> {tag}</span>}
           </span>
-          <span className={`member-sub ellipsis${p.room ? " teal" : ""}`}>{sub}</span>
+          <span className={`member-sub ellipsis${p.room ? " teal" : playing ? " plays" : ""}`}>{sub}</span>
         </span>
       </button>
     );

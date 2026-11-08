@@ -5,6 +5,7 @@
 //! jamais dans un fichier lisible par d'autres programmes.
 
 mod clips;
+mod games;
 mod mumble;
 
 const SERVICE: &str = "com.tomo.app";
@@ -72,6 +73,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             launched_at_login,
+            games::running_programs,
             secret_get,
             secret_set,
             secret_delete,
