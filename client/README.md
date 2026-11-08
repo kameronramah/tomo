@@ -55,9 +55,9 @@ Le serveur de dev crée automatiquement un **compte de test** : son pseudo et so
 - **Carte** : active « Audio spatial » dans un salon, puis ajoute des bots (outils de test) : ils tournent autour de toi, et leur bip se déplace dans ton casque.
 - **Connecteur de jeu** : lance le simulateur Mumble Link, qui fait croire à Tomo qu'un jeu compatible tourne :
   ```bash
-  cd client/src-tauri
-  cargo run --example mumble_sim
+  client\scripts\mumble-sim.cmd
   ```
+  (à lancer depuis le dossier du projet ; le script règle le PATH et le dossier de compilation. Sur un autre système : `cd client/src-tauri` puis `cargo run --example mumble_sim`.)
   La carte passe en « Position du jeu : Simulateur Tomo » et suit le joueur simulé. Ctrl+C pour arrêter : Tomo repasse sur la carte au bout de 2 s.
 - Test automatique de la lecture Mumble Link : `cargo test --lib mumble`.
 
