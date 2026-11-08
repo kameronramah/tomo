@@ -93,7 +93,7 @@ export function Logo({ size = 28, cut = "var(--panel)" }: { size?: number; cut?:
 export function Wordmark({ size = 17 }: { size?: number }) {
   return (
     <span className="wordmark" style={{ fontSize: size }}>
-      Tom<span className="amber">o</span>
+      tom<span className="amber">o</span>
     </span>
   );
 }

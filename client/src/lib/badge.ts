@@ -70,7 +70,7 @@ function setFavicon(href: string) {
 export async function setAppBadge(n: number) {
   if (n === last) return;
   last = n;
-  document.title = n > 0 ? `(${n > 99 ? "99+" : n}) Tomo` : "Tomo";
+  document.title = n > 0 ? `(${n > 99 ? "99+" : n}) tomo` : "tomo";
   setFavicon(drawFavicon(n > 0));
   if (!inTauri) return;
   const win = getCurrentWindow();

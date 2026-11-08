@@ -25,7 +25,7 @@ export default function TitleBar() {
     <div className="titlebar" data-tauri-drag-region>
       <span className="titlebar-brand" data-tauri-drag-region>
         <Logo size={16} cut="var(--rail)" />
-        <span data-tauri-drag-region>Tomo</span>
+        <span data-tauri-drag-region>tomo</span>
       </span>
       <div className="window-controls">
         <button onClick={() => win.minimize()} aria-label="Réduire" title="Réduire">

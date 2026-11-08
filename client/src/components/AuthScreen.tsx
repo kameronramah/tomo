@@ -76,9 +76,9 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
   return (
     <div className="auth">
       <section className="auth-brand">
-        <div className="row gap-12">
-          <Logo size={40} />
-          <Wordmark size={22} />
+        <div className="row gap-16">
+          <Logo size={72} />
+          <Wordmark size={44} />
         </div>
 
         <div className="col gap-28">
@@ -94,7 +94,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
               <span className="feature-icon amber">
                 <Icon name="rewind" />
               </span>
-              Garde les 60 dernières secondes en un raccourci
+              Garde les dernières secondes du salon en un raccourci
             </li>
             <li>
               <span className="feature-icon">
@@ -105,14 +105,14 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
           </ul>
         </div>
 
-        <span className="muted small">Tomo v0.5 · open source</span>
+        <span className="muted small">tomo v0.6 · open source</span>
       </section>
 
       <section className="auth-form-wrap">
         <form className="auth-form" onSubmit={submit}>
           <div className="auth-compact-brand row gap-10">
-            <Logo size={34} cut="var(--bg)" />
-            <Wordmark size={20} />
+            <Logo size={52} cut="var(--bg)" />
+            <Wordmark size={32} />
           </div>
           <div className="col gap-6">
             <h2 className="title">
