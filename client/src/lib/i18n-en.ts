@@ -822,6 +822,28 @@ export const EN: Record<string, string> = {
   "Steam ne répond pas pour l'instant.": "Steam isn't responding right now.",
   "Riot ne répond pas (clé expirée ?).": "Riot isn't responding (expired key?).",
 
+  // ---- Overlay ----
+  "Ce qui s'affiche": "What's shown",
+  "En bas à droite": "Bottom right",
+  "En bas à gauche": "Bottom left",
+  "En haut à droite": "Top right",
+  "En haut à gauche": "Top left",
+  "En vocal, quand un jeu est lancé (réglable par jeu dans Paramètres › Jeux)": "In voice, when a game is running (per game in Settings › Games)",
+  "Jamais": "Never",
+  "Les nouveaux messages de la pièce, pendant 15 secondes.": "New room messages, for 15 seconds.",
+  "Les personnes de la pièce, en surbrillance quand elles parlent, et qui a coupé son micro.": "People in the room, highlighted when they speak, and who's muted.",
+  "Messages du chat": "Chat messages",
+  "micro coupé": "muted",
+  "Opacité": "Opacity",
+  "Overlay en jeu": "In-game overlay",
+  "Position": "Position",
+  "Quand l'afficher": "When to show it",
+  "Quand les sous-titres sont activés dans la pièce.": "When captions are on in the room.",
+  "Qui parle": "Who's speaking",
+  "Toujours quand je suis en vocal": "Always when I'm in voice",
+  "Une petite fenêtre transparente par-dessus ton jeu : qui parle, le chat de la pièce, les sous-titres. Les clics la traversent, elle ne gêne jamais la partie. Mets ton jeu en « plein écran fenêtré » (ou « fenêtré sans bordure ») : un plein écran exclusif passe par-dessus tout.":
+    "A small transparent window over your game: who's speaking, the room chat, captions. Clicks go through it, it never gets in the way. Set your game to “windowed fullscreen” (or “borderless windowed”): exclusive fullscreen covers everything.",
+
   // ---- Sous-titres ----
   "(traduit)": "(translated)",
   "≈ 250 Mo · plus juste, demande une bonne carte graphique": "≈ 250 MB · more accurate, needs a good graphics card",

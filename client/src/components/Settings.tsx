@@ -8,6 +8,7 @@ import { errorMessage } from "../lib/ui";
 import { Icon, NetworkBadge, UserAvatar, type IconName } from "./Brand";
 import { MyProfileSection, PrivacySection } from "./SettingsProfile";
 import SettingsGames from "./SettingsGames";
+import SettingsOverlay from "./SettingsOverlay";
 import { GameAccountsSection } from "./GameStats";
 import { autostartEnabled, inTauri, setAutostart } from "../lib/desktop";
 import { MicTester } from "./Home";
@@ -26,6 +27,7 @@ type Section =
   | "clips"
   | "screen"
   | "games"
+  | "overlay"
   | "accounts"
   | "sounds"
   | "appearance"
@@ -52,6 +54,7 @@ const GROUPS: { title: string; items: { id: Section; label: string; icon: IconNa
       { id: "clips", label: t("Clips"), icon: "rewind" },
       { id: "screen", label: t("Partage d'écran"), icon: "screenShare" },
       { id: "games", label: t("Jeux"), icon: "gamepad" },
+      { id: "overlay", label: t("Overlay en jeu"), icon: "layers" },
     ],
   },
   {
@@ -155,6 +158,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           {section === "clips" && <Clips s={s} api={api} />}
           {section === "screen" && <ScreenSettings s={s} />}
           {section === "games" && <SettingsGames api={api} />}
+          {section === "overlay" && <SettingsOverlay />}
           {section === "accounts" && <GameAccountsSection api={api} realtime={realtime} />}
           {section === "sounds" && <Sounds s={s} />}
           {section === "appearance" && <Appearance s={s} />}

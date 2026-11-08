@@ -1299,3 +1299,20 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .caption-line.pending { opacity: .6; }
 /* Le bandeau flotte juste au-dessus du dock */
 .stage-main > .captions-bar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 104px; z-index: 6; width: min(820px, calc(100% - 32px)); margin: 0; }
+
+/* ---- v0.8 - Overlay en jeu (fenêtre transparente) ---- */
+html.overlay-mode, html.overlay-mode body, html.overlay-mode #root { background: transparent !important; overflow: hidden; }
+.ov { position: fixed; inset: 0; padding: 8px; display: flex; flex-direction: column; gap: 6px; align-items: flex-start; font-family: Inter, sans-serif; pointer-events: none; }
+.ov.right { align-items: flex-end; }
+.ov.bottom { justify-content: flex-end; }
+.ov-card { background: rgba(14, 16, 20, .78); border: 1px solid rgba(255, 255, 255, .08); border-radius: 12px; padding: 8px 10px; color: #ECEEF3; font-size: 13px; max-width: 320px; box-shadow: 0 6px 18px rgba(0, 0, 0, .35); }
+.ov-voice { display: flex; align-items: center; gap: 8px; padding: 2px 0; opacity: .75; }
+.ov-voice.speaking { opacity: 1; }
+.ov-avatar { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 700; color: #0E1014; flex: none; }
+.ov-voice.speaking .ov-avatar { box-shadow: 0 0 0 2px #0E1014, 0 0 0 4px #2DD4BF; }
+.ov-name { font-weight: 600; }
+.ov-muted { font-size: 11px; color: #FFB020; }
+.ov-room { margin-top: 4px; font-size: 11px; color: #9aa1b2; }
+.ov-chat strong { color: #2DD4BF; }
+.ov-caption strong { color: #FFB020; }
+.ov-dim { color: #9aa1b2; font-size: 11px; }

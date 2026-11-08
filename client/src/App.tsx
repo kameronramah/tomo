@@ -23,6 +23,7 @@ import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
 import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
 import { currentGame, gamePrefs, onGame, publicGame, startGameWatch, type RunningGame } from "./lib/games";
 import GameCard from "./components/GameCard";
+import { overlayChat, startOverlay } from "./lib/overlay";
 import LegendsView from "./components/LegendsView";
 import ChallengesView from "./components/ChallengesView";
 import UpdateCard from "./components/UpdateCard";
@@ -382,6 +383,12 @@ export default function App() {
     [serverPeople],
   );
 
+  // ---- Overlay en jeu : actif tant que je suis en vocal ----------------------------
+  const voiceRoom = voice?.room;
+  const voiceLabelRef = useRef("");
+  voiceLabelRef.current = voice ? voice.roomLabel : "";
+  useEffect(() => (voiceRoom ? startOverlay(voiceRoom, () => voiceLabelRef.current) : undefined), [voiceRoom]);
+
   /** Épingler un message au mur des légendes du serveur. */
   async function pinLegend(serverId: string, messageId: string) {
     try {
@@ -467,6 +474,9 @@ export default function App() {
             });
           }
           if (typeof e.serverId === "string") keyServerRef.current[key] = e.serverId;
+          // Chat de la pièce où je suis : affiché aussi dans l'overlay en jeu
+          if (m.scope === "room" && voiceRef.current?.kind === "room" && voiceRef.current.roomId === m.target && m.content)
+            overlayChat(m.id, m.authorName, m.content);
           // Mention (@toi, @tous, ou @vocal si je suis en vocal dans ce serveur)
           const v = voiceRef.current;
           const inVoiceThere = v?.kind === "room" && v.serverId === e.serverId;
