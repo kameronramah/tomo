@@ -11,7 +11,7 @@ services:
     volumes:
       - ./livekit.yaml:/etc/livekit.yaml:ro
 
-  # API Talk2Mates : vérifie le code d'invitation et signe les tokens LiveKit.
+  # API Tomo : comptes, serveurs, salons, invitations, jetons LiveKit. Base SQLite dans le volume api-data.
   api:
     build: ./api
     restart: unless-stopped
@@ -19,6 +19,7 @@ services:
     environment:
       PORT: 3000
       DATA_DIR: /data
+      TRUST_PROXY: "1"   # derrière Caddy : IP réelle pour la limitation des tentatives
     ports:
       - "127.0.0.1:3000:3000"   # accessible uniquement via Caddy
     volumes:

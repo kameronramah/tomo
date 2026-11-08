@@ -1,72 +1,42 @@
-import { Room, RoomEvent, Track } from "livekit-client";
-import { loadDevices, type SavedServer } from "./storage";
+import { Room, RoomEvent, Track, type RemoteParticipant } from "livekit-client";
+import type { Api } from "./api";
+import { loadDevices } from "./prefs";
 
-export type RoomInfo = {
-  id: string;
-  label: string;
-  participants: { identity: string; name: string }[];
-};
+/** Volumes choisis par personne (par pseudo), gardés le temps de la session. */
+export const volumeMemory = new Map<string, number>();
+let deafened = false;
 
-type ServerAccess = Pick<SavedServer, "apiUrl" | "invite">;
+const volumeKey = (p: RemoteParticipant) => p.name || p.identity;
 
-export function normalizeApiUrl(url: string): string {
-  let u = url.trim().replace(/\/+$/, "");
-  if (!/^https?:\/\//i.test(u)) {
-    // Serveur local → http, serveur distant → https
-    const local = /^(localhost|127\.|192\.168\.|10\.)/i.test(u);
-    u = `${local ? "http" : "https"}://${u}`;
-  }
-  return u;
+function applyVolume(p: RemoteParticipant) {
+  p.setVolume(deafened ? 0 : volumeMemory.get(volumeKey(p)) ?? 1);
 }
 
-/** Appel à l'API Talk2Mates d'un serveur, avec son code d'invitation. */
-async function api<T>(server: ServerAccess, path: string, init?: RequestInit): Promise<T> {
-  let res: Response;
-  try {
-    res = await fetch(`${server.apiUrl}${path}`, {
-      ...init,
-      headers: { "Content-Type": "application/json", "X-Invite-Code": server.invite, ...init?.headers },
-    });
-  } catch {
-    throw new Error("Serveur injoignable. Vérifie l'adresse.");
-  }
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(body.error ?? `Erreur serveur (${res.status})`);
-  return body as T;
+export function setParticipantVolume(p: RemoteParticipant, v: number) {
+  volumeMemory.set(volumeKey(p), v);
+  applyVolume(p);
 }
 
-export const getServerInfo = (s: ServerAccess) =>
-  api<{ name: string; rooms: { id: string; label: string }[] }>(s, "/info");
-
-export const listRooms = (s: ServerAccess) => api<RoomInfo[]>(s, "/rooms");
+/** Couper le son : plus rien n'est entendu (le micro est géré à part). */
+export function setDeafened(room: Room | null, value: boolean) {
+  deafened = value;
+  room?.remoteParticipants.forEach(applyVolume);
+}
 
 /** Conteneur caché qui reçoit les éléments <audio> des voix des autres. */
 function audioContainer(): HTMLElement {
-  let el = document.getElementById("t2m-audio");
+  let el = document.getElementById("tomo-audio");
   if (!el) {
     el = document.createElement("div");
-    el.id = "t2m-audio";
+    el.id = "tomo-audio";
     el.style.display = "none";
     document.body.appendChild(el);
   }
   return el;
 }
 
-/**
- * Rejoint un salon vocal d'un serveur.
- * Renvoie le salon connecté et un éventuel avertissement (ex. micro indisponible).
- */
-export async function joinRoom(
-  server: ServerAccess,
-  name: string,
-  roomId: string,
-  opts: { micEnabled: boolean },
-): Promise<{ room: Room; warning?: string }> {
-  const { url, token } = await api<{ url: string; token: string }>(server, "/token", {
-    method: "POST",
-    body: JSON.stringify({ name, room: roomId }),
-  });
-
+export async function joinRoom(api: Api, roomId: string, opts: { micEnabled: boolean }) {
+  const { url, token } = await api.roomToken(roomId);
   const devices = loadDevices();
   const room = new Room({
     adaptiveStream: true,
@@ -81,8 +51,11 @@ export async function joinRoom(
   });
 
   room
-    .on(RoomEvent.TrackSubscribed, (track) => {
-      if (track.kind === Track.Kind.Audio) audioContainer().appendChild(track.attach());
+    .on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
+      if (track.kind === Track.Kind.Audio) {
+        audioContainer().appendChild(track.attach());
+        applyVolume(participant);
+      }
     })
     .on(RoomEvent.TrackUnsubscribed, (track) => {
       track.detach().forEach((el) => el.remove());

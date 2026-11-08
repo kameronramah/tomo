@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    t2m_client_lib::run()
+    tomo_lib::run()
 }

@@ -1,6 +1,6 @@
 {
-  "name": "t2m-api",
-  "version": "0.1.0",
+  "name": "tomo-api",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,11 +10,13 @@
   },
   "dependencies": {
     "@fastify/cors": "^11.4.1",
+    "@fastify/rate-limit": "^11.2.2",
     "fastify": "^5.2.0",
+    "jose": "^6.2.15",
     "livekit-server-sdk": "^2.9.0"
   },
   "devDependencies": {
-    "@types/node": "^22.10.0",
+    "@types/node": "^24.19.2",
     "typescript": "^5.7.0"
   }
 }

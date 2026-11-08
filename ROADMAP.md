@@ -4,29 +4,31 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 
 ---
 
-## V0.1 — Fondations
-> Objectif : deux amis peuvent se parler à travers le serveur.
-
-- [ ] Serveur déployé sur le VPS (LiveKit + Caddy + API) via `docker compose`
+## V0.1 — Fondations ✅
 - [x] Serveur de dev local (`server/docker-compose.dev.yml`)
-- [x] API : génération d'un token LiveKit (accès protégé par un code d'invitation)
-- [x] Client Tauri : écran de connexion (pseudo + code d'invitation)
-- [x] Client : rejoindre un salon vocal et entendre les autres
-- [x] Choix du micro et de la sortie audio
-- [x] Bonus : volume par personne + indicateur « qui parle »
-- [x] Interface façon Discord : serveurs mémorisés dans une barre à gauche, passage d'un serveur à l'autre en un clic
-- [x] Liste des salons du serveur (configurée par l'hébergeur) avec les personnes connectées dans chacun
-- [x] Passage d'un salon à l'autre en un clic (on garde l'état du micro, les périphériques et les volumes)
-- [ ] Test à plusieurs avec de vrais micros
+- [x] Client Tauri : rejoindre un salon vocal et entendre les autres
+- [x] Choix du micro et de la sortie audio, volume par personne, indicateur « qui parle »
+- [x] Test avec un vrai micro
+
+## V0.2 — Tomo : comptes, serveurs, nouvelle interface ✅
+- [x] Nouveau nom (**Tomo**), logo et charte, interface selon les maquettes validées
+- [x] Comptes sécurisés : scrypt, sessions 15 min + renouvellement à rotation, blocage après 5 échecs, limitation par IP
+- [x] « Rester connecté » via le coffre-fort de Windows
+- [x] Serveurs créés par les utilisateurs (créateur = admin), aucun serveur par défaut
+- [x] Gestion par l'admin : salons, membres (admin / exclure), invitations, renommer, supprimer
+- [x] Codes membres + **codes invités d'un soir sans compte**
+- [x] Changement de serveur/salon en un clic, Ctrl + 1…9, parcourir un serveur sans quitter son vocal
+- [x] Couper micro / son, test du micro avant d'entrer
+- [x] Interrupteur d'audio spatial par salon (état synchronisé ; rendu 3D en V2)
+- [ ] Serveur déployé sur le VPS (LiveKit + Caddy + API)
+- [ ] Test à plusieurs, chacun chez soi
 
 ## V1 — MVP « on lâche Discord »
 > Objectif : utilisable tous les soirs par le groupe.
 
-- [ ] Créer / renommer / supprimer des salons depuis l'appli (aujourd'hui : variable `ROOMS` du serveur)
-- [ ] Vrais comptes à la place du code d'invitation partagé
+- [ ] Changer son mot de passe, voir et révoquer ses appareils connectés
 - [ ] **Push-to-talk** avec raccourci global (qui marche quand le jeu est au premier plan)
-- [ ] Indicateur « qui parle »
-- [ ] Réglage du volume par personne + mute individuel
+- [ ] Réordonner les salons par glisser-déposer
 - [ ] **Volume normalisé automatiquement** (compresseur / AGC sur chaque voix reçue)
 - [ ] Suppression de bruit (RNNoise ou celle du navigateur)
 - [ ] **Clip audio après coup** : tampon circulaire de 60 s, raccourci → fichier `.ogg`
@@ -40,7 +42,8 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [ ] **Callouts rapides** : touches → phrases en synthèse vocale (Piper, local)
 - [ ] **Mode radio** : connecté à plusieurs salons, un push-to-talk par salon, volume par salon
 - [ ] **Audio spatial activable**
-  - [ ] Interrupteur ON/OFF **par salon**, synchronisé pour tout le monde
+  - [x] Interrupteur ON/OFF **par salon**, synchronisé pour tout le monde
+  - [ ] Rendu 3D des voix (PannerNode HRTF) à partir des positions en jeu
   - [ ] Raccourci clavier pour basculer + son de confirmation
   - [ ] Profils par jeu (ON/OFF par défaut selon le jeu détecté), surchargés par l'interrupteur
   - [ ] Repli automatique en audio normal si le jeu n'envoie pas de positions

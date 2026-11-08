@@ -5,7 +5,7 @@
 ```
         PC des joueurs                                   VPS
 ┌──────────────────────────┐              ┌────────────────────────────────┐
-│  Client Talk2Mates (Tauri)  │   HTTPS      │  Caddy (443)                   │
+│  Client Tomo (Tauri)     │   HTTPS      │  Caddy (443)                   │
 │  ├─ UI React             │ ───────────▶ │   ├─ api.<domaine>  → API :3000│
 │  ├─ livekit-client (JS)  │              │   └─ rtc.<domaine>  → LiveKit  │
 │  ├─ Web Audio (volume,   │   WebRTC     │                       :7880    │
@@ -17,9 +17,30 @@
                                           └────────────────────────────────┘
 ```
 
-1. Le client demande un **token** à l'API (pseudo + code d'invitation + salon).
-2. L'API vérifie le code et signe un token LiveKit (JWT) valable pour ce salon.
-3. Le client se connecte à LiveKit avec ce token. L'audio transite par le SFU, qui relaie chaque voix aux autres sans la décoder.
+1. L'utilisateur se connecte (pseudo + mot de passe) : l'API renvoie un **jeton d'accès** (15 min) et un **jeton de renouvellement**.
+2. Il choisit un salon d'un de ses serveurs : l'API vérifie qu'il en est membre (ou invité de ce serveur) et signe un **jeton LiveKit** pour ce salon.
+3. Le client se connecte à LiveKit avec ce jeton. L'audio transite par le SFU, qui relaie chaque voix aux autres sans la décoder.
+
+## Modèle de données
+
+Une **instance Tomo** (= un VPS) héberge des **comptes** et des **serveurs** créés par les utilisateurs.
+
+| Table | Contenu |
+|---|---|
+| `users` | pseudo (unique, insensible à la casse), hash scrypt du mot de passe |
+| `sessions` | hash SHA-256 du jeton de renouvellement, expiration (30 jours) |
+| `servers` | nom, créateur |
+| `members` | rôle par serveur : `owner` (créateur), `admin`, `member` |
+| `rooms` | salons vocaux d'un serveur, ordre, audio spatial ON/OFF |
+| `invites` | code `XXXX-XXXX`, type `member` ou `guest`, expiration, utilisations max |
+
+| Action | Membre | Admin | Créateur |
+|---|---|---|---|
+| Rejoindre les salons, audio spatial ON/OFF, code membre | ✅ | ✅ | ✅ |
+| Créer / renommer / supprimer des salons, codes invités, exclure un membre | | ✅ | ✅ |
+| Nommer / retirer des admins, exclure un admin, supprimer le serveur | | | ✅ |
+
+Un **invité** (code invité, sans compte) reçoit un jeton limité à **un seul serveur**, qui expire avec le code (24 h maximum). Il peut seulement entrer dans les salons.
 
 ## Pourquoi ces choix
 
@@ -55,6 +76,10 @@ Phrases pré-générées avec **Piper** au premier lancement (cache local), puis
 La partie Rust de Tauri liste les processus (crate `sysinfo`) et les compare à une table `processus → jeu` versionnée dans le dépôt.
 
 ## Sécurité
-- Accès au serveur par **code d'invitation**, à remplacer en V1 par de vrais comptes.
-- Tokens LiveKit à durée courte, signés par l'API. La clé secrète LiveKit ne quitte jamais le serveur.
-- Tout passe en HTTPS / DTLS-SRTP (WebRTC chiffre toujours le média en transit).
+- **Mots de passe** : 12 caractères minimum, hachés avec **scrypt** (N=32768, sel aléatoire de 16 octets), comparés à temps constant. Un hash factice est vérifié quand le pseudo n'existe pas, pour ne pas révéler quels pseudos existent.
+- **Sessions** : jeton d'accès JWT HS256 de 15 min (gardé en mémoire uniquement) + jeton de renouvellement aléatoire de 256 bits, **stocké haché** côté serveur et **remplacé à chaque usage** (rotation). « Déconnecter tous mes appareils » supprime toutes les sessions.
+- **« Rester connecté »** : le jeton de renouvellement est rangé dans le **Gestionnaire d'identification Windows** (crate Rust `keyring`), jamais dans un fichier.
+- **Anti force brute** : 10 tentatives/minute/IP sur les routes de connexion, et pseudo bloqué 15 min après 5 échecs.
+- **Droits vérifiés côté serveur** à chaque requête (rôle sur le serveur concerné).
+- **Jetons LiveKit** de 6 h, signés par l'API, limités à un salon. La clé secrète LiveKit ne quitte jamais le serveur.
+- Tout passe en **HTTPS** / DTLS-SRTP (WebRTC chiffre toujours le média en transit).

@@ -1,4 +1,4 @@
-# 🖥️ Héberger Talk2Mates sur un VPS
+# 🖥️ Héberger Tomo sur un VPS
 
 ## Ce qu'il faut demander au propriétaire du VPS
 
@@ -40,10 +40,10 @@ Certains hébergeurs ont **en plus** un pare-feu dans leur interface web (OVH, H
 
 ## Nom de domaine gratuit (DuckDNS)
 1. Se connecter sur https://www.duckdns.org.
-2. Créer deux sous-domaines pointant vers l'IP du VPS, par exemple `t2m-api` et `t2m-rtc`.
-3. On obtient `t2m-api.duckdns.org` et `t2m-rtc.duckdns.org`.
+2. Créer deux sous-domaines pointant vers l'IP du VPS, par exemple `tomo-api` et `tomo-rtc`.
+3. On obtient `tomo-api.duckdns.org` et `tomo-rtc.duckdns.org`.
 
-Si le VPS a déjà un domaine, on peut aussi utiliser des sous-domaines de celui-ci (`api.t2m.mondomaine.fr`…).
+Si le VPS a déjà un domaine, on peut aussi utiliser des sous-domaines de celui-ci (`api.tomo.mondomaine.fr`…).
 
 ## Installation
 
@@ -57,7 +57,7 @@ cd T2M/server
 
 # 3. Configurer
 cp .env.example .env
-nano .env   # domaines, clés LiveKit, code d'invitation, nom du serveur, salons (ROOMS)
+nano .env   # domaines, clés LiveKit, JWT_SECRET (openssl rand -base64 48), REGISTRATION
 
 # 4. Générer une paire de clés LiveKit et la coller dans .env
 docker run --rm livekit/livekit-server generate-keys
@@ -69,7 +69,8 @@ docker compose logs -f
 
 ### Vérifier que ça marche
 - `https://<API_DOMAIN>/health` doit répondre `{"ok":true}`.
-- Tester la connexion WebRTC avec https://livekit.io/connection-test (URL `wss://<LIVEKIT_DOMAIN>` + un token obtenu via l'API).
+- Dans l'appli Tomo : sur l'écran de connexion, « Instance : … modifier » → `https://<API_DOMAIN>`, puis crée ton compte et ton serveur.
+- Une fois tes potes inscrits, tu peux fermer les inscriptions avec `REGISTRATION=closed` dans `.env` (puis `docker compose up -d`).
 
 ## VPS partagé (ports 80/443 déjà pris)
 Si le VPS a déjà un nginx ou un Caddy :
@@ -82,4 +83,12 @@ Si le VPS a déjà un nginx ou un Caddy :
 ```bash
 cd T2M && git pull
 cd server && docker compose up -d --build
+```
+
+## Sauvegarde
+Toute la base (comptes, serveurs, salons, invitations) tient dans un fichier SQLite du volume `api-data`.
+```bash
+docker compose stop api
+docker compose cp api:/data/. ./sauvegarde-tomo/
+docker compose start api
 ```

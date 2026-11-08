@@ -1,8 +1,8 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Talk2Mates",
-  "version": "0.1.0",
-  "identifier": "com.talk2mates.app",
+  "productName": "Tomo",
+  "version": "0.2.0",
+  "identifier": "com.tomo.app",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -12,11 +12,12 @@
   "app": {
     "windows": [
       {
-        "title": "Talk2Mates",
-        "width": 960,
-        "height": 680,
-        "minWidth": 420,
-        "minHeight": 480
+        "title": "Tomo",
+        "width": 1240,
+        "height": 800,
+        "minWidth": 900,
+        "minHeight": 600,
+        "backgroundColor": "#0E1014"
       }
     ],
     "security": {

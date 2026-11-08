@@ -1,8 +1,8 @@
 [package]
-name = "t2m-client"
-version = "0.1.0"
-description = "Talk2Mates - le vocal pour jouer entre potes"
-authors = ["Talk2Mates contributors"]
+name = "tomo"
+version = "0.2.0"
+description = "Tomo - le vocal pour jouer entre potes"
+authors = ["Tomo contributors"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,7 +11,7 @@ edition = "2024"
 # The `_lib` suffix may seem redundant but it is necessary
 # to make the lib name unique and wouldn't conflict with the bin name.
 # This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
-name = "t2m_client_lib"
+name = "tomo_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -22,6 +22,8 @@ tauri = { version = "2", features = [] }
 tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Coffre-fort du système (Gestionnaire d'identification Windows) pour la session « rester connecté »
+keyring = { version = "3", features = ["windows-native", "apple-native", "linux-native"] }
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

@@ -1,43 +1,27 @@
-# 🎮 Talk2Mates (T2M)
+# Tomo
 
 > Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, léger.
+> *(anciennement Talk2Mates / T2M)*
 
-**Talk2Mates** est une application de chat vocal pour les groupes d'amis qui jouent ensemble, une alternative à Discord avec des fonctionnalités que Discord ne propose pas : écoute de plusieurs canaux à la fois, audio spatial activable, clip audio après coup, callouts vocaux, mode focus…
+**Tomo** (« ami » en japonais) est une application de chat vocal pour les groupes d'amis qui jouent ensemble. C'est une alternative à Discord, avec des fonctionnalités en plus : audio spatial activable, invités d'un soir sans compte, clip audio des 60 dernières secondes, mode focus…
 
 Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout tourne sur votre propre serveur.
 
 ---
 
-## ✨ Fonctionnalités
+## ✨ Ce qui marche déjà (v0.2)
 
-### 🎧 Vocal
-- **Salons vocaux** avec push-to-talk ou détection de voix
-- **Mode radio** : écouter plusieurs salons à la fois, avec une touche de push-to-talk par salon
-- **Volume normalisé automatiquement** : tout le monde au même niveau
-- **Audio spatial activable** : un interrupteur par salon, un raccourci clavier et des profils par jeu (ex. ON pour Minecraft, OFF pour Valorant)
-- **Haute qualité pour tous** (Opus), sans abonnement
+- **Comptes sécurisés** : pseudo + mot de passe, session gardée dans le coffre-fort de Windows (« rester connecté »).
+- **Serveurs créés par les utilisateurs**. Aucun serveur n'existe au départ : celui qui crée un serveur en est l'**admin**.
+- **Gestion complète par l'admin** : salons (créer, renommer, supprimer), membres (nommer admin, exclure), invitations, nom du serveur, suppression.
+- **Invitations** :
+  - **code membre** : un ami avec un compte rejoint le serveur ;
+  - **code invité** : quelqu'un **sans compte** rejoint le temps d'une soirée (1 à 24 h), puis son accès s'arrête tout seul.
+- **Salons vocaux** : qui parle, volume par personne, couper micro et son, choix micro et sortie, test du micro avant d'entrer.
+- **Changement de serveur et de salon en un clic** (et Ctrl + 1…9), sans quitter son vocal pour parcourir un autre serveur.
+- **Interrupteur d'audio spatial** par salon, synchronisé pour tout le monde (le rendu 3D arrive en V2).
 
-### 🎬 Garder les bons moments
-- **Clip audio après coup** : un raccourci enregistre les 30 à 60 dernières secondes du vocal
-- **Mur des légendes** : épingler les citations cultes
-- **Sous-titres en direct** et **traduction** (en local, optionnels)
-
-### 🎮 Pensé pour le jeu
-- **Détection du jeu lancé** : rejoindre le bon salon automatiquement et voir qui joue à quoi
-- **Callouts rapides** : « Ennemi à gauche ! » en synthèse vocale, sur une touche
-- **Mode focus / ranked** : seuls tes coéquipiers peuvent te parler, et plus aucune notification
-- **Stats de jeu** (Steam, Riot) sur le profil
-- **Partage d'écran avec annotation** (mode coach)
-
-### 👥 Entre amis
-- **« Qui est dispo ce soir ? »** : créneaux habituels et suggestion du meilleur moment
-- **Défis et paris amicaux** avec points virtuels et classement
-
-### 🔒 Vie privée
-- **Auto-hébergé** : vos données restent sur votre serveur
-- **Client léger** (Tauri), bien moins gourmand qu'une application Electron
-
-👉 Le détail et l'ordre de développement sont dans la [ROADMAP](ROADMAP.md).
+👉 La suite est dans la [ROADMAP](ROADMAP.md).
 
 ---
 
@@ -47,12 +31,10 @@ Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout 
 |---|---|
 | Client de bureau | [Tauri 2](https://tauri.app) (Rust) + React + TypeScript |
 | Audio / vidéo temps réel | [LiveKit](https://livekit.io), auto-hébergé (WebRTC, SFU) |
-| API (comptes, salons, tokens) | Node.js + TypeScript ([Fastify](https://fastify.dev)) + SQLite |
+| API (comptes, serveurs, salons, invitations) | Node.js 24 + TypeScript ([Fastify](https://fastify.dev)) + SQLite intégré (`node:sqlite`) |
+| Sécurité | scrypt (mots de passe), JWT 15 min + jetons de renouvellement à rotation, limitation des tentatives |
 | HTTPS / reverse proxy | [Caddy](https://caddyserver.com) (certificats Let's Encrypt automatiques) |
-| Nom de domaine | [DuckDNS](https://www.duckdns.org) (gratuit) ou domaine existant |
-| Synthèse vocale (callouts) | [Piper](https://github.com/rhasspy/piper), en local |
-| Transcription | [whisper.cpp](https://github.com/ggerganov/whisper.cpp), en local |
-| Distribution | GitHub Releases + GitHub Actions |
+| Distribution | GitHub Releases |
 
 Plus de détails dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
@@ -62,40 +44,37 @@ Plus de détails dans [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ```
 T2M/
-├── client/          # Application de bureau (Tauri + React)
+├── client/                  # Application de bureau Tomo (Tauri + React)
 ├── server/
-│   ├── api/         # API Node/TypeScript : génération des tokens LiveKit
-│   ├── docker-compose.yml
+│   ├── api/                 # API Node/TypeScript
+│   ├── docker-compose.yml   # Production (VPS)
+│   ├── docker-compose.dev.yml  # Développement local
 │   ├── livekit.yaml
 │   ├── Caddyfile
 │   └── .env.example
 └── docs/
     ├── ARCHITECTURE.md
-    └── HEBERGEMENT.md   # Déployer sur un VPS
+    └── HEBERGEMENT.md       # Déployer sur un VPS
 ```
 
 ---
 
-## 🚀 Démarrage rapide (serveur)
+## 🚀 Démarrage rapide
 
-Prérequis : un VPS Linux avec Docker, et un nom de domaine (DuckDNS suffit).
-
+**En local** (Docker requis) :
 ```bash
-git clone https://github.com/<toi>/T2M.git
-cd T2M/server
-cp .env.example .env      # puis remplir les valeurs
-docker compose up -d
+cd server
+docker compose -f docker-compose.dev.yml up --build
 ```
+Puis lancer le client (voir [client/README.md](client/README.md)), créer un compte, puis un serveur.
 
-Le guide complet, avec les ports à ouvrir et le pare-feu, est dans [docs/HEBERGEMENT.md](docs/HEBERGEMENT.md).
+**Sur un VPS :** voir [docs/HEBERGEMENT.md](docs/HEBERGEMENT.md).
 
 ---
 
 ## 💸 Coût
 
-**0 €.** Le projet n'utilise que des outils open source auto-hébergés et des offres gratuites. Les fonctionnalités qui demanderaient de payer sont listées à part dans la [ROADMAP](ROADMAP.md#-mis-de-côté).
-
----
+**0 €.** Uniquement des outils open source auto-hébergés et des offres gratuites. Les fonctionnalités qui demanderaient de payer sont listées à part dans la [ROADMAP](ROADMAP.md#-mis-de-côté).
 
 ## 📄 Licence
 
