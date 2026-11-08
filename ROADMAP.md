@@ -47,7 +47,7 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [ ] **Volume normalisé automatiquement** (compresseur / AGC sur chaque voix reçue)
 - [ ] Suppression de bruit (RNNoise ou celle du navigateur)
 - [ ] **Clip audio après coup** : tampon circulaire de 60 s, raccourci → fichier `.ogg`
-- [ ] Chat texte simple par salon
+- [x] Chat texte par salon (salons textuels + chat des salons vocaux)
 - [ ] Mise à jour automatique du client via GitHub Releases
 
 ## V2 — Pensé pour le jeu
@@ -78,6 +78,46 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [ ] **Sous-titres en direct** (whisper.cpp, petit modèle)
 - [ ] **Traduction** des sous-titres (LibreTranslate / Argos, local)
 - [ ] Choix d'exécution : sur le PC du joueur ou sur le serveur
+
+---
+
+## 🔧 Petites améliorations
+Repérées en route. À glisser entre deux grosses fonctionnalités.
+
+### Interface
+- [ ] Bloc « En vocal » : le ping passe à la ligne quand le panneau latéral est étroit
+- [ ] Pseudo coupé dans la carte profil en fenêtre étroite (3 boutons à côté)
+- [ ] Le ping affiche « — ms » pendant les 5 premières secondes d'une connexion vocale (en attendant la 1ʳᵉ mesure)
+- [ ] Pastille de non-lus par serveur dans le sélecteur et l'accès rapide
+- [ ] Indicateur « X est en train d'écrire… »
+- [ ] Recherche dans les messages
+- [ ] Statuts : en ligne / absent / ne pas déranger (lié au mode focus)
+- [ ] Mettre à jour les maquettes « Connexion » et « Créer un compte » (elles montrent encore l'ancien parcours)
+
+### Audio et vocal
+- [ ] Paramètres > Audio : appliquer tout de suite le changement de micro / sortie (aujourd'hui : à la prochaine connexion)
+- [ ] Idem pour suppression de bruit / annulation d'écho / gain automatique
+- [ ] Vérifier le « retour micro » des outils de test avec un vrai micro
+
+### Messagerie et appels
+- [ ] Notifications Windows (toast) pour les messages privés quand Tomo est en arrière-plan
+- [ ] Appel manqué affiché dans la conversation privée
+- [ ] Appels de groupe entre amis (plus de 2 personnes)
+- [ ] Les appels en train de sonner sont perdus si l'API redémarre (gardés en mémoire)
+- [ ] Liens d'invitation cliquables (`tomo://invite/ABCD-EFGH`)
+
+### Compte et sécurité
+- [ ] Révoquer un appareil précis (aujourd'hui : tous d'un coup)
+- [ ] Le blocage « 5 échecs = 15 min » peut servir à bloquer volontairement un pseudo : passer à un délai progressif par IP + pseudo
+- [ ] Limiter l'envoi de messages par compte (aujourd'hui : par adresse IP)
+
+### Fenêtre
+- [ ] Vérifier le redimensionnement par les bords et l'agrandissement (ne pas passer sous la barre des tâches)
+- [ ] Documenter l'overlay NVIDIA (Alt + R pour le masquer) dans l'aide
+
+### Projet
+- [ ] Transformer les scripts de test PowerShell en vraie suite de tests (Vitest) lancée par GitHub Actions
+- [ ] Construire l'installateur Windows automatiquement à chaque version (GitHub Actions + Releases)
 
 ---
 
