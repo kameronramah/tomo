@@ -57,7 +57,8 @@ cd tomo/server
 
 # 3. Configurer
 cp .env.example .env
-nano .env   # domaines, clés LiveKit, JWT_SECRET (openssl rand -base64 48), REGISTRATION
+nano .env   # API_DOMAIN, LIVEKIT_DOMAIN, LIVEKIT_URL (wss://<LIVEKIT_DOMAIN>), ACME_EMAIL,
+            # clés LiveKit, JWT_SECRET (openssl rand -base64 48), REGISTRATION
 
 # 4. Générer une paire de clés LiveKit et la coller dans .env
 docker run --rm livekit/livekit-server generate-keys
@@ -71,6 +72,13 @@ docker compose logs -f
 - `https://<API_DOMAIN>/health` doit répondre `{"ok":true}`.
 - Dans l'appli tomo : sur l'écran de connexion, « Instance : … modifier » → `https://<API_DOMAIN>`, puis crée ton compte et ton serveur.
 - Une fois tes potes inscrits, tu peux fermer les inscriptions avec `REGISTRATION=closed` dans `.env` (puis `docker compose up -d`).
+
+### Ce que tes potes doivent faire
+1. Installer tomo depuis https://github.com/kameronramah/tomo/releases/latest.
+2. Au premier lancement, sur l'écran de connexion : « Instance : … modifier » → `https://<API_DOMAIN>` (l'adresse que tu leur donnes).
+3. Créer leur compte, puis « Rejoindre avec un code » avec le code d'invitation que tu crées dans ton serveur (bouton « Inviter »).
+
+Pour un invité d'un soir, pas besoin de compte : « J'ai un code invité » sur l'écran de connexion.
 
 ### Options gratuites (dans `.env`)
 | Variable | À quoi ça sert | Où l'obtenir |
@@ -89,6 +97,7 @@ Si le VPS a déjà un nginx ou un Caddy :
 2. Ajouter dans le reverse proxy existant deux hôtes virtuels :
    - `API_DOMAIN` → `http://127.0.0.1:3000`
    - `LIVEKIT_DOMAIN` → `http://127.0.0.1:7880` (**avec le support WebSocket**)
+3. Le reverse proxy doit transmettre la vraie adresse des joueurs (`X-Forwarded-For`, fait par défaut par Caddy ; avec nginx : `proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;`). Sinon, la protection contre les mots de passe devinés croit que tout le monde vient de la même adresse.
 
 ## Mises à jour
 ```bash
