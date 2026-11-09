@@ -34,7 +34,8 @@ export function normalizeInstance(url: string): string {
   return u;
 }
 
-export const loadInstance = () => read<string>(KEYS.instance, DEFAULT_INSTANCE);
+// Adresse nettoyée (un « / » final, comme « https://tomo.grylix.dev/ », donnerait des adresses en « //auth »)
+export const loadInstance = () => normalizeInstance(read<string>(KEYS.instance, DEFAULT_INSTANCE));
 export const saveInstance = (url: string) => write(KEYS.instance, normalizeInstance(url));
 
 export type Devices = { input?: string; output?: string };

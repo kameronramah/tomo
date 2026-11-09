@@ -45,3 +45,16 @@ Donne la clé privée à GitHub (gratuit) :
 - **Le workflow échoue sur « signing »** : le secret `TAURI_SIGNING_PRIVATE_KEY` manque ou est incomplet.
 - **Les applis ne voient pas la mise à jour** : vérifier que la Release n'est pas en brouillon et qu'elle contient `latest.json`.
 - **Version de test sans publier** : onglet Actions › Installateurs › *Run workflow* ; les fichiers sont dans l'onglet de l'exécution (artefacts), aucune Release n'est créée.
+
+## Version navigateur (https://app-tomo.grylix.dev)
+À refaire à chaque nouvelle version, en plus des installateurs. Sur le PC (jamais sur le VPS, trop peu de mémoire) :
+
+1. Fabriquer la version web, dans `client/` (PowerShell) :
+   ```
+   $env:VITE_TOMO_INSTANCE="https://tomo.grylix.dev"; npm run build
+   ```
+2. Avec FileZilla (SFTP, utilisateur `ramah`), remplacer **le contenu** de `/home/ramah/tomo-web/` par celui de `client/dist/` (`index.html` directement dans `tomo-web`). Supprimer d'abord les anciens fichiers de `tomo-web/assets/`.
+
+Tout ce qui est dans `tomo-web` est public : jamais de secret ni de lien symbolique dedans. Le serveur web (nginx) est géré par Guillaume.
+
+Dans le navigateur, ne marchent pas : raccourcis en jeu, overlay, jeux détectés, clips sur le disque, mise à jour automatique (pas besoin : recharger la page suffit).
