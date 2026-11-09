@@ -97,7 +97,7 @@ Plugin `updater` de Tauri. GitHub Actions construit les installateurs à chaque 
 - **Riot** : liaison par Riot ID (la connexion officielle RSO est réservée aux applis validées) ; rang et dernières parties de League of Legends (`RIOT_API_KEY`). Réponses gardées 10 min en mémoire.
 
 ### Mot de passe oublié
-L'adresse e-mail est obligatoire et vérifiée par un code. « Mot de passe oublié » : on tape son pseudo ou son adresse, le serveur envoie un code à 6 chiffres (30 min, 5 essais) **seulement si l'adresse est vérifiée**, avec la même réponse dans tous les cas (on ne révèle pas si un compte existe). Avec le code, on choisit un nouveau mot de passe : toutes les sessions sont coupées. Envoi par SMTP (Gmail + mot de passe d'application, gratuit). Sans e-mail, l'admin peut générer un code de secours sur le serveur (`node dist/cli-secours.js <pseudo>`, 1 h).
+L'adresse e-mail est obligatoire et vérifiée par un code. « Mot de passe oublié » : on tape son pseudo ou son adresse, le serveur envoie un code à 6 chiffres (30 min, 5 essais) **seulement si l'adresse est vérifiée**, avec la même réponse dans tous les cas (on ne révèle pas si un compte existe). Avec le code, on choisit un nouveau mot de passe : toutes les sessions sont coupées. Envoi par SMTP (Brevo, gratuit). Sans e-mail, l'admin peut générer un code de secours sur le serveur (`node dist/cli-secours.js <pseudo>`, 1 h).
 
 ### Langues
 `i18n.ts` : le texte est écrit en français dans le code (`t("Paramètres")`), `i18n-en.ts` le traduit. Un texte absent du dictionnaire reste en français.

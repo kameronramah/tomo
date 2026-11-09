@@ -34,16 +34,17 @@ export const config = {
   /** Clé Klipy (recherche de GIF, gratuite : https://partner.klipy.com). Sans clé, pas de recherche de GIF. */
   klipyKey: process.env.KLIPY_API_KEY?.trim() || null,
   /**
-   * Envoi des e-mails (codes de vérification, mot de passe oublié). Gmail : SMTP_HOST=smtp.gmail.com,
-   * SMTP_PORT=465, SMTP_USER=l'adresse Gmail, SMTP_PASS=mot de passe d'application. Sans eux : pas d'envoi.
+   * Envoi des e-mails (codes de vérification, mot de passe oublié) par SMTP. Brevo (gratuit) :
+   * SMTP_HOST=smtp-relay.brevo.com, SMTP_PORT=587, SMTP_USER=identifiant SMTP, SMTP_PASS=clé SMTP,
+   * MAIL_FROM=adresse d'expéditeur autorisée chez Brevo. Sans SMTP_USER / SMTP_PASS : pas d'envoi.
    */
   mail:
     process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim()
       ? {
-          host: process.env.SMTP_HOST?.trim() || "smtp.gmail.com",
-          port: Number(process.env.SMTP_PORT ?? 465),
+          host: process.env.SMTP_HOST?.trim() || "smtp-relay.brevo.com",
+          port: Number(process.env.SMTP_PORT ?? 587),
           user: process.env.SMTP_USER.trim(),
-          pass: process.env.SMTP_PASS.replace(/\s+/g, ""), // Google l'affiche en 4 groupes séparés par des espaces
+          pass: process.env.SMTP_PASS.trim(),
           from: process.env.MAIL_FROM?.trim() || process.env.SMTP_USER.trim(),
         }
       : null,

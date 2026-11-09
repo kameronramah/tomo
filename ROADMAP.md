@@ -69,9 +69,9 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 
 ## V0.10 — Récupérer son compte ✅
 - [x] **Adresse e-mail obligatoire** (à l'inscription, et demandée aux comptes existants), vérifiée par un code
-- [x] **Mot de passe oublié** : code à 6 chiffres par e-mail (Gmail, gratuit), toutes les sessions coupées après le changement
+- [x] **Mot de passe oublié** : code à 6 chiffres par e-mail (Brevo, gratuit), toutes les sessions coupées après le changement
 - [x] **Code de secours** donné par l'admin du serveur (commande `cli-secours.js`)
-- [ ] Configurer Gmail sur le VPS et tester l'envoi réel
+- [ ] Configurer Brevo sur le VPS et tester l'envoi réel
 
 ## V0.11 — Mises à jour sans couper personne ✅
 - [x] Appli de bureau : mise à jour **imposée au lancement**, pop-up pendant l'utilisation (jamais en vocal, « Plus tard » possible)

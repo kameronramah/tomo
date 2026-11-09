@@ -15,7 +15,7 @@ Ce qui existe (v0.11) :
 - **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils (**rangés par glisser-déposer**), invitations (membre + **invité d'un soir sans compte**).
 - **Messagerie** temps réel : fils, chat de chaque pièce, amis, messages privés (demandes hors amis), **appels privés** ; pièces jointes, messages vocaux, GIF (Klipy), **modifier, réactions, mentions** @pseudo / @vocal / @tous, « en train d'écrire… ».
 - **Profils, statuts, confidentialité, blocage**, membres du serveur, notifications système, pastilles de non-lus.
-- **Adresse e-mail obligatoire** (vérifiée par un code) et **mot de passe oublié** par code à 6 chiffres envoyé par mail (Gmail SMTP), ou **code de secours** donné par l'admin (`cli-secours.js`).
+- **Adresse e-mail obligatoire** (vérifiée par un code) et **mot de passe oublié** par code à 6 chiffres envoyé par mail (Brevo, SMTP), ou **code de secours** donné par l'admin (`cli-secours.js`).
 - **Micro** : **appuyer pour parler** (touche ou bouton de souris) ou **seuil de voix**, option **« baisser les autres quand je parle »** ; **raccourcis configurables qui marchent en jeu** (Paramètres › Raccourcis clavier).
 - **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **partage d'écran** HD + **mode coach** (annotations sur demande, affichées sur l'écran de celui qui partage), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
 - **Jeux** : détection du jeu lancé (« joue à … »), réglages par jeu (pièce auto, mode focus, spatial, overlay, masquer), proposition de rejoindre les potes, **stats Steam / League of Legends**.
@@ -95,7 +95,7 @@ Points techniques notables :
 - « Qui parle » : mesuré localement toutes les 40 ms (`speaking.ts`) ; pour mon micro, sur la piste traitée (ce qui part vraiment).
 - **Push-to-talk** (`ptt.ts`) : la piste micro brute est mise en `enabled = false` tant que la touche n'est pas tenue (filet de sécurité toutes les 250 ms ; un micro coupé n'est jamais rouvert). **Baisser les autres** : facteur `duck` appliqué dans `applyVolume` (`voice.ts`) quand « qui parle » me détecte.
 - **Raccourcis** : `input.rs` lit l'état des touches (Windows `GetAsyncKeyState`, Mac `CGEventSourceKeyState`) toutes les 8 ms, **seulement celles des raccourcis** (`input_set_keys`), et envoie `input:keys` à la fenêtre principale ; `hotkeys.ts` déclenche les actions. Enregistrement d'une touche : `input_record` (toutes les touches, 15 s max). Repli clavier de la fenêtre dans le navigateur. Noms des touches : « Ctrl », « Shift », « M », « Mouse4 »…
-- **E-mail et mot de passe oublié** : colonne `users.email` (minuscules, unique) + `email_verified` ; codes à 6 chiffres hachés dans `email_codes` (`verify` / `reset` / `rescue`, 5 essais, 30 min ou 1 h). `/auth/forgot` répond toujours pareil (pas de fuite) et n'envoie que vers une adresse **vérifiée**. Envoi par SMTP (`SMTP_USER` / `SMTP_PASS`, Gmail + mot de passe d'application) ; en dev sans SMTP, les codes vont dans `/dev/mailbox`. Côté appli : `AuthScreen` (modes forgot / reset), `EmailAccount.tsx` (fenêtre obligatoire au démarrage, Paramètres › Compte). Mauvais mot de passe actuel = **403** (un 401 déconnecterait l'appli).
+- **E-mail et mot de passe oublié** : colonne `users.email` (minuscules, unique) + `email_verified` ; codes à 6 chiffres hachés dans `email_codes` (`verify` / `reset` / `rescue`, 5 essais, 30 min ou 1 h). `/auth/forgot` répond toujours pareil (pas de fuite) et n'envoie que vers une adresse **vérifiée**. Envoi par SMTP (Brevo : `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM`) ; en dev sans SMTP, les codes vont dans `/dev/mailbox`. Côté appli : `AuthScreen` (modes forgot / reset), `EmailAccount.tsx` (fenêtre obligatoire au démarrage, Paramètres › Compte). Mauvais mot de passe actuel = **403** (un 401 déconnecterait l'appli).
 - **Ranger** : `PUT /servers/:id/rooms/order` et `/channels/order` (liste complète), événement WebSocket `channels` → les clients rechargent le serveur.
 - **Attributs LiveKit** du participant : `clips=1`, `cc=1` (sous-titres), `coach` (`all` ou identités autorisées à annoter mon écran, après demande acceptée), `lang` (fr/en, langue de transcription). Toujours les écrire avec `{ ...attributes, clé: valeur }`.
 - **Canaux de données LiveKit** : `pos` (positions spatiales, ~10/s), `coach` (annotations).
@@ -148,7 +148,7 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 
 **Publier une version** (installateurs + mise à jour automatique) : voir [docs/PUBLIER-UNE-VERSION.md](docs/PUBLIER-UNE-VERSION.md). En bref : même numéro dans `tauri.conf.json`, `Cargo.toml`, `package.json`, puis `git tag vX.Y.Z` et `git push origin vX.Y.Z`. La Release est **publiée directement** (plus de brouillon) avec `latest.json`. Il faut que le secret GitHub `TAURI_SIGNING_PRIVATE_KEY` existe.
 
-**E-mails** : `SMTP_USER` / `SMTP_PASS` (Gmail + mot de passe d'application, voir `docs/HEBERGEMENT.md`).
+**E-mails** : `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM` (Brevo, voir `docs/HEBERGEMENT.md`).
 **Clés facultatives** dans `server/.env` (dev et prod) : `KLIPY_API_KEY` (GIF), `STEAM_API_KEY` (stats Steam), `RIOT_API_KEY` (Riot / LoL ; la clé « development » expire toutes les 24 h).
 
 ---

@@ -1,6 +1,6 @@
 /**
  * Envoi des e-mails (codes de vérification et de mot de passe oublié) par SMTP.
- * Prévu pour Gmail avec un « mot de passe d'application » (gratuit), mais tout serveur SMTP marche.
+ * Prévu pour Brevo (gratuit), mais tout serveur SMTP marche.
  *
  * Sans configuration SMTP, rien n'est envoyé : la vérification d'adresse et le mot de passe
  * oublié par e-mail sont simplement indisponibles. En mode dev, les mails sont gardés en
