@@ -20,7 +20,8 @@ import { connectVoice, getRecorder, getSpatial, joinRoom, setDeafened as applyDe
 import { clipFileName, clipsSupported, encodeWav, openClipsFolder, saveClip } from "./lib/clips";
 import { playSound, setQuietMode, startRinging } from "./lib/sounds";
 import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
-import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
+import { applyStartupMinimize, inQuietHours, inTauri, notify } from "./lib/desktop";
+import { updateAtLaunch } from "./lib/updater";
 import { currentGame, gamePrefs, onGame, publicGame, startGameWatch, type RunningGame } from "./lib/games";
 import GameCard from "./components/GameCard";
 import { overlayChat, startOverlay, toggleOverlayHidden } from "./lib/overlay";
@@ -202,6 +203,17 @@ export default function App() {
       .catch(() => {})
       .finally(() => setBooting(false));
   }, [api]);
+
+  // Mise à jour imposée au lancement (appli de bureau). Pas de réseau / GitHub injoignable : on entre quand même.
+  const [launchChecked, setLaunchChecked] = useState(!inTauri);
+  const [launchUpdate, setLaunchUpdate] = useState<{ version: string; progress: number } | null>(null);
+  useEffect(() => {
+    if (launchChecked) return;
+    void updateAtLaunch((version, progress) => setLaunchUpdate({ version, progress })).then((installing) => {
+      if (!installing) setLaunchChecked(true);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Le serveur sait-il envoyer des e-mails ? (sinon, pas d'étape de vérification d'adresse)
   const [mailOn, setMailOn] = useState(true);
@@ -837,6 +849,24 @@ export default function App() {
   }
 
   // ---- Rendu -------------------------------------------------------------------------
+  if (!launchChecked) {
+    // Appli de bureau : une mise à jour disponible au lancement est installée d'office.
+    return (
+      <div className="splash">
+        <Logo size={56} cut="var(--bg)" />
+        {launchUpdate && (
+          <div className="col gap-8 center launch-update" role="status">
+            <strong>{t("Mise à jour en cours…")}</strong>
+            <span className="muted small">{t("tomo {0} s'installe, puis se relance tout seul.", { 0: launchUpdate.version })}</span>
+            <span className="launch-bar" aria-hidden="true">
+              <span style={{ width: `${Math.round(launchUpdate.progress * 100)}%` }} />
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (booting) {
     return (
       <div className="splash">
@@ -1108,7 +1138,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <UpdateCard inVoice={!!voice} />
+      <UpdateCard inVoice={!!voice} apiBase={api.baseUrl} />
       <GameCard
         game={game}
         mates={gameMates}

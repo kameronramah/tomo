@@ -1416,3 +1416,11 @@ span.key-chip { cursor: default; }
 .hint.center { text-align: center; }
 .email-gate { max-width: 460px; }
 .email-gate-foot { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); }
+
+/* ---- v0.11 : mises à jour imposées ---- */
+.splash:has(.launch-update) { animation: none; grid-auto-flow: row; align-content: center; gap: 24px; }
+.launch-update { max-width: 320px; }
+.launch-bar { width: 240px; height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.launch-bar span { display: block; height: 100%; background: var(--teal); transition: width 0.2s; }
+.update-modal { max-width: 440px; display: flex; flex-direction: column; gap: 18px; }
+.update-modal-actions { justify-content: flex-end; }

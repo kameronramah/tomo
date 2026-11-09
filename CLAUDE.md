@@ -1,7 +1,7 @@
 # CLAUDE.md — Contexte du projet tomo
 
 > Fichier lu automatiquement par Claude Code. Il résume tout ce qu'il faut savoir pour reprendre le projet.
-> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.10.0**.
+> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.11.0**.
 > Copie locale du propriétaire : `C:\Users\Kameron\Documents\tomo`.
 > Installer la dernière version : https://github.com/kameronramah/tomo/releases/latest
 
@@ -11,7 +11,7 @@
 
 **tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire). La marque s'écrit **« tomo » en minuscules, partout**.
 
-Ce qui existe (v0.10) :
+Ce qui existe (v0.11) :
 - **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils (**rangés par glisser-déposer**), invitations (membre + **invité d'un soir sans compte**).
 - **Messagerie** temps réel : fils, chat de chaque pièce, amis, messages privés (demandes hors amis), **appels privés** ; pièces jointes, messages vocaux, GIF (Klipy), **modifier, réactions, mentions** @pseudo / @vocal / @tous, « en train d'écrire… ».
 - **Profils, statuts, confidentialité, blocage**, membres du serveur, notifications système, pastilles de non-lus.
@@ -20,7 +20,7 @@ Ce qui existe (v0.10) :
 - **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **partage d'écran** HD + **mode coach** (annotations sur demande, affichées sur l'écran de celui qui partage), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
 - **Jeux** : détection du jeu lancé (« joue à … »), réglages par jeu (pièce auto, mode focus, spatial, overlay, masquer), proposition de rejoindre les potes, **stats Steam / League of Legends**.
 - **Social** : **mur des légendes** (citations, images, clips), **défis à points** (sans paris), classement du mois.
-- **Appli** : français / anglais, **mise à jour automatique** (GitHub Releases signées), installateurs Windows + Mac, Paramètres complets.
+- **Appli** : français / anglais, **mises à jour imposées** (GitHub Releases signées : installée d'office au lancement, pop-up après le vocal pendant l'utilisation), installateurs Windows + Mac, **version navigateur** (https://app-tomo.grylix.dev), Paramètres complets.
 - **Compte de test + outils de test** (bots qui parlent, bougent, partagent un écran…) — uniquement en dev.
 
 Les **paris** sont volontairement en attente (le propriétaire veut d'abord décider à quoi servent les points). Pas de canal bêta pour les mises à jour (demande explicite).
@@ -102,7 +102,8 @@ Points techniques notables :
 - **Jeux** : Rust `running_programs` (crate `sysinfo`, noms des programmes seulement) → `games.ts` (liste connue + jeux ajoutés) → WebSocket `{type:"game"}` → serveur en mémoire (`gameOf`, respecte `show_game`).
 - **Sous-titres** : Transformers.js 3.7 dans un Web Worker ; modèles `onnx-community/whisper-*` et `Xenova/opus-mt-fr-en` / `en-fr` téléchargés depuis Hugging Face au premier usage ; WebGPU si dispo.
 - **Overlay** : fenêtre Tauri `overlay` créée depuis le JS (`overlay.ts`), transparente, `setIgnoreCursorEvents(true)`, état envoyé par `emitTo("overlay", "overlay:state")` toutes les 200 ms. `macOSPrivateApi` activé (transparence sur Mac).
-- **Mise à jour** : plugin `updater` + `process` ; endpoint `releases/latest/download/latest.json` ; téléchargement en arrière-plan, installation au clic « Redémarrer ». Clé publique dans `tauri.conf.json`, **clé privée** dans `C:\Users\Kameron\.tauri\tomo-updater.key` (jamais dans le dépôt ; secret GitHub `TAURI_SIGNING_PRIVATE_KEY`).
+- **Mise à jour** (`updater.ts`, `UpdateCard.tsx`) : plugin `updater` + `process` ; endpoint `releases/latest/download/latest.json`. Au lancement : `updateAtLaunch` (8 s max) installe d'office et relance (écran « Mise à jour en cours… »). Pendant l'utilisation : vérif toutes les 30 min, téléchargement en arrière-plan, **pop-up jamais pendant un vocal**, « Plus tard » → revient au prochain départ du vocal ; jamais de redémarrage tout seul. Version navigateur : `/version.json` (écrit par `~/maj-tomo.sh`) relu toutes les 10 min → pop-up « Recharger ». `GET /version` → `{ minClient }` (constante `MIN_CLIENT` dans `server/api/src/index.ts`) : en dessous, « Mise à jour obligatoire ».
+- **Déploiement du serveur** : sur le VPS, un minuteur (`tomo-maj-auto.timer`, toutes les 5 min) lance `~/maj-tomo.sh` dès qu'il y a du nouveau sur `main` : **un `git push` met le serveur et la version web à jour tout seuls**, sans redémarrer LiveKit (le vocal continue). Donc ne pousser sur `main` que du code testé, et **garder l'API compatible avec la version précédente de l'appli** (ne pas supprimer / renommer une route ou un champ encore utilisé ; sinon monter `MIN_CLIENT`). Clé publique dans `tauri.conf.json`, **clé privée** dans `C:\Users\Kameron\.tauri\tomo-updater.key` (jamais dans le dépôt ; secret GitHub `TAURI_SIGNING_PRIVATE_KEY`).
 - **Langues** : `t("texte français")` + `i18n-en.ts` ; changer de langue recharge la fenêtre ; les erreurs du serveur passent aussi par `t()` dans `errorMessage`.
 - Clips : `AudioWorklet` → tampon circulaire → WAV écrit par Rust ; « Mettre au mur » l'envoie comme pièce jointe (type `audio/wav`).
 - « Rester connecté » : jeton de renouvellement dans le coffre-fort du système (crate `keyring`).

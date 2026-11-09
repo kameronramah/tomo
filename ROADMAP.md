@@ -73,6 +73,12 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] **Code de secours** donné par l'admin du serveur (commande `cli-secours.js`)
 - [ ] Configurer Gmail sur le VPS et tester l'envoi réel
 
+## V0.11 — Mises à jour sans couper personne ✅
+- [x] Appli de bureau : mise à jour **imposée au lancement**, pop-up pendant l'utilisation (jamais en vocal, « Plus tard » possible)
+- [x] Version navigateur : pop-up « Recharger » quand le serveur a une nouvelle version
+- [x] Serveur : version minimale de l'appli (`GET /version`)
+- [ ] VPS : mise à jour automatique toutes les 5 min après un `git push`, sans redémarrer LiveKit (partie A, faite par Ramah)
+
 ## V1 — MVP « on lâche Discord »
 > Objectif : utilisable tous les soirs par le groupe.
 

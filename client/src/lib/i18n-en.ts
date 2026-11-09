@@ -1055,4 +1055,17 @@ export const EN: Record<string, string> = {
   "Attends une minute avant de redemander un code.": "Wait a minute before asking for another code.",
   "Ajoute d'abord une adresse e-mail.": "Add an email address first.",
   "L'envoi de mails n'est pas disponible sur ce serveur.": "Email sending isn't available on this server.",
+  // ---- v0.11 : mises à jour imposées ----
+  "Mise à jour en cours…": "Updating…",
+  "tomo {0} s'installe, puis se relance tout seul.": "tomo {0} is installing, then restarts by itself.",
+  "tomo vérifie à chaque lancement (la mise à jour s'installe alors d'office) puis toutes les 30 minutes.": "tomo checks at every launch (the update is then installed automatically) and every 30 minutes.",
+  "Les mises à jour sont obligatoires : tes potes et toi avez toujours la même version. Pendant l'utilisation, tomo te propose de l'installer, jamais pendant un vocal.": "Updates are mandatory: you and your friends always have the same version. While you use it, tomo offers to install it, never during voice.",
+  "Mise à jour de tomo": "tomo update",
+  "Mise à jour obligatoire": "Update required",
+  "Une nouvelle version de tomo est prête": "A new version of tomo is ready",
+  "Ton serveur tomo demande au moins la version {0}. Mets à jour pour continuer.": "Your tomo server requires at least version {0}. Update to continue.",
+  "Recharge la page pour l'utiliser (quelques secondes).": "Reload the page to use it (a few seconds).",
+  "tomo {0} est téléchargée. L'installation prend quelques secondes, puis tomo se relance.": "tomo {0} is downloaded. Installing takes a few seconds, then tomo restarts.",
+  "Recharger maintenant": "Reload now",
+  "Mettre à jour maintenant": "Update now",
 };

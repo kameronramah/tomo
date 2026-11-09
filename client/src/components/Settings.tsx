@@ -698,7 +698,7 @@ function Network({ api, realtime, voiceRoom }: { api: Api; realtime: Realtime | 
   );
 }
 
-function About({ s }: { s: S }) {
+function About(_: { s: S }) {
   const [up, setUp] = useState<UpdateState>(getUpdateState());
   useEffect(() => onUpdateState(setUp), []);
   const desktop = inTauri;
@@ -722,7 +722,7 @@ function About({ s }: { s: S }) {
                         ? t("tomo {0} est prête : redémarre pour l'installer.", { 0: up.version })
                         : up.kind === "error"
                           ? up.message
-                          : t("tomo vérifie tout seul au démarrage puis toutes les 6 heures.")}
+                          : t("tomo vérifie à chaque lancement (la mise à jour s'installe alors d'office) puis toutes les 30 minutes.")}
             </span>
           </span>
           {desktop &&
@@ -736,12 +736,9 @@ function About({ s }: { s: S }) {
               </button>
             ))}
         </div>
-        <Toggle
-          label={t("Mettre à jour automatiquement")}
-          hint={t("La nouvelle version se télécharge en arrière-plan, puis tomo te propose de redémarrer pour l'installer. Jamais pendant un vocal.")}
-          checked={s.updates.auto}
-          onChange={(v) => updateSettings("updates", { auto: v })}
-        />
+        <span className="hint">
+          {t("Les mises à jour sont obligatoires : tes potes et toi avez toujours la même version. Pendant l'utilisation, tomo te propose de l'installer, jamais pendant un vocal.")}
+        </span>
       </Card>
       <Card title={t("tomo")}>
         <p className="text">{t("Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, open source (licence MIT).")}</p>

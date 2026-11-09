@@ -30,6 +30,13 @@ await app.register(rateLimit, { max: 300, timeWindow: "1 minute" });
 app.addContentTypeParser("*", (_req, _payload, done) => done(null, undefined));
 
 app.get("/health", async () => ({ ok: true }));
+/**
+ * Version minimale de l'appli acceptée par ce serveur. À monter seulement quand un changement de l'API
+ * casse les anciennes versions : elles affichent alors « Mise à jour obligatoire ». Sinon, ne pas toucher :
+ * les appareils ouverts gardent l'ancienne version tant qu'on ne relance pas, l'API doit rester compatible.
+ */
+const MIN_CLIENT = "0.10.0";
+app.get("/version", async () => ({ minClient: MIN_CLIENT }));
 
 await app.register(websocket, { options: { maxPayload: 4096 } });
 await app.register(realtimeRoutes);

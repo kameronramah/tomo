@@ -39,21 +39,31 @@ Donne la clé privée à GitHub (gratuit) :
 3. GitHub Actions (onglet **Actions**) fabrique les installateurs Windows et Mac (~15 min), les signe et **publie la Release** avec `latest.json`.
 4. C'est tout : le lien `releases/latest` donne la nouvelle version, et les applis installées la proposent.
 
-> Le texte de la Release (onglet Releases › Edit) s'affiche dans la carte « tomo X est prête » : mets-y 2-3 lignes « Quoi de neuf » (une par ligne, commençant par `- `).
+> Le texte de la Release (onglet Releases › Edit) apparaît sur la page GitHub de la version : mets-y 2-3 lignes « Quoi de neuf » (une par ligne, commençant par `- `).
 
 ## En cas de souci
 - **Le workflow échoue sur « signing »** : le secret `TAURI_SIGNING_PRIVATE_KEY` manque ou est incomplet.
 - **Les applis ne voient pas la mise à jour** : vérifier que la Release n'est pas en brouillon et qu'elle contient `latest.json`.
 - **Version de test sans publier** : onglet Actions › Installateurs › *Run workflow* ; les fichiers sont dans l'onglet de l'exécution (artefacts), aucune Release n'est créée.
 
-## Version navigateur (https://app-tomo.grylix.dev)
-Rien à faire à la main : sur le VPS, `~/maj-tomo.sh` met à jour l'API **et** fabrique la version web (avec `VITE_TOMO_INSTANCE=https://tomo.grylix.dev/`), puis remplace `~/tomo-web` (servi par le nginx de Guillaume). L'ancien script est gardé dans `~/maj-tomo.sh.avant-web`.
+## Serveur et version navigateur : automatiques
+Sur le VPS, un minuteur regarde GitHub toutes les 5 minutes : **un `git push` sur `main` met à jour l'API et la version navigateur tout seul**, même si des gens sont en vocal (LiveKit n'est jamais redémarré, l'audio continue ; le chat se reconnecte en quelques secondes).
 
-Donc, après avoir poussé sur GitHub :
+Conséquences :
+- ne pousser sur `main` que du code testé ;
+- l'API doit rester **compatible avec la version précédente de l'appli** (les gens gardent l'ancienne tant qu'ils ne relancent pas) : ne pas supprimer ni renommer une route ou un champ encore utilisé ;
+- si c'est inévitable, monter `MIN_CLIENT` dans `server/api/src/index.ts` : les applis plus anciennes affichent « Mise à jour obligatoire ».
+
+Commandes utiles sur le VPS : `journalctl --user -u tomo-maj-auto -n 50` (historique), `systemctl --user disable --now tomo-maj-auto.timer` (couper l'automatique).
+
+## Version navigateur (https://app-tomo.grylix.dev)
+Rien à faire à la main : `~/maj-tomo.sh` (lancé tout seul par le minuteur) met à jour l'API **et** fabrique la version web, ajoute les nouveaux fichiers dans `~/tomo-web` sans effacer les anciens (les onglets ouverts continuent de marcher ; ménage après 14 jours), écrit `version.json` puis remplace `index.html` en dernier. Les onglets ouverts voient la pop-up « Recharger ».
+
+Pour forcer une mise à jour tout de suite :
 ```
 ssh ramah@51.75.121.23 ~/maj-tomo.sh
 ```
 
 Tout ce qui est dans `tomo-web` est public : jamais de secret ni de lien symbolique dedans.
 
-Dans le navigateur, ne marchent pas : raccourcis en jeu, overlay, jeux détectés, clips sur le disque, mise à jour automatique (pas besoin : recharger la page suffit).
+Dans le navigateur, ne marchent pas : raccourcis en jeu, overlay, jeux détectés, clips sur le disque.
