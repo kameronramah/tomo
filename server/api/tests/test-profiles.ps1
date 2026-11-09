@@ -18,9 +18,9 @@ function Upload($bytes, $query, $token) {
 function Check($l, $c) { if ($c) { "OK   $l" } else { "FAIL $l" } }
 
 $pw = "une-phrase-de-passe-solide"
-$A = (Call POST "/auth/register" @{ username = "Pa$s"; password = $pw }).data
-$B = (Call POST "/auth/register" @{ username = "Pb$s"; password = $pw }).data
-$C = (Call POST "/auth/register" @{ username = "Pc$s"; password = $pw }).data
+$A = (Call POST "/auth/register" @{ username = "Pa$s"; password = $pw; email = "Pa$s@exemple.test" }).data
+$B = (Call POST "/auth/register" @{ username = "Pb$s"; password = $pw; email = "Pb$s@exemple.test" }).data
+$C = (Call POST "/auth/register" @{ username = "Pc$s"; password = $pw; email = "Pc$s@exemple.test" }).data
 $tA = $A.accessToken; $tB = $B.accessToken; $tC = $C.accessToken
 $idA = $A.user.id; $idB = $B.user.id; $idC = $C.user.id
 

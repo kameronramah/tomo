@@ -122,6 +122,9 @@ for (const sql of [
   "ALTER TABLE users ADD COLUMN show_last_seen INTEGER NOT NULL DEFAULT 1",
   // --- Messages (v0.7) ---
   "ALTER TABLE messages ADD COLUMN edited_at INTEGER", // dernière modification
+  // --- Adresse e-mail (v0.10) : sert seulement à récupérer son compte, jamais montrée aux autres ---
+  "ALTER TABLE users ADD COLUMN email TEXT", // en minuscules
+  "ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0",
 ]) {
   try {
     db.exec(sql);
@@ -137,6 +140,19 @@ CREATE TABLE IF NOT EXISTS blocks (
   blocked_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   created_at INTEGER NOT NULL,
   PRIMARY KEY (blocker_id, blocked_id)
+);
+-- Une adresse e-mail = un seul compte
+CREATE UNIQUE INDEX IF NOT EXISTS users_email ON users (email) WHERE email IS NOT NULL;
+-- Codes à 6 chiffres envoyés par e-mail (ou donnés par l'admin), stockés hachés.
+-- purpose : verify (vérifier l'adresse) | reset (mot de passe oublié) | rescue (code de secours de l'admin)
+CREATE TABLE IF NOT EXISTS email_codes (
+  user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  purpose    TEXT NOT NULL,
+  code_hash  TEXT NOT NULL,
+  expires_at INTEGER NOT NULL,
+  attempts   INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (user_id, purpose)
 );
 -- Réactions aux messages (une ligne par personne et par emoji)
 CREATE TABLE IF NOT EXISTS message_reactions (

@@ -13,8 +13,8 @@ function Call($method, $path, $body = $null, $token = $null) {
 }
 function Check($l, $c) { if ($c) { "OK   $l" } else { "FAIL $l" } }
 $pw = "une-phrase-de-passe-solide"
-$userA = (Call POST "/auth/register" @{ username = "Alice$s"; password = $pw }).data
-$userB = (Call POST "/auth/register" @{ username = "Bob$s"; password = $pw }).data
+$userA = (Call POST "/auth/register" @{ username = "Alice$s"; password = $pw; email = "Alice$s@exemple.test" }).data
+$userB = (Call POST "/auth/register" @{ username = "Bob$s"; password = $pw; email = "Bob$s@exemple.test" }).data
 $tokA = $userA.accessToken; $tokB = $userB.accessToken
 
 $r = Call POST "/friends" @{ username = "Bob$s" } $tokA; Check "demande d'ami envoyée" ($r.ok -and $r.data.status -eq "outgoing")
@@ -40,7 +40,7 @@ $r = Call POST "/channels/$ch/messages" @{ content = $long } $tokA; Check "messa
 $m = (Call GET "/channels/$ch/messages" $null $tokA).data[0]
 $r = Call DELETE "/messages/$($m.id)" $null $tokA; Check "suppression de son message" $r.ok
 
-$r = Call POST "/me/password" @{ current = "faux"; next = "nouvelle-phrase-solide" } $tokA; Check "mauvais mot de passe actuel refusé (401)" ($r.status -eq 401)
+$r = Call POST "/me/password" @{ current = "faux"; next = "nouvelle-phrase-solide" } $tokA; Check "mauvais mot de passe actuel refusé (403)" ($r.status -eq 403)
 $r = Call POST "/me/password" @{ current = $pw; next = "nouvelle-phrase-solide" } $tokA; Check "mot de passe changé" ($r.ok -and $r.data.refreshToken)
 $r = Call POST "/auth/refresh" @{ refreshToken = $userA.refreshToken }; Check "ancienne session révoquée (401)" ($r.status -eq 401)
 $r = Call POST "/auth/login" @{ username = "Alice$s"; password = "nouvelle-phrase-solide" }; Check "connexion avec le nouveau mot de passe" $r.ok

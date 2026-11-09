@@ -22,8 +22,8 @@ async function call0(method, path, body, token) {
   return { status: res.status, data };
 }
 const pw = "une-phrase-de-passe-solide";
-const A = (await call("POST", "/auth/register", { username: `Sa${s}`, password: pw })).data;
-const B = (await call("POST", "/auth/register", { username: `Sb${s}`, password: pw })).data;
+const A = (await call("POST", "/auth/register", { username: `Sa${s}`, password: pw, email: `Sa${s}@exemple.test` })).data;
+const B = (await call("POST", "/auth/register", { username: `Sb${s}`, password: pw, email: `Sb${s}@exemple.test` })).data;
 
 let r = await call("GET", "/me/links", null, A.accessToken);
 check("mes comptes : rien de lié au départ", r.data.steam === null && r.data.riot === null && r.data.visibility === "servers");

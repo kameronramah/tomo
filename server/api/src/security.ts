@@ -231,3 +231,10 @@ export function recordLoginFailure(username: string, ip: string) {
 export function clearLoginFailures(username: string, ip: string) {
   failures.delete(keyOf(username, ip));
 }
+
+/** Nouveau mot de passe : plus aucun blocage sur ce pseudo, quelle que soit l'adresse. */
+export function clearLoginFailuresFor(username: string) {
+  const suffix = `|${username.toLowerCase()}`;
+  for (const k of [...failures.keys()]) if (k.endsWith(suffix)) failures.delete(k);
+  perUser.delete(username.toLowerCase());
+}

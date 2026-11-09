@@ -29,8 +29,9 @@
 
 | Table | Contenu |
 |---|---|
-| `users` | pseudo, hash scrypt, nom affiché, photo/bannière, phrase, couleur, statut, confidentialité (`dm_policy`, `call_policy`, `friend_policy`, `show_game`, `show_last_seen`) |
+| `users` | pseudo, hash scrypt, adresse e-mail (privée, vérifiée ou non), nom affiché, photo/bannière, phrase, couleur, statut, confidentialité (`dm_policy`, `call_policy`, `friend_policy`, `show_game`, `show_last_seen`) |
 | `sessions` | hash SHA-256 du jeton de renouvellement, expiration |
+| `email_codes` | codes à 6 chiffres hachés : vérification d'adresse, mot de passe oublié, code de secours (5 essais, durée limitée) |
 | `servers`, `members` | serveurs et rôles (`owner`, `admin`, `member`) |
 | `rooms`, `channels` | pièces vocales (audio spatial ON/OFF) et fils de discussion |
 | `invites` | codes membre ou invité d'un soir |
@@ -94,6 +95,9 @@ Plugin `updater` de Tauri. GitHub Actions construit les installateurs à chaque 
 ### Stats de jeu
 - **Steam** : liaison par la connexion officielle Steam (OpenID 2.0, vérifiée par l'API) ; heures jouées sur 2 semaines via l'API Web Steam (`STEAM_API_KEY`).
 - **Riot** : liaison par Riot ID (la connexion officielle RSO est réservée aux applis validées) ; rang et dernières parties de League of Legends (`RIOT_API_KEY`). Réponses gardées 10 min en mémoire.
+
+### Mot de passe oublié
+L'adresse e-mail est obligatoire et vérifiée par un code. « Mot de passe oublié » : on tape son pseudo ou son adresse, le serveur envoie un code à 6 chiffres (30 min, 5 essais) **seulement si l'adresse est vérifiée**, avec la même réponse dans tous les cas (on ne révèle pas si un compte existe). Avec le code, on choisit un nouveau mot de passe : toutes les sessions sont coupées. Envoi par SMTP (Gmail + mot de passe d'application, gratuit). Sans e-mail, l'admin peut générer un code de secours sur le serveur (`node dist/cli-secours.js <pseudo>`, 1 h).
 
 ### Langues
 `i18n.ts` : le texte est écrit en français dans le code (`t("Paramètres")`), `i18n-en.ts` le traduit. Un texte absent du dictionnaire reste en français.

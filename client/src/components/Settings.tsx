@@ -20,6 +20,7 @@ import { LANGS, lang, locale, setLang, t, type Lang } from "../lib/i18n";
 import { DuckCard, MicMode, ShortcutsSection } from "./SettingsVoice";
 import { switchDevice } from "../lib/voice";
 import { isRecordingShortcut } from "../lib/hotkeys";
+import { EmailSettings } from "./EmailAccount";
 
 type Section =
   | "profile"
@@ -182,9 +183,11 @@ function Account({ api, user, onLogoutAll }: { api: Api; user: User; onLogoutAll
   const [confirm, setConfirm] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string }>();
   const [sessions, setSessions] = useState<SessionInfo[]>([]);
+  const [mailOn, setMailOn] = useState(true);
 
   useEffect(() => {
     api.sessions().then(setSessions).catch(() => {});
+    api.authConfig().then((c) => setMailOn(c.mail !== false)).catch(() => {});
   }, []);
 
   async function changePassword(e: React.FormEvent) {
@@ -216,6 +219,10 @@ function Account({ api, user, onLogoutAll }: { api: Api; user: User; onLogoutAll
           </span>
         </div>
       </div>
+
+      <Card title={t("Adresse e-mail")}>
+        <EmailSettings api={api} mailOn={mailOn} />
+      </Card>
 
       <Card title={t("Changer le mot de passe")}>
         <form className="col gap-12" onSubmit={changePassword}>

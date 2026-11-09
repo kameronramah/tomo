@@ -34,6 +34,7 @@ import UpdateCard from "./components/UpdateCard";
 import { flashIcon, setAppBadge } from "./lib/badge";
 import { mentionsMe } from "./components/MessageParts";
 import ProfileCard from "./components/ProfileCard";
+import { EmailGate } from "./components/EmailAccount";
 import { speakingDetector } from "./lib/speaking";
 import { errorMessage } from "./lib/ui";
 import { removeAllBots, setLoopback } from "./lib/dev";
@@ -200,6 +201,12 @@ export default function App() {
       .then((s) => s && setSession(s))
       .catch(() => {})
       .finally(() => setBooting(false));
+  }, [api]);
+
+  // Le serveur sait-il envoyer des e-mails ? (sinon, pas d'étape de vérification d'adresse)
+  const [mailOn, setMailOn] = useState(true);
+  useEffect(() => {
+    api.authConfig().then((c) => setMailOn(c.mail !== false)).catch(() => {});
   }, [api]);
 
   function onSession(s: Session) {
@@ -1226,6 +1233,11 @@ export default function App() {
           }}
           onClose={() => setDevOpen(false)}
         />
+      )}
+
+      {/* Adresse e-mail obligatoire (sauf compte de test du serveur de dev) */}
+      {session.kind === "user" && !session.user.isDev && (
+        <EmailGate api={api} user={session.user} mailOn={mailOn} onUser={(user) => setSession({ kind: "user", user })} onLogout={logout} />
       )}
 
       {settingsOpen && session.kind === "user" && (

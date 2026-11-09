@@ -2,6 +2,9 @@ import type { FastifyInstance } from "fastify";
 import { randomUUID } from "node:crypto";
 import { db } from "./db.js";
 import { config } from "./config.js";
+import { cleanEmail } from "./codes.js";
+import { mailEnabled } from "./mail.js";
+import { emailTaken, sendVerifyCode } from "./routes-account.js";
 import {
   DUMMY_HASH,
   PASSWORD_MAX,
@@ -28,7 +31,7 @@ type UserRow = { id: string; username: string; password_hash: string; is_dev: nu
 export const devFlag = (isDev: number | undefined) => config.devTools && isDev === 1;
 
 /** Ouvre une session : jeton d'accès court + jeton de renouvellement (stocké haché). */
-async function openSession(user: { id: string; username: string; isDev: boolean }, userAgent?: string) {
+export async function openSession(user: { id: string; username: string; isDev: boolean }, userAgent?: string) {
   const { token, hash } = newRefreshToken();
   const now = Date.now();
   db.prepare(
@@ -41,7 +44,7 @@ async function openSession(user: { id: string; username: string; isDev: boolean 
   };
 }
 
-function checkPassword(password: unknown): string | null {
+export function checkPassword(password: unknown): string | null {
   if (typeof password !== "string") return "Mot de passe manquant.";
   if (password.length < PASSWORD_MIN) return `Le mot de passe doit faire au moins ${PASSWORD_MIN} caractères.`;
   if (password.length > PASSWORD_MAX) return `Le mot de passe doit faire au plus ${PASSWORD_MAX} caractères.`;
@@ -52,31 +55,38 @@ export default async function authRoutes(app: FastifyInstance) {
   // Limite stricte sur les routes sensibles : 10 essais / minute / IP.
   const strict = { config: { rateLimit: { max: 10, timeWindow: "1 minute" } } };
 
-  app.get("/auth/config", async () => ({ registration: config.registration }));
+  /** mail : l'envoi de mails marche (vérification d'adresse, mot de passe oublié par e-mail). */
+  app.get("/auth/config", async () => ({ registration: config.registration, mail: mailEnabled() }));
 
-  app.post<{ Body: { username?: unknown; password?: unknown } }>("/auth/register", strict, async (req, reply) => {
+  app.post<{ Body: { username?: unknown; password?: unknown; email?: unknown } }>("/auth/register", strict, async (req, reply) => {
     if (config.registration === "closed") return reply.code(403).send({ error: "Les inscriptions sont fermées." });
     const username = cleanName(req.body?.username);
     if (!username)
       return reply.code(400).send({ error: "Pseudo invalide : 3 à 32 caractères (lettres, chiffres, espace, . _ -)." });
     const pwError = checkPassword(req.body?.password);
     if (pwError) return reply.code(400).send({ error: pwError });
+    // Adresse e-mail obligatoire : c'est elle qui permet de récupérer le compte.
+    const email = cleanEmail(req.body?.email);
+    if (!email) return reply.code(400).send({ error: "Adresse e-mail invalide." });
 
     const exists = db.prepare("SELECT 1 FROM users WHERE username = ?").get(username);
     if (exists) return reply.code(409).send({ error: "Ce pseudo est déjà pris." });
+    if (emailTaken(email)) return reply.code(409).send({ error: "Cette adresse e-mail est déjà utilisée par un autre compte." });
 
     const user = { id: randomUUID(), username, isDev: false };
     const passwordHash = await hashPassword(req.body!.password as string);
     try {
-      db.prepare("INSERT INTO users (id, username, password_hash, created_at) VALUES (?, ?, ?, ?)").run(
+      db.prepare("INSERT INTO users (id, username, password_hash, created_at, email) VALUES (?, ?, ?, ?, ?)").run(
         user.id,
         username,
         passwordHash,
         Date.now(),
+        email,
       );
     } catch {
       return reply.code(409).send({ error: "Ce pseudo est déjà pris." });
     }
+    await sendVerifyCode({ id: user.id, username, email });
     return openSession(user, req.headers["user-agent"]);
   });
 
@@ -150,7 +160,7 @@ export default async function authRoutes(app: FastifyInstance) {
     if (!me) return;
     const row = db.prepare("SELECT id, username, password_hash, is_dev FROM users WHERE id = ?").get(me.id) as UserRow | undefined;
     if (!row || typeof req.body?.current !== "string" || !(await verifyPassword(req.body.current, row.password_hash)))
-      return reply.code(401).send({ error: "Mot de passe actuel incorrect." });
+      return reply.code(403).send({ error: "Mot de passe actuel incorrect." });
     const pwError = checkPassword(req.body?.next);
     if (pwError) return reply.code(400).send({ error: pwError });
     db.prepare("UPDATE users SET password_hash = ? WHERE id = ?").run(await hashPassword(req.body!.next as string), me.id);
@@ -170,8 +180,17 @@ export default async function authRoutes(app: FastifyInstance) {
   app.get("/me", async (req, reply) => {
     const me = await requireUser(req, reply);
     if (!me) return;
-    const row = db.prepare("SELECT is_dev FROM users WHERE id = ?").get(me.id) as { is_dev: number } | undefined;
-    return { id: me.id, username: me.name, isDev: devFlag(row?.is_dev) };
+    const row = db.prepare("SELECT is_dev, email, email_verified FROM users WHERE id = ?").get(me.id) as
+      | { is_dev: number; email: string | null; email_verified: number }
+      | undefined;
+    return {
+      id: me.id,
+      username: me.name,
+      isDev: devFlag(row?.is_dev),
+      // Visible seulement par soi-même
+      email: row?.email ?? null,
+      emailVerified: row?.email_verified === 1,
+    };
   });
 
   // -------------------------------------------------------------------------

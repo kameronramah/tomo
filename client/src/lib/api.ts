@@ -5,7 +5,8 @@ import { t } from "./i18n";
 // Types renvoyés par l'API
 // ---------------------------------------------------------------------------
 export type Role = "owner" | "admin" | "member" | "guest";
-export type User = { id: string; username: string; isDev?: boolean };
+/** email / emailVerified : seulement pour son propre compte (jamais ceux des autres). */
+export type User = { id: string; username: string; isDev?: boolean; email?: string | null; emailVerified?: boolean };
 export type DevStats = {
   users: number;
   fakeMembers: number;
@@ -303,18 +304,34 @@ export class Api {
     return { kind: "user", user };
   }
 
-  async login(username: string, password: string, remember: boolean): Promise<Session> {
-    const r = await this.request<AuthResult>("POST", "/auth/login", { username, password }, false);
+  /** Après connexion : le profil complet (avec l'état de l'adresse e-mail). */
+  private async startSession(r: AuthResult, remember: boolean): Promise<Session> {
     this.remember = remember;
     await this.setTokens(r);
-    return { kind: "user", user: r.user };
+    const user = await this.request<User>("GET", "/me").catch(() => r.user);
+    return { kind: "user", user };
   }
 
-  async register(username: string, password: string, remember: boolean): Promise<Session> {
-    const r = await this.request<AuthResult>("POST", "/auth/register", { username, password }, false);
-    this.remember = remember;
-    await this.setTokens(r);
-    return { kind: "user", user: r.user };
+  async login(username: string, password: string, remember: boolean): Promise<Session> {
+    const r = await this.request<AuthResult>("POST", "/auth/login", { username, password }, false);
+    return this.startSession(r, remember);
+  }
+
+  async register(username: string, password: string, email: string, remember: boolean): Promise<Session> {
+    const r = await this.request<AuthResult>("POST", "/auth/register", { username, password, email }, false);
+    return this.startSession(r, remember);
+  }
+
+  // ---- Adresse e-mail et mot de passe oublié -------------------------------
+  me = () => this.request<User>("GET", "/me");
+  setEmail = (email: string, password: string) =>
+    this.request<{ email: string; emailVerified: boolean }>("POST", "/me/email", { email, password });
+  resendEmailCode = () => this.request<{ ok: true }>("POST", "/me/email/resend", {});
+  verifyEmail = (code: string) => this.request<{ emailVerified: boolean }>("POST", "/me/email/verify", { code });
+  forgotPassword = (login: string) => this.request<{ ok: true }>("POST", "/auth/forgot", { login }, false);
+  async resetPassword(login: string, code: string, password: string, remember: boolean): Promise<Session> {
+    const r = await this.request<AuthResult>("POST", "/auth/reset", { login, code, password }, false);
+    return this.startSession(r, remember);
   }
 
   async joinAsGuest(code: string, name: string): Promise<Session> {
@@ -336,7 +353,8 @@ export class Api {
     await this.clear();
   }
 
-  authConfig = () => this.request<{ registration: "open" | "closed" }>("GET", "/auth/config");
+  /** mail : le serveur sait envoyer des e-mails (vérification, mot de passe oublié). */
+  authConfig = () => this.request<{ registration: "open" | "closed"; mail?: boolean }>("GET", "/auth/config");
 
   // ---- Serveurs ----------------------------------------------------------
   servers = () => this.request<ServerSummary[]>("GET", "/servers");

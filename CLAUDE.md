@@ -1,7 +1,7 @@
 # CLAUDE.md — Contexte du projet tomo
 
 > Fichier lu automatiquement par Claude Code. Il résume tout ce qu'il faut savoir pour reprendre le projet.
-> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.9.0**.
+> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.10.0**.
 > Copie locale du propriétaire : `C:\Users\Kameron\Documents\tomo`.
 > Installer la dernière version : https://github.com/kameronramah/tomo/releases/latest
 
@@ -11,10 +11,11 @@
 
 **tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire). La marque s'écrit **« tomo » en minuscules, partout**.
 
-Ce qui existe (v0.9) :
+Ce qui existe (v0.10) :
 - **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils (**rangés par glisser-déposer**), invitations (membre + **invité d'un soir sans compte**).
 - **Messagerie** temps réel : fils, chat de chaque pièce, amis, messages privés (demandes hors amis), **appels privés** ; pièces jointes, messages vocaux, GIF (Klipy), **modifier, réactions, mentions** @pseudo / @vocal / @tous, « en train d'écrire… ».
 - **Profils, statuts, confidentialité, blocage**, membres du serveur, notifications système, pastilles de non-lus.
+- **Adresse e-mail obligatoire** (vérifiée par un code) et **mot de passe oublié** par code à 6 chiffres envoyé par mail (Gmail SMTP), ou **code de secours** donné par l'admin (`cli-secours.js`).
 - **Micro** : **appuyer pour parler** (touche ou bouton de souris) ou **seuil de voix**, option **« baisser les autres quand je parle »** ; **raccourcis configurables qui marchent en jeu** (Paramètres › Raccourcis clavier).
 - **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **partage d'écran** HD + **mode coach** (annotations sur demande, affichées sur l'écran de celui qui partage), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
 - **Jeux** : détection du jeu lancé (« joue à … »), réglages par jeu (pièce auto, mode focus, spatial, overlay, masquer), proposition de rejoindre les potes, **stats Steam / League of Legends**.
@@ -75,8 +76,9 @@ tomo/
 │   │   ├── src/            index.ts, config.ts, db.ts, security.ts, access.ts, realtime.ts (WebSocket,
 │   │   │                   présence, « joue à »), livekit.ts, routes-auth.ts, routes-servers.ts,
 │   │   │                   routes-chat.ts (messages, réactions, mentions), routes-social.ts, profiles.ts,
-│   │   │                   attachments.ts, gifs.ts, legends.ts, challenges.ts, gamestats.ts, typing.ts, routes-dev.ts
-│   │   └── tests/          test-api/social/attachments/profiles/messages.ps1, test-games/legends/stats/v09.mjs
+│   │   │                   attachments.ts, gifs.ts, legends.ts, challenges.ts, gamestats.ts, typing.ts, routes-dev.ts,
+│   │   │                   routes-account.ts (e-mail, mot de passe oublié), codes.ts, mail.ts (SMTP), cli-secours.ts
+│   │   └── tests/          test-api/social/attachments/profiles/messages.ps1, test-games/legends/stats/v09/email.mjs
 │   ├── docker-compose.yml      Production (VPS) : LiveKit + API + Caddy (HTTPS)
 │   ├── docker-compose.dev.yml  Développement local (avec DEV_TOOLS et compte de test)
 │   ├── livekit.yaml, Caddyfile, .env.example
@@ -93,6 +95,7 @@ Points techniques notables :
 - « Qui parle » : mesuré localement toutes les 40 ms (`speaking.ts`) ; pour mon micro, sur la piste traitée (ce qui part vraiment).
 - **Push-to-talk** (`ptt.ts`) : la piste micro brute est mise en `enabled = false` tant que la touche n'est pas tenue (filet de sécurité toutes les 250 ms ; un micro coupé n'est jamais rouvert). **Baisser les autres** : facteur `duck` appliqué dans `applyVolume` (`voice.ts`) quand « qui parle » me détecte.
 - **Raccourcis** : `input.rs` lit l'état des touches (Windows `GetAsyncKeyState`, Mac `CGEventSourceKeyState`) toutes les 8 ms, **seulement celles des raccourcis** (`input_set_keys`), et envoie `input:keys` à la fenêtre principale ; `hotkeys.ts` déclenche les actions. Enregistrement d'une touche : `input_record` (toutes les touches, 15 s max). Repli clavier de la fenêtre dans le navigateur. Noms des touches : « Ctrl », « Shift », « M », « Mouse4 »…
+- **E-mail et mot de passe oublié** : colonne `users.email` (minuscules, unique) + `email_verified` ; codes à 6 chiffres hachés dans `email_codes` (`verify` / `reset` / `rescue`, 5 essais, 30 min ou 1 h). `/auth/forgot` répond toujours pareil (pas de fuite) et n'envoie que vers une adresse **vérifiée**. Envoi par SMTP (`SMTP_USER` / `SMTP_PASS`, Gmail + mot de passe d'application) ; en dev sans SMTP, les codes vont dans `/dev/mailbox`. Côté appli : `AuthScreen` (modes forgot / reset), `EmailAccount.tsx` (fenêtre obligatoire au démarrage, Paramètres › Compte). Mauvais mot de passe actuel = **403** (un 401 déconnecterait l'appli).
 - **Ranger** : `PUT /servers/:id/rooms/order` et `/channels/order` (liste complète), événement WebSocket `channels` → les clients rechargent le serveur.
 - **Attributs LiveKit** du participant : `clips=1`, `cc=1` (sous-titres), `coach` (`all` ou identités autorisées à annoter mon écran, après demande acceptée), `lang` (fr/en, langue de transcription). Toujours les écrire avec `{ ...attributes, clé: valeur }`.
 - **Canaux de données LiveKit** : `pos` (positions spatiales, ~10/s), `coach` (annotations).
@@ -136,7 +139,7 @@ powershell -ExecutionPolicy Bypass -File server\api\tests\test-api.ps1
 ```bash
 node server/api/tests/test-games.mjs
 ```
-(idem `test-legends.mjs`, `test-stats.mjs`, `test-v09.mjs`)
+(idem `test-legends.mjs`, `test-stats.mjs`, `test-v09.mjs`, `test-email.mjs`)
 ```bash
 cd client/src-tauri && cargo test --lib
 ```
@@ -144,6 +147,7 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 
 **Publier une version** (installateurs + mise à jour automatique) : voir [docs/PUBLIER-UNE-VERSION.md](docs/PUBLIER-UNE-VERSION.md). En bref : même numéro dans `tauri.conf.json`, `Cargo.toml`, `package.json`, puis `git tag vX.Y.Z` et `git push origin vX.Y.Z`. La Release est **publiée directement** (plus de brouillon) avec `latest.json`. Il faut que le secret GitHub `TAURI_SIGNING_PRIVATE_KEY` existe.
 
+**E-mails** : `SMTP_USER` / `SMTP_PASS` (Gmail + mot de passe d'application, voir `docs/HEBERGEMENT.md`).
 **Clés facultatives** dans `server/.env` (dev et prod) : `KLIPY_API_KEY` (GIF), `STEAM_API_KEY` (stats Steam), `RIOT_API_KEY` (Riot / LoL ; la clé « development » expire toutes les 24 h).
 
 ---
@@ -185,6 +189,7 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 - Mots de passe : scrypt (N=32768), 12 caractères min, comparaison à temps constant, hash factice si le pseudo n'existe pas.
 - Connexion : après 5 échecs, blocage de l'**adresse + pseudo** (1, 2, 4, 8 puis 15 min) ; 50 échecs en 1 h sur un pseudo, toutes adresses confondues → 5 min pour tout le monde. Messages : 10 par 10 s **par compte**.
 - Raccourcis : seules les touches choisies sont surveillées ; rien n'est enregistré ni envoyé.
+- E-mail : visible seulement par soi (`/me`), jamais dans les profils ; changer d'adresse demande le mot de passe ; réinitialisation = toutes les sessions coupées.
 - Jetons de renouvellement stockés **hachés**, rotation à chaque usage ; changement de mot de passe = toutes les sessions révoquées.
 - Droits vérifiés **côté serveur** à chaque route (`access.ts`).
 - **`DEV_TOOLS=1` uniquement en dev**. Ne jamais le mettre dans le `.env` du VPS.

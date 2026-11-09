@@ -47,14 +47,13 @@ Donne la clé privée à GitHub (gratuit) :
 - **Version de test sans publier** : onglet Actions › Installateurs › *Run workflow* ; les fichiers sont dans l'onglet de l'exécution (artefacts), aucune Release n'est créée.
 
 ## Version navigateur (https://app-tomo.grylix.dev)
-À refaire à chaque nouvelle version, en plus des installateurs. Sur le PC (jamais sur le VPS, trop peu de mémoire) :
+Rien à faire à la main : sur le VPS, `~/maj-tomo.sh` met à jour l'API **et** fabrique la version web (avec `VITE_TOMO_INSTANCE=https://tomo.grylix.dev/`), puis remplace `~/tomo-web` (servi par le nginx de Guillaume). L'ancien script est gardé dans `~/maj-tomo.sh.avant-web`.
 
-1. Fabriquer la version web, dans `client/` (PowerShell) :
-   ```
-   $env:VITE_TOMO_INSTANCE="https://tomo.grylix.dev"; npm run build
-   ```
-2. Avec FileZilla (SFTP, utilisateur `ramah`), remplacer **le contenu** de `/home/ramah/tomo-web/` par celui de `client/dist/` (`index.html` directement dans `tomo-web`). Supprimer d'abord les anciens fichiers de `tomo-web/assets/`.
+Donc, après avoir poussé sur GitHub :
+```
+ssh ramah@51.75.121.23 ~/maj-tomo.sh
+```
 
-Tout ce qui est dans `tomo-web` est public : jamais de secret ni de lien symbolique dedans. Le serveur web (nginx) est géré par Guillaume.
+Tout ce qui est dans `tomo-web` est public : jamais de secret ni de lien symbolique dedans.
 
 Dans le navigateur, ne marchent pas : raccourcis en jeu, overlay, jeux détectés, clips sur le disque, mise à jour automatique (pas besoin : recharger la page suffit).

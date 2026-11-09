@@ -33,6 +33,20 @@ export const config = {
       : null,
   /** Clé Klipy (recherche de GIF, gratuite : https://partner.klipy.com). Sans clé, pas de recherche de GIF. */
   klipyKey: process.env.KLIPY_API_KEY?.trim() || null,
+  /**
+   * Envoi des e-mails (codes de vérification, mot de passe oublié). Gmail : SMTP_HOST=smtp.gmail.com,
+   * SMTP_PORT=465, SMTP_USER=l'adresse Gmail, SMTP_PASS=mot de passe d'application. Sans eux : pas d'envoi.
+   */
+  mail:
+    process.env.SMTP_USER?.trim() && process.env.SMTP_PASS?.trim()
+      ? {
+          host: process.env.SMTP_HOST?.trim() || "smtp.gmail.com",
+          port: Number(process.env.SMTP_PORT ?? 465),
+          user: process.env.SMTP_USER.trim(),
+          pass: process.env.SMTP_PASS.replace(/\s+/g, ""), // Google l'affiche en 4 groupes séparés par des espaces
+          from: process.env.MAIL_FROM?.trim() || process.env.SMTP_USER.trim(),
+        }
+      : null,
   livekit: {
     url: requireEnv("LIVEKIT_URL"), // wss://… donné aux clients
     httpUrl: process.env.LIVEKIT_HTTP_URL ?? requireEnv("LIVEKIT_URL").replace(/^ws/, "http"),

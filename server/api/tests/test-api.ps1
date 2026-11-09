@@ -23,15 +23,15 @@ function Call($method, $path, $body = $null, $token = $null) {
 function Check($label, $cond) { if ($cond) { Write-Output "OK   $label" } else { Write-Output "FAIL $label" } }
 
 $pw = "une-phrase-de-passe-solide"
-$r = Call POST "/auth/register" @{ username = "Kam$suffix"; password = "court" }
+$r = Call POST "/auth/register" @{ username = "Kam$suffix"; password = "court"; email = "Kam$suffix@exemple.test" }
 Check "mot de passe trop court refusé (400)" ($r.status -eq 400)
 
-$kam = Call POST "/auth/register" @{ username = "Kam$suffix"; password = $pw }
+$kam = Call POST "/auth/register" @{ username = "Kam$suffix"; password = $pw; email = "Kam$suffix@exemple.test" }
 Check "inscription Kam" ($kam.ok -and $kam.data.accessToken -and $kam.data.refreshToken)
-$r = Call POST "/auth/register" @{ username = "kam$suffix"; password = $pw }
+$r = Call POST "/auth/register" @{ username = "kam$suffix"; password = $pw; email = "kam$suffix@exemple.test" }
 Check "pseudo déjà pris, insensible à la casse (409)" ($r.status -eq 409)
 
-$lea = Call POST "/auth/register" @{ username = "Lea$suffix"; password = $pw }
+$lea = Call POST "/auth/register" @{ username = "Lea$suffix"; password = $pw; email = "Lea$suffix@exemple.test" }
 Check "inscription Léa" $lea.ok
 
 $r = Call POST "/auth/login" @{ username = "Kam$suffix"; password = "mauvais-mot-de-passe" }

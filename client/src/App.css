@@ -1400,3 +1400,19 @@ span.key-chip { cursor: default; }
 .typing-dots span:nth-child(3) { animation-delay: 0.3s; }
 @keyframes typing-bounce { 0%, 60%, 100% { opacity: 0.35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-2px); } }
 @media (prefers-reduced-motion: reduce) { .typing-dots span { animation: none; } }
+
+/* ---- v0.10 : mot de passe oublié, adresse e-mail ---- */
+.auth-steps { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: var(--faint); }
+.auth-steps > span { display: inline-flex; align-items: center; gap: 8px; }
+.auth-steps > span.on { color: var(--text); }
+.auth-step-dot {
+  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-3); color: var(--text-soft); font: 600 11px var(--font);
+}
+.auth-steps .on .auth-step-dot { background: var(--teal); color: var(--teal-ink); }
+.auth-steps .done .auth-step-dot { background: var(--teal-bg); color: var(--teal-strong); }
+.code-input.digits { font: 700 24px var(--font-display); letter-spacing: 0.45em; text-align: center; }
+.link.small { font-size: 12px; }
+.hint.center { text-align: center; }
+.email-gate { max-width: 460px; }
+.email-gate-foot { margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--line); }

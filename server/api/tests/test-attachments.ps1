@@ -22,8 +22,8 @@ function Fetch($url) {
 function Check($l, $c) { if ($c) { "OK   $l" } else { "FAIL $l" } }
 
 $pw = "une-phrase-de-passe-solide"
-$userA = (Call POST "/auth/register" @{ username = "Pj$s"; password = $pw }).data
-$userB = (Call POST "/auth/register" @{ username = "Pk$s"; password = $pw }).data
+$userA = (Call POST "/auth/register" @{ username = "Pj$s"; password = $pw; email = "Pj$s@exemple.test" }).data
+$userB = (Call POST "/auth/register" @{ username = "Pk$s"; password = $pw; email = "Pk$s@exemple.test" }).data
 $tokA = $userA.accessToken; $tokB = $userB.accessToken
 $srv = (Call POST "/servers" @{ name = "PJ test" } $tokA).data
 $ch = (Call GET "/servers/$($srv.id)" $null $tokA).data.channels[0].id

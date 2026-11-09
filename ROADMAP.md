@@ -67,6 +67,12 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] « X est en train d'écrire… »
 - [ ] Tester en vrai : push-to-talk et raccourcis dans un jeu, sur Mac (autorisation « Surveillance de l'entrée »)
 
+## V0.10 — Récupérer son compte ✅
+- [x] **Adresse e-mail obligatoire** (à l'inscription, et demandée aux comptes existants), vérifiée par un code
+- [x] **Mot de passe oublié** : code à 6 chiffres par e-mail (Gmail, gratuit), toutes les sessions coupées après le changement
+- [x] **Code de secours** donné par l'admin du serveur (commande `cli-secours.js`)
+- [ ] Configurer Gmail sur le VPS et tester l'envoi réel
+
 ## V1 — MVP « on lâche Discord »
 > Objectif : utilisable tous les soirs par le groupe.
 
@@ -147,6 +153,8 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [x] Limiter l'envoi de messages par compte (aujourd'hui : par adresse IP)
 - [ ] Vérifier le blocage par adresse depuis deux adresses différentes (testé seulement depuis une seule)
 - [ ] Riot : vérifier que le Riot ID appartient bien à la personne (impossible sans la connexion officielle Riot)
+- [ ] E-mail : prévenir par mail quand le mot de passe ou l'adresse change (« ce n'était pas toi ? »)
+- [ ] Version navigateur : « Rester connecté » perdu à la fermeture de l'onglet (session en sessionStorage) — décider si on le garde
 
 ### Fenêtre
 - [ ] Vérifier le redimensionnement par les bords et l'agrandissement

@@ -22,8 +22,8 @@ async function call0(method, path, body, token) {
 }
 
 const pw = "une-phrase-de-passe-solide";
-const A = (await call("POST", "/auth/register", { username: `Ga${s}`, password: pw })).data;
-const B = (await call("POST", "/auth/register", { username: `Gb${s}`, password: pw })).data;
+const A = (await call("POST", "/auth/register", { username: `Ga${s}`, password: pw, email: `Ga${s}@exemple.test` })).data;
+const B = (await call("POST", "/auth/register", { username: `Gb${s}`, password: pw, email: `Gb${s}@exemple.test` })).data;
 const srv = (await call("POST", "/servers", { name: "Jeux" }, A.accessToken)).data;
 const inv = (await call("POST", `/servers/${srv.id}/invites`, { kind: "member" }, A.accessToken)).data;
 await call("POST", `/invites/${inv.code}/accept`, null, B.accessToken);

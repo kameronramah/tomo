@@ -91,6 +91,29 @@ Sans ces clés, tomo marche normalement ; seules ces options sont désactivées.
 
 > La liaison Steam renvoie le navigateur vers `https://<API_DOMAIN>/links/steam/callback` : l'API doit donc être joignable en HTTPS (c'est le cas avec Caddy).
 
+### E-mails (mot de passe oublié) avec Gmail, gratuit
+Chaque compte tomo a une adresse e-mail obligatoire. Elle sert à vérifier l'adresse et à envoyer un code quand on oublie son mot de passe.
+1. Crée une adresse Gmail pour tomo (par exemple `tomo.tonserveur@gmail.com`).
+2. Active la **validation en deux étapes** sur ce compte Google (https://myaccount.google.com/security).
+3. Crée un **mot de passe d'application** sur https://myaccount.google.com/apppasswords (nom : « tomo »). Google affiche 16 lettres : c'est lui qu'on utilise, pas le mot de passe du compte.
+4. Ajoute dans `.env` (ou `~/tomo-config/tomo.env`) :
+   ```
+   SMTP_HOST=smtp.gmail.com
+   SMTP_PORT=465
+   SMTP_USER=tomo.tonserveur@gmail.com
+   SMTP_PASS=les16lettresdugoogle
+   ```
+5. Redémarre l'API. `https://<API_DOMAIN>/auth/config` doit afficher `"mail":true`.
+
+Sans ces lignes, tomo marche, mais sans vérification d'adresse ni mot de passe oublié par e-mail.
+
+### Code de secours (mot de passe oublié sans accès à l'e-mail)
+Sur le serveur, l'admin génère un code à usage unique, valable 1 h, et le donne à la personne. Elle le tape dans « Mot de passe oublié › J'ai déjà un code » :
+```bash
+node dist/cli-secours.js <pseudo>         # dans server/api, avec les variables de .env chargées
+```
+Avec Docker : `docker compose exec api node dist/cli-secours.js <pseudo>`.
+
 ## VPS partagé (ports 80/443 déjà pris)
 Si le VPS a déjà un nginx ou un Caddy :
 1. Retirer le service `caddy` de `docker-compose.yml`.

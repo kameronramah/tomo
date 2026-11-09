@@ -46,6 +46,7 @@ Ensuite, tomo **se met à jour tout seul** (Paramètres › À propos). Au premi
 - Messages : pièces jointes, messages vocaux, GIF (Klipy), **modifier**, **réactions**, **mentions** @pseudo / @vocal / @tous, « X est en train d'écrire… ».
 - **Mur des légendes** : citations cultes, captures et clips épinglés.
 - **Défis à points** : on se lance un défi, les participants valident le gagnant, classement du mois (pas d'argent, pas de mise).
+- Comptes protégés : adresse e-mail vérifiée, **mot de passe oublié** par code envoyé par mail.
 - Profils (photo, bannière, phrase, couleur), statuts (en ligne, inactif, ne pas déranger, invisible + statut perso), confidentialité, blocage.
 
 **Appli**

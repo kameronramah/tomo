@@ -14,9 +14,9 @@ function Call($method, $path, $body = $null, $token = $null) {
 function Check($l, $c) { if ($c) { "OK   $l" } else { "FAIL $l" } }
 
 $pw = "une-phrase-de-passe-solide"
-$A = (Call POST "/auth/register" @{ username = "Ma$s"; password = $pw }).data
-$B = (Call POST "/auth/register" @{ username = "Mb$s"; password = $pw }).data
-$C = (Call POST "/auth/register" @{ username = "Mc$s"; password = $pw }).data
+$A = (Call POST "/auth/register" @{ username = "Ma$s"; password = $pw; email = "Ma$s@exemple.test" }).data
+$B = (Call POST "/auth/register" @{ username = "Mb$s"; password = $pw; email = "Mb$s@exemple.test" }).data
+$C = (Call POST "/auth/register" @{ username = "Mc$s"; password = $pw; email = "Mc$s@exemple.test" }).data
 $tA = $A.accessToken; $tB = $B.accessToken; $tC = $C.accessToken
 $srv = (Call POST "/servers" @{ name = "Messages" } $tA).data
 $inv = (Call POST "/servers/$($srv.id)/invites" @{ kind = "member" } $tA).data

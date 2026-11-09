@@ -8,6 +8,7 @@ import { AccessToken } from "livekit-server-sdk";
 import { db, tx } from "./db.js";
 import { config } from "./config.js";
 import { hashPassword, requireUser } from "./security.js";
+import { devMailbox } from "./mail.js";
 
 /** Crée ou met à jour le compte de test (mot de passe et drapeau is_dev) au démarrage. */
 export async function seedDevUser(log: (msg: string) => void) {
@@ -42,6 +43,13 @@ async function requireDev(req: FastifyRequest, reply: FastifyReply) {
 const FIRST_NAMES = ["Alex", "Sam", "Nico", "Jules", "Léa", "Max", "Inès", "Tom", "Zoé", "Hugo", "Lina", "Noah", "Emma", "Yanis", "Sarah"];
 
 export default async function devRoutes(app: FastifyInstance) {
+  /** Boîte de test : dernier code « envoyé » à une adresse (serveur de dev sans SMTP, pour les tests). */
+  app.get<{ Querystring: { to?: string } }>("/dev/mailbox", async (req, reply) => {
+    const mail = devMailbox.get(String(req.query.to ?? "").toLowerCase());
+    if (!mail) return reply.code(404).send({ error: "Aucun mail." });
+    return mail;
+  });
+
   /** Jeton LiveKit pour un faux joueur (« bot ») dans un salon accessible au compte de test. */
   app.post<{ Body: { roomId?: unknown; name?: unknown } }>("/dev/bot-token", async (req, reply) => {
     const me = await requireDev(req, reply);
