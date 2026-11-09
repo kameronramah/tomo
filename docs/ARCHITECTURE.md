@@ -15,7 +15,8 @@
 │  │  + Opus-MT (sous-titres)  │          │   └─ TURN UDP 3478             │
 │  └─ Rust : coffre-fort,      │          │  API (Node 24 + SQLite)        │
 │     Mumble Link, jeux        │          └────────────────────────────────┘
-│     lancés, clips, overlay   │
+│     lancés, clips, overlay,  │
+│     touches des raccourcis   │
 └──────────────────────────────┘          GitHub Releases : installateurs +
                                           latest.json (mise à jour automatique)
 ```
@@ -55,13 +56,25 @@ Un **invité** (code invité, sans compte) a un jeton limité à **un seul serve
 ### Audio
 - **Chaîne par voix reçue** (`setWebAudioPlugins`, en ligne droite) : **volume uniformisé** (`leveler.ts`) puis **audio spatial** (`PannerNode` HRTF) si la pièce l'a activé. Le son d'un partage d'écran n'est jamais traité.
 - **Micro** : suppression de bruit « légère » (filtre du navigateur) ou « avancée » (**RNNoise** en AudioWorklet, `denoise.ts`), plus une **porte de bruit** réglable. Branché sur la piste LiveKit avec `setProcessor` : ce qui part est le son nettoyé.
-- **« Qui parle »** : mesuré localement toutes les 40 ms (`speaking.ts`).
+- **« Qui parle »** : mesuré localement toutes les 40 ms (`speaking.ts`) ; pour mon micro, sur ce qui part vraiment (après suppression de bruit, seuil, push-to-talk).
+- **Appuyer pour parler** (`ptt.ts`) : la piste micro brute est désactivée (`enabled = false`) tant que la touche n'est pas tenue ; ce qui part est du silence. La coupure LiveKit (« micro coupé ») reste prioritaire. Délai de relâche réglable.
+- **Baisser les autres quand je parle** (option) : quand « qui parle » me détecte, le volume de chaque voix reçue est multiplié par (1 − réglage), avec la montée douce de `setVolume`. Le son des partages d'écran n'est pas touché.
+- **Changement de micro, de sortie, d'écho ou de gain auto** : appliqué tout de suite en vocal (`switchActiveDevice`, `restartTrack`).
 
 ### Audio spatial
 Positions échangées sur le canal de données LiveKit (sujet `pos`, ~10/s). Source « carte » (chacun déplace son avatar) ou « jeu » (**Mumble Link**, lu par la partie Rust). Repli au centre si pas de position récente ou jeux différents. Réglable par jeu (Paramètres › Jeux).
 
 ### Jeux lancés
 La partie Rust (`games.rs`, crate `sysinfo`) lit **uniquement les noms des programmes ouverts**, toutes les 10 s. `games.ts` les compare à une liste de jeux connus + ceux ajoutés à la main. Le jeu en cours sert au « joue à … », à la pièce automatique, au mode focus (notifications coupées sauf coéquipiers), à l'audio spatial et à l'overlay par jeu.
+
+### Raccourcis (`hotkeys.ts` + `input.rs`)
+La partie Rust lit l'**état** des touches toutes les 8 ms (Windows : `GetAsyncKeyState` ; Mac : `CGEventSourceKeyState`, avec l'autorisation « Surveillance de l'entrée »), sans crochet clavier : la touche n'est jamais bloquée, le jeu la reçoit. Elle ne surveille **que les touches des raccourcis** de la personne (liste envoyée par l'interface) ; seul l'enregistrement d'un nouveau raccourci, lancé par un clic, regarde toutes les touches pendant 15 s au plus. Les touches tenues sont envoyées à la fenêtre principale (`input:keys`), qui déclenche les actions. Dans le navigateur (ou sur Mac sans autorisation), repli sur le clavier de la fenêtre.
+
+### Ranger les pièces et les fils
+`PUT /servers/:id/rooms/order` et `/channels/order` (admins) avec la liste complète des identifiants dans le nouvel ordre ; refusée si elle ne correspond plus (quelqu'un vient d'en ajouter). Les membres connectés sont prévenus par l'événement `channels` et rechargent le serveur. Côté interface : `sortable.ts` (poignée, déplacement en direct, flèches du clavier).
+
+### « En train d'écrire »
+Le client envoie `{type:"typing", scope, target}` sur le WebSocket (au plus toutes les 3 s) ; le serveur (`typing.ts`) vérifie l'accès et relaie à ceux qui voient la conversation. Rien n'est enregistré.
 
 ### Overlay en jeu
 Une seconde fenêtre Tauri (`label: overlay`), transparente, toujours au-dessus, **traversée par les clics** (`setIgnoreCursorEvents`). La fenêtre principale lui envoie son état (qui parle, chat, sous-titres) par événement Tauri toutes les 200 ms. Elle n'a aucune autre permission. Marche avec les jeux en plein écran fenêtré / sans bordure.
@@ -97,10 +110,11 @@ Plugin `updater` de Tauri. GitHub Actions construit les installateurs à chaque 
 - **Mots de passe** : 12 caractères minimum, **scrypt** (N=32768), comparaison à temps constant, hash factice si le pseudo n'existe pas.
 - **Sessions** : JWT de 15 min en mémoire + jeton de renouvellement **haché** côté serveur et **remplacé à chaque usage**.
 - **« Rester connecté »** : jeton rangé dans le coffre-fort du système (crate `keyring`).
-- **Anti force brute** : 10 tentatives/min/IP sur `/auth`, pseudo bloqué 15 min après 5 échecs.
+- **Anti force brute** : 10 tentatives/min/IP sur `/auth` ; après 5 échecs, l'**adresse + pseudo** est bloquée 1, 2, 4, 8 puis 15 min (quelqu'un qui rate exprès ne bloque pas le vrai propriétaire) ; 50 échecs en 1 h sur un pseudo depuis plusieurs adresses le bloquent 5 min.
+- **Envoi de messages** : 10 messages par 10 s **par compte** (et une limite large par adresse, pour les potes derrière la même box).
 - **Droits vérifiés côté serveur** à chaque route (`access.ts`).
 - **Pièces jointes** : type déduit des octets, adresses signées, pas de SVG affiché, fichiers orphelins effacés.
 - **Jetons LiveKit** limités à une pièce ; la clé secrète ne quitte jamais le serveur.
 - **Liaison Steam** : réponse d'OpenID revérifiée auprès de Steam, état à usage unique (10 min).
 - **Mises à jour** : refusées si la signature ne correspond pas à la clé publique intégrée à l'appli.
-- **Vie privée** : jeux détectés, sous-titres, suppression de bruit et traduction calculés sur le PC ; le « joue à … » et les stats ne sont visibles que si on l'autorise.
+- **Vie privée** : jeux détectés, sous-titres, suppression de bruit et traduction calculés sur le PC ; le « joue à … » et les stats ne sont visibles que si on l'autorise. Raccourcis : seules les touches choisies sont surveillées, rien n'est enregistré ni envoyé.

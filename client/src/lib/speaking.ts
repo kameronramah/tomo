@@ -42,7 +42,9 @@ export class SpeakingDetector {
   private micTrack(p: Participant): MediaStreamTrack | null {
     const pub = p.getTrackPublication(Track.Source.Microphone);
     if (!pub || pub.isMuted || !pub.track) return null;
-    const t = pub.track.mediaStreamTrack;
+    // Mon micro : on écoute ce qui part vraiment (après suppression de bruit, porte, push-to-talk)
+    const processed = (pub.track as { getProcessor?: () => { processedTrack?: MediaStreamTrack } | undefined }).getProcessor?.()?.processedTrack;
+    const t = processed ?? pub.track.mediaStreamTrack;
     return t && t.readyState === "live" ? t : null;
   }
 

@@ -22,7 +22,9 @@ export type SoundName =
   | "message" // nouveau message (privé ou salon)
   | "ring" // appel entrant
   | "callEnd"
-  | "clip"; // clip enregistré
+  | "clip" // clip enregistré
+  | "pttOn" // appuyer pour parler : touche enfoncée
+  | "pttOff"; // touche relâchée
 
 /** Timbres : rapports d'harmoniques, leur volume et leur durée relative. */
 const TIMBRES = {
@@ -65,6 +67,9 @@ const SOUNDS: Record<SoundName, Sound> = {
   // Micro / casque : petits « toc » en bois, aigu = activé, grave = coupé.
   mute: { notes: [{ f: N.A4, t: 0, d: 0.16, timbre: "wood", glide: 1.04, g: 0.8 }], reverb: 0.08 },
   unmute: { notes: [{ f: N.D5, t: 0, d: 0.16, timbre: "wood", glide: 0.96, g: 0.8 }], reverb: 0.08 },
+  // Appuyer pour parler : deux petits « tocs » très discrets (montant à l'appui, descendant au relâchement)
+  pttOn: { notes: [{ f: N.E5, t: 0, d: 0.07, timbre: "wood", g: 0.4 }], reverb: 0 },
+  pttOff: { notes: [{ f: N.B4, t: 0, d: 0.07, timbre: "wood", g: 0.35 }], reverb: 0 },
   deafen: { notes: [{ f: N.D5, t: 0, d: 0.14, timbre: "wood", g: 0.7 }, { f: N.A4, t: 0.075, d: 0.2, timbre: "wood", g: 0.75 }], reverb: 0.08 },
   undeafen: { notes: [{ f: N.A4, t: 0, d: 0.14, timbre: "wood", g: 0.7 }, { f: N.D5, t: 0.075, d: 0.2, timbre: "wood", g: 0.75 }], reverb: 0.08 },
   // Message : deux gouttes de verre, légères.
@@ -100,6 +105,8 @@ const CATEGORY: Record<SoundName, "voice" | "messages" | "calls"> = {
   ring: "calls",
   callEnd: "calls",
   clip: "voice",
+  pttOn: "voice",
+  pttOff: "voice",
 };
 
 // ---------------------------------------------------------------------------

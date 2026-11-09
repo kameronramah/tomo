@@ -20,10 +20,12 @@ Ensuite, tomo **se met à jour tout seul** (Paramètres › À propos). Au premi
 
 ---
 
-## ✨ Ce que fait tomo (v0.8)
+## ✨ Ce que fait tomo (v0.9)
 
 **Vocal**
 - Pièces vocales : qui parle (mesuré en direct), volume par personne, couper micro / son, choix du micro et de la sortie.
+- **Appuyer pour parler** (touche ou bouton de souris) ou **seuil de voix** réglable, et en option **« baisser les autres quand je parle »**.
+- **Raccourcis clavier configurables** qui marchent **en jeu** sans bloquer la touche (micro, son, clip, overlay, sous-titres…).
 - **Volume uniformisé** : tout le monde au même niveau, sans rien régler.
 - **Suppression de bruit avancée** (RNNoise, calculée sur ton PC) + porte de bruit, avec test « s'écouter » avant / après.
 - **Audio spatial** : carte de la pièce ou **position lue dans le jeu** (Mumble Link : Minecraft avec mod, Guild Wars 2, Arma… ; Valheim devrait marcher avec le mod PositionalAudio, pas encore testé).
@@ -39,9 +41,9 @@ Ensuite, tomo **se met à jour tout seul** (Paramètres › À propos). Au premi
 - **Stats** : Steam (heures jouées) et League of Legends (rang, dernières parties) sur la fiche profil.
 
 **Social**
-- Serveurs créés par les utilisateurs, rangés en **dossiers**, invitations membre ou **invité d'un soir sans compte**.
+- Serveurs créés par les utilisateurs, rangés en **dossiers**, invitations membre ou **invité d'un soir sans compte**. Pièces et fils **rangés par glisser-déposer**.
 - Fils de discussion, chat de chaque pièce, amis, messages privés (et demandes de message hors amis), **appels privés**.
-- Messages : pièces jointes, messages vocaux, GIF (Klipy), **modifier**, **réactions**, **mentions** @pseudo / @vocal / @tous.
+- Messages : pièces jointes, messages vocaux, GIF (Klipy), **modifier**, **réactions**, **mentions** @pseudo / @vocal / @tous, « X est en train d'écrire… ».
 - **Mur des légendes** : citations cultes, captures et clips épinglés.
 - **Défis à points** : on se lance un défi, les participants valident le gagnant, classement du mois (pas d'argent, pas de mise).
 - Profils (photo, bannière, phrase, couleur), statuts (en ligne, inactif, ne pas déranger, invisible + statut perso), confidentialité, blocage.

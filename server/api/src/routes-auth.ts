@@ -85,7 +85,7 @@ export default async function authRoutes(app: FastifyInstance) {
     const password = typeof req.body?.password === "string" ? req.body.password : "";
     const generic = { error: "Pseudo ou mot de passe incorrect." };
 
-    const locked = loginLockedFor(username);
+    const locked = loginLockedFor(username, req.ip);
     if (locked) {
       return reply
         .code(429)
@@ -98,10 +98,10 @@ export default async function authRoutes(app: FastifyInstance) {
     // On vérifie toujours un hash (même factice) pour ne pas révéler si le pseudo existe.
     const ok = await verifyPassword(password, row?.password_hash ?? DUMMY_HASH);
     if (!row || !ok) {
-      recordLoginFailure(username);
+      recordLoginFailure(username, req.ip);
       return reply.code(401).send(generic);
     }
-    clearLoginFailures(username);
+    clearLoginFailures(username, req.ip);
     return openSession({ id: row.id, username: row.username, isDev: devFlag(row.is_dev) }, req.headers["user-agent"]);
   });
 

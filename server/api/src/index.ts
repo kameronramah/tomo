@@ -20,7 +20,7 @@ const app = Fastify({ logger: true, trustProxy: config.trustProxy, bodyLimit: 64
 
 // Le client de bureau (origine tauri.localhost) et le client web de dev appellent l'API
 // depuis une autre origine. L'authentification passe par l'en-tête Authorization (pas de cookie).
-await app.register(cors, { origin: true, methods: ["GET", "POST", "PATCH", "DELETE"] });
+await app.register(cors, { origin: true, methods: ["GET", "POST", "PUT", "PATCH", "DELETE"] });
 
 // Limite globale par IP ; les routes de connexion ont une limite plus stricte.
 await app.register(rateLimit, { max: 300, timeWindow: "1 minute" });

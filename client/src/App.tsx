@@ -23,7 +23,10 @@ import { putPeople, setPeopleApi, watchPeople } from "./lib/people";
 import { applyStartupMinimize, inQuietHours, notify } from "./lib/desktop";
 import { currentGame, gamePrefs, onGame, publicGame, startGameWatch, type RunningGame } from "./lib/games";
 import GameCard from "./components/GameCard";
-import { overlayChat, startOverlay } from "./lib/overlay";
+import { overlayChat, startOverlay, toggleOverlayHidden } from "./lib/overlay";
+import { startHotkeys } from "./lib/hotkeys";
+import { setPttHeld } from "./lib/ptt";
+import { getCaptions, startCaptions, stopCaptions } from "./lib/captions";
 import { startCoachScreen } from "./lib/coachScreen";
 import LegendsView from "./components/LegendsView";
 import ChallengesView from "./components/ChallengesView";
@@ -602,22 +605,30 @@ export default function App() {
   }
 
   // ---- Raccourcis clavier -------------------------------------------------------
+  // Raccourcis configurables (Paramètres › Raccourcis clavier), qui marchent aussi en jeu.
+  useEffect(() => {
+    const inVoice = () => !!voiceRef.current;
+    void startHotkeys({
+      ptt: (down) => setPttHeld(down),
+      mute: () => inVoice() && void toggleMic(),
+      deafen: () => inVoice() && void toggleDeafen(),
+      clip: () => inVoice() && void takeClip(),
+      spatial: () => voiceRef.current?.kind === "room" && void toggleSpatial(),
+      captions: () => {
+        const room = voiceRef.current?.room;
+        if (!room) return;
+        if (getCaptions()) stopCaptions();
+        else startCaptions(room);
+      },
+      leave: () => inVoice() && void leaveVoice(),
+      overlay: () => toggleOverlayHidden(),
+      settings: () => session?.kind === "user" && setSettingsOpen(true),
+    });
+  });
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!e.ctrlKey || e.altKey) return;
-      if (e.shiftKey && e.key.toLowerCase() === "m" && voiceRef.current) {
-        e.preventDefault();
-        toggleMic();
-      } else if (e.shiftKey && e.key.toLowerCase() === "c" && voiceRef.current) {
-        e.preventDefault();
-        takeClip();
-      } else if (e.shiftKey && e.key.toLowerCase() === "d" && voiceRef.current) {
-        e.preventDefault();
-        toggleDeafen();
-      } else if (!e.shiftKey && e.key === "," && session?.kind === "user") {
-        e.preventDefault();
-        setSettingsOpen(true);
-      } else if (!e.shiftKey) {
+      if (!e.shiftKey) {
         const n = Number(e.key);
         if (n >= 1 && n <= 9 && servers[n - 1]) {
           e.preventDefault();
@@ -1061,6 +1072,20 @@ export default function App() {
         onAddChannel={() => setDialog({ kind: "addChannel", serverId: detail.id })}
         onRenameChannel={(channel) => setDialog({ kind: "renameChannel", channel })}
         onDeleteChannel={(channel) => setDialog({ kind: "deleteChannel", channel })}
+        onReorderRooms={(ids) =>
+          api.reorderRooms(detail.id, ids).then(loadDetail, (err) => {
+            showError(err);
+            loadDetail();
+            throw err;
+          })
+        }
+        onReorderChannels={(ids) =>
+          api.reorderChannels(detail.id, ids).then(loadDetail, (err) => {
+            showError(err);
+            loadDetail();
+            throw err;
+          })
+        }
       />
     );
   } else if (servers.length === 0 && !isGuest) {

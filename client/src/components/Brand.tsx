@@ -48,11 +48,11 @@ export function useDisplayName(userId: string | null | undefined, fallback: stri
   return getPerson(userId)?.displayName ?? fallback;
 }
 
-/** Barres de signal + ping (ms), mis à jour toutes les 2 s. */
+/** Barres de signal + ping (ms), mis à jour chaque seconde. */
 export function NetworkBadge({ room, showLabel = false }: { room: Room | null; showLabel?: boolean }) {
   const [, tick] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
-    const t = setInterval(tick, 2000);
+    const t = setInterval(tick, 1000);
     return () => clearInterval(t);
   }, []);
   const n = networkInfo(room);
@@ -138,6 +138,7 @@ const PATHS: Record<string, string[]> = {
   userCheck: ["M9 4a4 4 0 1 1 0 8 4 4 0 0 1 0-8z", "M2 21a7 7 0 0 1 14 0", "M16 11l2 2 4-4"],
   bell: ["M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9", "M13.7 21a2 2 0 0 1-3.4 0"],
   monitor: ["M3 4h18v12H3z", "M8 20h8M12 16v4"],
+  grip: ["M8.5 6h1M14.5 6h1M8.5 12h1M14.5 12h1M8.5 18h1M14.5 18h1"],
   keyboard: ["M2 6h20v12H2z", "M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"],
   info: ["M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20z", "M12 16v-4M12 8h.01"],
   signal: ["M2 20h.01M7 20v-4M12 20v-8M17 20V8M22 20V4"],

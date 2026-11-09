@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { db, tx } from "./db.js";
 import { attachmentsFor, checkAttachments, linkAttachments, sweepAttachments, type Attachment } from "./attachments.js";
 import { accessOf, isManager } from "./access.js";
-import { authenticate, cleanLabel, requireUser, type Principal } from "./security.js";
+import { TOO_FAST, authenticate, cleanLabel, messageTooFast, requireUser, type Principal } from "./security.js";
 import { sendToServer, sendToUser } from "./realtime.js";
 
 export type Scope = "channel" | "room" | "dm";
@@ -163,8 +163,23 @@ function cleanChannelName(v: unknown): string | null {
   return label ? label.toLowerCase().replace(/\s+/g, "-") : null;
 }
 
+
+/** Nouvel ordre des fils (admins) : la liste complète des identifiants, dans l'ordre voulu. */
+export function reorderChannels(serverId: string, ids: unknown): string | null {
+  if (!Array.isArray(ids) || ids.length > 200 || !ids.every((x) => typeof x === "string")) return "Liste invalide.";
+  const existing = (db.prepare("SELECT id FROM channels WHERE server_id = ?").all(serverId) as { id: string }[]).map((r) => r.id);
+  const wanted = new Set(ids as string[]);
+  if (wanted.size !== ids.length || wanted.size !== existing.length || !existing.every((id) => wanted.has(id))) {
+    return "La liste ne correspond pas aux fils du serveur (quelqu'un vient d'en ajouter ou d'en retirer ?).";
+  }
+  const update = db.prepare("UPDATE channels SET position = ? WHERE id = ? AND server_id = ?");
+  tx(() => (ids as string[]).forEach((id, i) => update.run(i, id, serverId)));
+  return null;
+}
+
 export default async function chatRoutes(app: FastifyInstance) {
-  const writeLimit = { config: { rateLimit: { max: 20, timeWindow: "10 seconds" } } };
+  // Par adresse IP (large : plusieurs potes peuvent partager une box) ; la vraie limite est par compte.
+  const writeLimit = { config: { rateLimit: { max: 60, timeWindow: "10 seconds" } } };
 
   // ---- Salons textuels -----------------------------------------------------
   app.get<{ Params: { id: string } }>("/servers/:id/channels", async (req, reply) => {
@@ -196,6 +211,19 @@ export default async function chatRoutes(app: FastifyInstance) {
     );
     sendToServer(req.params.id, { type: "channels", serverId: req.params.id });
     return channel;
+  });
+
+  /** Ranger les fils (glisser-déposer). */
+  app.put<{ Params: { id: string }; Body: { ids?: unknown } }>("/servers/:id/channels/order", async (req, reply) => {
+    const me = await requireUser(req, reply);
+    if (!me) return;
+    const role = accessOf(me, req.params.id);
+    if (!role) return notFound(reply, "Serveur introuvable.");
+    if (!isManager(role)) return reply.code(403).send({ error: "Seuls les admins du serveur peuvent faire ça." });
+    const error = reorderChannels(req.params.id, req.body?.ids);
+    if (error) return reply.code(409).send({ error });
+    sendToServer(req.params.id, { type: "channels", serverId: req.params.id });
+    return { ok: true };
   });
 
   app.patch<{ Params: { channelId: string }; Body: { name?: unknown } }>("/channels/:channelId", async (req, reply) => {
@@ -244,6 +272,7 @@ export default async function chatRoutes(app: FastifyInstance) {
       if (!me) return;
       const ch = serverOfChannel(req.params.channelId);
       if (!ch || !accessOf(me, ch.server_id)) return notFound(reply);
+      if (messageTooFast(me.id)) return reply.code(429).send(TOO_FAST);
       const msg = createMessage(me, "channel", ch.id, req.body, isManager(accessOf(me, ch.server_id)));
       if (typeof msg === "string") return reply.code(400).send({ error: msg });
       sendToServer(ch.server_id, { type: "message", serverId: ch.server_id, message: msg });
@@ -268,6 +297,7 @@ export default async function chatRoutes(app: FastifyInstance) {
       if (!me) return;
       const room = serverOfRoom(req.params.roomId);
       if (!room || !accessOf(me, room.server_id)) return notFound(reply);
+      if (messageTooFast(me.id)) return reply.code(429).send(TOO_FAST);
       const msg = createMessage(me, "room", room.id, req.body, isManager(accessOf(me, room.server_id)));
       if (typeof msg === "string") return reply.code(400).send({ error: msg });
       sendToServer(room.server_id, { type: "message", serverId: room.server_id, message: msg });

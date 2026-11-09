@@ -92,6 +92,32 @@ function dayLabel(ts: number) {
 const timeLabel = (ts: number) => new Date(ts).toLocaleTimeString(locale(), { hour: "2-digit", minute: "2-digit" });
 
 
+/** Sous la liste des messages : « Léa est en train d'écrire… » */
+function TypingLine({ names }: { names: string[] }) {
+  const text =
+    names.length === 0
+      ? ""
+      : names.length === 1
+        ? t("{0} est en train d'écrire…", { 0: names[0] })
+        : names.length === 2
+          ? t("{0} et {1} sont en train d'écrire…", { 0: names[0], 1: names[1] })
+          : t("Plusieurs personnes sont en train d'écrire…");
+  return (
+    <div className="typing-line" aria-live="polite">
+      {text && (
+        <>
+          <span className="typing-dots" aria-hidden="true">
+            <span />
+            <span />
+            <span />
+          </span>
+          {text}
+        </>
+      )}
+    </div>
+  );
+}
+
 export default function ChatView(props: Props) {
   const { api, realtime, scope, target, myId } = props;
   const stored = props.storedTarget ?? target;
@@ -151,12 +177,37 @@ export default function ChatView(props: Props) {
     };
   }, [scope, target]);
 
+  // « X est en train d'écrire… » : nom → heure du dernier signal (effacé après 5 s ou à son message)
+  const [typers, setTypers] = useState<Record<string, { name: string; at: number }>>({});
+  useEffect(() => setTypers({}), [scope, target]);
+  useEffect(() => {
+    if (!Object.keys(typers).length) return;
+    const timer = setInterval(() => {
+      setTypers((cur) => {
+        const now = Date.now();
+        const next = Object.fromEntries(Object.entries(cur).filter(([, v]) => now - v.at < 5000));
+        return Object.keys(next).length === Object.keys(cur).length ? cur : next;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [typers]);
+
   // Messages en direct
   useEffect(() => {
     if (!realtime) return;
     return realtime.on((e) => {
+      if (e.type === "typing" && e.scope === scope && e.userId !== myId && e.target === (scope === "dm" ? target : stored)) {
+        setTypers((cur) => ({ ...cur, [e.userId]: { name: e.name, at: Date.now() } }));
+      }
       if (e.type === "message" && e.message.scope === scope && e.message.target === stored) {
         setMessages((list) => (list.some((m) => m.id === e.message.id) ? list : [...list, e.message]));
+        const author = e.message.authorId;
+        setTypers((cur) => {
+          if (!(author in cur)) return cur;
+          const next = { ...cur };
+          delete next[author];
+          return next;
+        });
       }
       if (e.type === "messageDeleted" && e.scope === scope && e.target === stored) {
         setMessages((list) => list.filter((m) => m.id !== e.id));
@@ -168,7 +219,7 @@ export default function ChatView(props: Props) {
         setMessages((list) => list.map((m) => (m.id === e.messageId ? { ...m, reactions: e.reactions } : m)));
       }
     });
-  }, [realtime, scope, stored]);
+  }, [realtime, scope, stored, target, myId]);
 
   // ---- Réactions, modification, mentions -------------------------------------
   const [pickerFor, setPickerFor] = useState<string | null>(null);
@@ -302,6 +353,7 @@ export default function ChatView(props: Props) {
   async function post(content: string, attachmentIds: string[]) {
     stickToBottom.current = true;
     const msg = await api.sendMessage(scope, target, content, attachmentIds);
+    realtime?.typingDone(scope, target);
     setMessages((list) => (list.some((m) => m.id === msg.id) ? list : [...list, msg]));
   }
 
@@ -509,6 +561,7 @@ export default function ChatView(props: Props) {
 
       {gifOpen && <GifPicker api={api} onPick={sendGif} onClose={() => setGifOpen(false)} />}
 
+      {!props.hideComposer && <TypingLine names={Object.values(typers).map((x) => x.name)} />}
       {props.hideComposer ? null : recording ? (
         <div className="composer recording" role="group" aria-label={t("Enregistrement d'un message vocal")}>
           <button type="button" className="icon-btn rec-cancel" onClick={() => stopRecording(false)} aria-label={t("Annuler l'enregistrement")} title={t("Annuler")}>
@@ -554,6 +607,7 @@ export default function ChatView(props: Props) {
             onChange={(e) => {
               setDraft(e.target.value);
               updateSuggest(e.target.value, e.target.selectionStart ?? e.target.value.length);
+              if (e.target.value.trim()) realtime?.typing(scope, target);
             }}
             onBlur={() => setSuggest(null)}
             onPaste={(e) => {

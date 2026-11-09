@@ -1,4 +1,4 @@
-import { ConnectionQuality, Room, RoomEvent, Track, type RemoteParticipant } from "livekit-client";
+import { ConnectionQuality, Room, RoomEvent, Track, type LocalAudioTrack, type RemoteParticipant } from "livekit-client";
 import type { Api } from "./api";
 import { getSettings, loadDevices, onSettingsChange } from "./prefs";
 import { SpatialEngine, type Pose } from "./spatial";
@@ -9,10 +9,14 @@ import { currentGame, gamePrefs } from "./games";
 import { publishMyLang } from "./captions";
 import { applyMicProcessing, watchMicProcessing } from "./denoise";
 import { t } from "./i18n";
+import { watchPtt } from "./ptt";
+import { speakingDetector } from "./speaking";
 
 /** Volumes choisis par personne (par pseudo), gardés le temps de la session. */
 export const volumeMemory = new Map<string, number>();
 let deafened = false;
+/** « Baisser les autres quand je parle » : facteur appliqué aux voix (1 = normal). */
+let duck = 1;
 let activeRoom: Room | null = null;
 
 const volumeKey = (p: RemoteParticipant) => p.name || p.identity;
@@ -22,7 +26,7 @@ export const screenVolumeMemory = new Map<string, number>();
 
 function applyVolume(p: RemoteParticipant) {
   const master = getSettings().audio.outputVolume;
-  p.setVolume(deafened ? 0 : (volumeMemory.get(volumeKey(p)) ?? 1) * master);
+  p.setVolume(deafened ? 0 : (volumeMemory.get(volumeKey(p)) ?? 1) * master * duck);
   p.setVolume(deafened ? 0 : (screenVolumeMemory.get(volumeKey(p)) ?? 1) * master, Track.Source.ScreenShareAudio);
 }
 
@@ -138,6 +142,31 @@ async function startExtras(room: Room, ctx: AudioContext) {
     }),
   );
   await setClips(ex, clipsWanted);
+
+  // Baisser les autres quand je parle (option) : le son des partages d'écran n'est pas touché.
+  const me = room.localParticipant.identity;
+  let restore: ReturnType<typeof setTimeout> | undefined;
+  const setDuck = (v: number) => {
+    if (v === duck) return;
+    duck = v;
+    room.remoteParticipants.forEach(applyVolume);
+  };
+  ex.offs.push(
+    speakingDetector(room).onChange((set) => {
+      const a = getSettings().audio;
+      clearTimeout(restore);
+      if (a.duck && set.has(me)) setDuck(1 - a.duckAmount);
+      else restore = setTimeout(() => setDuck(1), 350); // retour en douceur après la phrase
+    }),
+    onSettingsChange((s) => {
+      if (!s.audio.duck) setDuck(1);
+      else if (duck !== 1) setDuck(1 - s.audio.duckAmount);
+    }),
+    () => {
+      clearTimeout(restore);
+      duck = 1;
+    },
+  );
 }
 
 async function stopExtras(room: Room) {
@@ -173,6 +202,9 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
   });
   // Suppression de bruit avancée / porte de bruit : suit les réglages en direct.
   const stopWatch = watchMicProcessing(room);
+  // Appuyer pour parler : la piste micro reste coupée tant que la touche n'est pas tenue.
+  const stopPtt = watchPtt(room);
+  const stopDevices = watchMicConstraints(room);
 
   room
     .on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
@@ -189,12 +221,15 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
     })
     .on(RoomEvent.Disconnected, () => {
       stopWatch();
+      stopPtt();
+      stopDevices();
       if (activeRoom === room) activeRoom = null;
       void stopExtras(room);
     });
 
   await room.connect(url, token);
   activeRoom = room;
+  measureEarlyPing(room);
   publishMyLang(room); // pour les sous-titres des autres (langue de transcription)
   await startExtras(room, ctx);
 
@@ -209,6 +244,39 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
   return { room, warning };
 }
 
+/**
+ * Écho, volume auto du micro, filtre léger : s'appliquent tout de suite en vocal
+ * (la piste micro est relancée avec les nouveaux réglages, en une fraction de seconde).
+ */
+function watchMicConstraints(room: Room) {
+  const pick = () => {
+    const a = getSettings().audio;
+    return JSON.stringify([a.echoCancellation, a.autoGain, a.denoise === "light"]);
+  };
+  let prev = pick();
+  return onSettingsChange(() => {
+    const next = pick();
+    if (next === prev) return;
+    prev = next;
+    const a = getSettings().audio;
+    const track = room.localParticipant.getTrackPublication(Track.Source.Microphone)?.track as LocalAudioTrack | undefined;
+    void track
+      ?.restartTrack({
+        deviceId: loadDevices().input,
+        echoCancellation: a.echoCancellation,
+        noiseSuppression: a.denoise === "light",
+        autoGainControl: a.autoGain,
+      })
+      .catch(() => {});
+  });
+}
+
+/** Changer de micro ou de sortie pendant un vocal (Paramètres › Audio). */
+export async function switchDevice(kind: "audioinput" | "audiooutput", id: string | undefined) {
+  if (!activeRoom) return;
+  await activeRoom.switchActiveDevice(kind, id ?? "default").catch(() => {});
+}
+
 export async function joinRoom(api: Api, roomId: string, opts: { micEnabled: boolean }) {
   const { url, token } = await api.roomToken(roomId);
   return connectVoice(url, token, opts);
@@ -219,11 +287,35 @@ export async function joinRoom(api: Api, roomId: string, opts: { micEnabled: boo
 // ---------------------------------------------------------------------------
 export type NetworkInfo = { rtt: number | null; level: 0 | 1 | 2 | 3; label: string };
 
+/** Ping lu dans les statistiques WebRTC, en attendant celui de LiveKit (qui arrive après ~5 s). */
+const earlyRtt = new WeakMap<Room, number>();
+const signalRtt = (room: Room) => (room as unknown as { engine?: { client?: { rtt?: number } } }).engine?.client?.rtt;
+
+function measureEarlyPing(room: Room) {
+  let tries = 0;
+  const timer = setInterval(async () => {
+    const raw = signalRtt(room);
+    if ((typeof raw === "number" && raw > 0) || ++tries > 15 || room.state === "disconnected") return clearInterval(timer);
+    const tracks = [room.localParticipant, ...room.remoteParticipants.values()].flatMap((p) => [...p.trackPublications.values()].map((pub) => pub.track));
+    for (const track of tracks) {
+      const report = await (track as { getRTCStatsReport?: () => Promise<RTCStatsReport | undefined> } | undefined)?.getRTCStatsReport?.().catch(() => undefined);
+      let found: number | undefined;
+      report?.forEach((s: { type?: string; state?: string; currentRoundTripTime?: number }) => {
+        if (s.type === "candidate-pair" && s.state === "succeeded" && typeof s.currentRoundTripTime === "number") found = s.currentRoundTripTime * 1000;
+      });
+      if (found && found > 0) {
+        earlyRtt.set(room, Math.round(found));
+        break;
+      }
+    }
+  }, 700);
+}
+
 /** Ping (aller-retour vers le serveur vocal) et qualité estimée par LiveKit. */
 export function networkInfo(room: Room | null): NetworkInfo {
   if (!room) return { rtt: null, level: 0, label: t("hors ligne") };
-  const raw = (room as unknown as { engine?: { client?: { rtt?: number } } }).engine?.client?.rtt;
-  const rtt = typeof raw === "number" && raw > 0 ? Math.round(raw) : null;
+  const raw = signalRtt(room);
+  const rtt = typeof raw === "number" && raw > 0 ? Math.round(raw) : (earlyRtt.get(room) ?? null);
   const q = room.localParticipant.connectionQuality;
   let level: NetworkInfo["level"] =
     q === ConnectionQuality.Excellent ? 3 : q === ConnectionQuality.Good ? 2 : q === ConnectionQuality.Poor ? 1 : 0;

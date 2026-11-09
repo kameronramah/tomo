@@ -5,7 +5,7 @@ import { AccessToken } from "livekit-server-sdk";
 import { db } from "./db.js";
 import { config } from "./config.js";
 import { areFriends, isBlocked, pair } from "./access.js";
-import { requireUser } from "./security.js";
+import { TOO_FAST, messageTooFast, requireUser } from "./security.js";
 import { isOnline, presenceOf, sendToUser } from "./realtime.js";
 import { canAddFriend, canCall, canMessage, displayNameOf, dmState, lightProfile, setDmState, userRow } from "./profiles.js";
 import { createMessage, listMessages, type MessageBody } from "./routes-chat.js";
@@ -170,10 +170,11 @@ export default async function socialRoutes(app: FastifyInstance) {
 
   app.post<{ Params: { userId: string }; Body: MessageBody }>(
     "/dm/:userId/messages",
-    { config: { rateLimit: { max: 20, timeWindow: "10 seconds" } } },
+    { config: { rateLimit: { max: 60, timeWindow: "10 seconds" } } },
     async (req, reply) => {
       const me = await requireUser(req, reply);
       if (!me) return;
+      if (messageTooFast(me.id)) return reply.code(429).send(TOO_FAST);
       const other = req.params.userId;
       if (!userRow(other)) return reply.code(404).send({ error: "Compte introuvable." });
       if (!canMessage(me.id, other)) return reply.code(403).send({ error: "Cette personne n'accepte pas les messages de ta part." });

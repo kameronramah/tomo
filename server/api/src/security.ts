@@ -138,28 +138,96 @@ export async function requireUser(req: FastifyRequest, reply: FastifyReply) {
 }
 
 // ---------------------------------------------------------------------------
-// Blocage temporaire après plusieurs échecs de connexion sur un même pseudo
+// Limite par compte (en plus de la limite par adresse IP)
+//
+// Sert pour l'envoi de messages : plusieurs potes derrière la même box (même IP, soirée LAN)
+// ne se gênent plus, et un compte seul ne peut pas inonder un fil.
 // ---------------------------------------------------------------------------
-const MAX_FAILS = 5;
-const LOCK_MS = 15 * 60 * 1000;
-const failures = new Map<string, { count: number; lockedUntil: number }>();
+const hits = new Map<string, number[]>();
 
-export function loginLockedFor(username: string): number {
-  const f = failures.get(username.toLowerCase());
-  return f && f.lockedUntil > Date.now() ? f.lockedUntil - Date.now() : 0;
+/** Vrai si le compte a déjà fait `max` actions de ce type dans la fenêtre (en ms). */
+export function tooFast(bucket: string, accountId: string, max: number, windowMs: number): boolean {
+  const key = `${bucket}|${accountId}`;
+  const now = Date.now();
+  const list = (hits.get(key) ?? []).filter((t) => now - t < windowMs);
+  if (list.length >= max) {
+    hits.set(key, list);
+    return true;
+  }
+  list.push(now);
+  hits.set(key, list);
+  if (hits.size > 20000) for (const [k, l] of hits) if (!l.some((t) => now - t < 60_000)) hits.delete(k);
+  return false;
 }
 
-export function recordLoginFailure(username: string) {
-  const key = username.toLowerCase();
-  const f = failures.get(key) ?? { count: 0, lockedUntil: 0 };
+/** Messages : 10 par tranche de 10 s et par compte. */
+export const messageTooFast = (accountId: string) => tooFast("msg", accountId, 10, 10_000);
+export const TOO_FAST = { error: "Tu envoies trop vite. Attends quelques secondes." };
+
+// ---------------------------------------------------------------------------
+// Blocage temporaire après plusieurs échecs de connexion
+//
+// Compté par adresse IP + pseudo : quelqu'un qui rate exprès le mot de passe d'un autre
+// ne bloque que lui-même, pas le vrai propriétaire du compte (qui se connecte d'ailleurs).
+// Le délai grandit à chaque série d'échecs : 1, 2, 4, 8 puis 15 min.
+// En plus, beaucoup d'échecs sur un même pseudo depuis plein d'adresses (attaque répartie)
+// le bloquent 5 min pour tout le monde.
+// ---------------------------------------------------------------------------
+const MAX_FAILS = 5;
+const MAX_LOCK_MS = 15 * 60 * 1000;
+const GLOBAL_FAILS = 50;
+const GLOBAL_WINDOW_MS = 60 * 60 * 1000;
+const GLOBAL_LOCK_MS = 5 * 60 * 1000;
+type Fail = { count: number; strikes: number; lockedUntil: number; last: number };
+const failures = new Map<string, Fail>();
+const perUser = new Map<string, { count: number; since: number; lockedUntil: number }>();
+
+const keyOf = (username: string, ip: string) => `${ip}|${username.toLowerCase()}`;
+
+function prune() {
+  if (failures.size < 5000 && perUser.size < 5000) return;
+  const now = Date.now();
+  for (const [k, f] of failures) if (f.lockedUntil < now && now - f.last > 24 * 3600_000) failures.delete(k);
+  for (const [k, u] of perUser) if (u.lockedUntil < now && now - u.since > GLOBAL_WINDOW_MS) perUser.delete(k);
+}
+
+/** Temps restant (ms) avant de pouvoir réessayer, 0 si c'est permis. */
+export function loginLockedFor(username: string, ip: string): number {
+  const now = Date.now();
+  const f = failures.get(keyOf(username, ip));
+  const u = perUser.get(username.toLowerCase());
+  return Math.max(f && f.lockedUntil > now ? f.lockedUntil - now : 0, u && u.lockedUntil > now ? u.lockedUntil - now : 0);
+}
+
+export function recordLoginFailure(username: string, ip: string) {
+  const now = Date.now();
+  const key = keyOf(username, ip);
+  const f = failures.get(key) ?? { count: 0, strikes: 0, lockedUntil: 0, last: now };
   f.count += 1;
+  f.last = now;
   if (f.count >= MAX_FAILS) {
-    f.lockedUntil = Date.now() + LOCK_MS;
+    f.lockedUntil = now + Math.min(MAX_LOCK_MS, 60_000 * 2 ** f.strikes);
+    f.strikes += 1;
     f.count = 0;
   }
   failures.set(key, f);
+
+  const name = username.toLowerCase();
+  const u = perUser.get(name) ?? { count: 0, since: now, lockedUntil: 0 };
+  if (now - u.since > GLOBAL_WINDOW_MS) {
+    u.count = 0;
+    u.since = now;
+  }
+  u.count += 1;
+  if (u.count >= GLOBAL_FAILS) {
+    u.lockedUntil = now + GLOBAL_LOCK_MS;
+    u.count = 0;
+    u.since = now;
+  }
+  perUser.set(name, u);
+  prune();
 }
 
-export function clearLoginFailures(username: string) {
-  failures.delete(username.toLowerCase());
+export function clearLoginFailures(username: string, ip: string) {
+  failures.delete(keyOf(username, ip));
 }

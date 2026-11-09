@@ -356,6 +356,9 @@ export class Api {
   renameRoom = (roomId: string, label: string) => this.request("PATCH", `/rooms/${roomId}`, { label });
   setSpatial = (roomId: string, spatial: boolean) => this.request("PATCH", `/rooms/${roomId}`, { spatial });
   deleteRoom = (roomId: string) => this.request("DELETE", `/rooms/${roomId}`);
+  /** Ranger les pièces / les fils : liste complète des identifiants dans le nouvel ordre (admins). */
+  reorderRooms = (serverId: string, ids: string[]) => this.request("PUT", `/servers/${serverId}/rooms/order`, { ids });
+  reorderChannels = (serverId: string, ids: string[]) => this.request("PUT", `/servers/${serverId}/channels/order`, { ids });
   roomToken = (roomId: string) =>
     this.request<{ url: string; token: string; identity: string; spatial: boolean }>("POST", `/rooms/${roomId}/token`, {});
 

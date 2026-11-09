@@ -58,12 +58,21 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] **Stats de jeu** : Steam (OpenID, heures jouées) et League of Legends (Riot ID : rang, dernières parties), Paramètres › Comptes de jeu
 - [ ] Tester en vrai : overlay par-dessus un jeu, sous-titres à plusieurs, liaison Steam, clé Riot, mise à jour automatique d'une version à la suivante
 
+## V0.9 — Micro et raccourcis ✅
+- [x] **Appuyer pour parler** (push-to-talk) : touche du clavier ou bouton de souris, délai de relâche, petit son
+- [x] **Seuil de voix** réglable avec le niveau du micro en direct (ou automatique)
+- [x] **« Baisser les autres quand je parle »** (option, coupée au départ)
+- [x] **Raccourcis clavier configurables** (Paramètres › Raccourcis) qui marchent **en jeu** sans bloquer la touche : push-to-talk, micro, son, clip, audio spatial, sous-titres, quitter, overlay
+- [x] **Ranger les pièces et les fils** par glisser-déposer (admins), visible tout de suite par tout le monde
+- [x] « X est en train d'écrire… »
+- [ ] Tester en vrai : push-to-talk et raccourcis dans un jeu, sur Mac (autorisation « Surveillance de l'entrée »)
+
 ## V1 — MVP « on lâche Discord »
 > Objectif : utilisable tous les soirs par le groupe.
 
 - [ ] Déployer sur le VPS et tester à plusieurs (voir V0.2)
-- [ ] Push-to-talk / seuil de voix, « baisser les autres quand je parle »
-- [ ] Réordonner les salons par glisser-déposer
+- [x] Push-to-talk / seuil de voix, « baisser les autres quand je parle » (v0.9)
+- [x] Réordonner les salons par glisser-déposer (v0.9)
 - [ ] Signer l'app Mac et l'app Windows (payant → voir « Mis de côté »)
 
 ## V2 — Encore plus pour le jeu
@@ -93,10 +102,10 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 Repérées en route. À glisser entre deux grosses fonctionnalités.
 
 ### Interface
-- [ ] Bloc « En vocal » : le ping passe à la ligne quand le panneau latéral est étroit
-- [ ] Pseudo coupé dans la carte profil en fenêtre étroite (3 boutons à côté)
-- [ ] Le ping affiche « — ms » pendant les 5 premières secondes d'une connexion vocale
-- [ ] Indicateur « X est en train d'écrire… »
+- [x] Bloc « En vocal » : le ping passe à la ligne quand le panneau latéral est étroit
+- [x] Pseudo coupé dans la carte profil en fenêtre étroite (3 boutons à côté)
+- [x] Le ping affiche « — ms » pendant les 5 premières secondes d'une connexion vocale (mesuré tout de suite par WebRTC)
+- [x] Indicateur « X est en train d'écrire… »
 - [ ] Recherche dans les messages
 - [ ] Mettre à jour les maquettes « Connexion » et « Créer un compte »
 - [ ] Mode coach : barre d'outils en icônes seules quand la fenêtre est petite
@@ -104,19 +113,23 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Mode coach : répondre à une demande depuis l'overlay (aujourd'hui : notification + réponse dans tomo)
 - [ ] Quelques textes restent en français en mode anglais (notifications système, messages d'erreur rares du serveur) : à traduire au fil de l'eau
 - [ ] Le mur des légendes affiche le pseudo de l'époque (pas le nom affiché actuel)
+- [ ] Ranger les pièces aussi depuis le plan du serveur (colonne visible en vocal), pas seulement depuis l'accueil
+- [ ] Ranger les serveurs dans la colonne de gauche par glisser-déposer
 
 ### Raccourcis
-- [ ] **Raccourcis globaux** (qui marchent quand le jeu est au premier plan), configurables
-- [ ] **Push-to-talk** : touche au choix, petit son à l'appui et au relâchement
-- [ ] Raccourci global pour le clip, l'audio spatial et l'overlay (Ctrl+Maj+O)
+- [x] **Raccourcis globaux** (qui marchent quand le jeu est au premier plan), configurables
+- [x] **Push-to-talk** : touche au choix, petit son à l'appui et au relâchement
+- [x] Raccourci global pour le clip, l'audio spatial et l'overlay (Ctrl+Maj+O)
+- [ ] Mac : les lettres des raccourcis suivent la position QWERTY (sur un clavier AZERTY, « A » s'affiche « Q ») → lire la disposition du clavier
+- [ ] Un push-to-talk par salon (mode radio, V2)
 
 ### Audio et vocal
-- [ ] Paramètres > Audio : appliquer tout de suite le changement de micro / sortie, d'écho et de gain auto
+- [x] Paramètres > Audio : appliquer tout de suite le changement de micro / sortie, d'écho et de gain auto
 - [ ] Vérifier le « retour micro » des outils de test avec un vrai micro
 - [ ] Clips : format .ogg plus léger ; les partager directement dans un fil ou un message privé
 - [ ] Carte spatiale : se déplacer aux flèches du clavier ; onde autour de l'avatar qui parle
 - [ ] Partage d'écran : choisir la qualité reçue, changer de profil sans arrêter, vignette « en direct », AV1
-- [ ] Sous-titres : ne pas recharger le modèle à chaque entrée dans une pièce
+- [x] Sous-titres : ne pas recharger le modèle à chaque entrée dans une pièce
 
 ### Jeux
 - [ ] Liste des jeux connus : la compléter (et « javaw.exe = Minecraft » peut se tromper avec d'autres programmes Java)
@@ -130,8 +143,9 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 
 ### Compte et sécurité
 - [ ] Révoquer un appareil précis (aujourd'hui : tous d'un coup)
-- [ ] Le blocage « 5 échecs = 15 min » peut servir à bloquer volontairement un pseudo : délai progressif par IP + pseudo
-- [ ] Limiter l'envoi de messages par compte (aujourd'hui : par adresse IP)
+- [x] Le blocage « 5 échecs = 15 min » peut servir à bloquer volontairement un pseudo : délai progressif par IP + pseudo
+- [x] Limiter l'envoi de messages par compte (aujourd'hui : par adresse IP)
+- [ ] Vérifier le blocage par adresse depuis deux adresses différentes (testé seulement depuis une seule)
 - [ ] Riot : vérifier que le Riot ID appartient bien à la personne (impossible sans la connexion officielle Riot)
 
 ### Fenêtre

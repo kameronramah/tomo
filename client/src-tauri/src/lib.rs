@@ -6,6 +6,7 @@
 
 mod clips;
 mod games;
+mod input;
 mod mumble;
 
 const SERVICE: &str = "com.tomo.app";
@@ -69,11 +70,16 @@ pub fn run() {
         .setup(|app| {
             // Position du joueur dans son jeu (Mumble Link) pour l'audio spatial
             mumble::spawn(app.handle().clone());
+            // Raccourcis qui marchent en jeu (seulement les touches choisies par la personne)
+            input::spawn(app.handle().clone());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
             launched_at_login,
             games::running_programs,
+            input::input_set_keys,
+            input::input_record,
+            input::input_permission,
             secret_get,
             secret_set,
             secret_delete,

@@ -70,6 +70,16 @@ export function publishMyLang(room: Room) {
   void room.localParticipant.setAttributes({ ...room.localParticipant.attributes, lang: myLang }).catch(() => {});
 }
 
+/**
+ * Un seul fil de calcul pour toute la session : le modèle reste chargé en mémoire quand on
+ * change de pièce ou qu'on rallume les sous-titres (plus de rechargement à chaque fois).
+ */
+let sharedWorker: Worker | null = null;
+function captionsWorker(): Worker {
+  sharedWorker ??= new Worker(new URL("./captions.worker.ts", import.meta.url), { type: "module" });
+  return sharedWorker;
+}
+
 export class Captions {
   lines: Line[] = [];
   status: CaptionsStatus = { state: "off", progress: 0 };
@@ -83,7 +93,7 @@ export class Captions {
 
   constructor(private room: Room) {
     this.translateTo = getSettings().captions.translate ? myLang : null;
-    this.worker = new Worker(new URL("./captions.worker.ts", import.meta.url), { type: "module" });
+    this.worker = captionsWorker();
     this.worker.onmessage = (e) => this.onWorker(e.data);
     this.status = { state: "loading", progress: 0 };
     this.worker.postMessage({ type: "load", model: getSettings().captions.model });
@@ -123,7 +133,7 @@ export class Captions {
     this.offRoom();
     this.grabs.forEach((stop) => stop());
     this.grabs.clear();
-    this.worker.terminate();
+    this.worker.onmessage = null; // le fil reste prêt pour la prochaine fois
     void this.ctx.close().catch(() => {});
     void this.room.localParticipant.setAttributes({ ...this.room.localParticipant.attributes, cc: "" }).catch(() => {});
     this.listeners.clear();

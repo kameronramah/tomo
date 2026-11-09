@@ -3,7 +3,7 @@ import type { ChosenStatus, MyProfile, ServerSummary, Session } from "../lib/api
 import { useServerLayout, type Folder } from "../lib/folders";
 import { STATUS_LABEL } from "../lib/people";
 import { formatExpiry } from "../lib/ui";
-import { Avatar, Icon, Logo, ServerBadge, StatusDot } from "./Brand";
+import { Avatar, Icon, Logo, ServerBadge, StatusDot, Wordmark } from "./Brand";
 import { t } from "../lib/i18n";
 
 export type Mode = "servers" | "messages";
@@ -296,7 +296,11 @@ export default function ServerRail(props: Props) {
     <nav className={`rail${collapsed ? " collapsed" : ""}`} aria-label={t("Navigation")}>
       <div className="rail-brand">
         <Logo size={28} cut="var(--rail)" />
-        {!collapsed && <span className="wordmark grow">{t("tomo")}</span>}
+        {!collapsed && (
+          <span className="grow">
+            <Wordmark size={18} />
+          </span>
+        )}
         <button
           className="icon-btn sm"
           onClick={() => layout.setCollapsed(!collapsed)}

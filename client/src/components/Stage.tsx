@@ -16,6 +16,8 @@ import { SCREEN_PRESETS, listShares, screenShareError, startScreenShare, stopScr
 import { t } from "../lib/i18n";
 import { getCaptions, onCaptions, startCaptions, stopCaptions } from "../lib/captions";
 import CaptionsBar from "./CaptionsBar";
+import { usePtt } from "../lib/ptt";
+import { formatShortcut, shortcutHint, shortcutOf } from "../lib/hotkeys";
 import { CoachRequests } from "./CoachLayer";
 
 const REFRESH_EVENTS = [
@@ -105,6 +107,7 @@ function ShareMenu({
 
 export default function Stage(props: Props) {
   const { room } = props;
+  const ptt = usePtt();
   const [, refresh] = useReducer((x: number) => x + 1, 0);
   const [devicesOpen, setDevicesOpen] = useState(false);
   const [inputs, setInputs] = useState<MediaDeviceInfo[]>([]);
@@ -158,7 +161,7 @@ export default function Stage(props: Props) {
       const saved = loadDevices();
       saveDevices(kind === "audioinput" ? { ...saved, input: id } : { ...saved, output: id });
     } catch {
-      setDeviceError("Impossible de changer de périphérique.");
+      setDeviceError(t("Impossible de changer de périphérique."));
     }
     refresh();
   }
@@ -331,18 +334,24 @@ export default function Stage(props: Props) {
       <div className="dock-wrap">
         <div className="dock">
           <button
-            className={`dock-btn${props.micOn ? " on" : " off"}`}
+            className={`dock-btn${props.micOn ? (ptt.ptt && !ptt.open ? " ptt-idle" : " on") : " off"}`}
             onClick={props.onToggleMic}
             aria-label={props.micOn ? t("Couper le micro") : t("Activer le micro")}
-            title={props.micOn ? t("Couper le micro") : t("Activer le micro")}
+            title={(props.micOn ? t("Couper le micro") : t("Activer le micro")) + shortcutHint("mute")}
           >
             <Icon name={props.micOn ? "mic" : "micOff"} size={22} />
           </button>
+          {ptt.ptt && props.micOn && (
+            <span className={`ptt-hint${ptt.open ? " open" : ""}`} aria-live="polite">
+              <strong>{ptt.open ? t("On t'entend") : shortcutOf("ptt") ? t("Appuie sur {0}", { 0: formatShortcut(shortcutOf("ptt")) }) : t("Aucune touche choisie")}</strong>
+              <span>{ptt.open ? t("touche tenue") : shortcutOf("ptt") ? t("pour parler") : t("Paramètres › Raccourcis")}</span>
+            </span>
+          )}
           <button
             className={`dock-btn${props.deafened ? " off" : ""}`}
             onClick={props.onToggleDeafen}
             aria-label={props.deafened ? t("Rétablir le son") : t("Couper le son")}
-            title={props.deafened ? t("Rétablir le son") : t("Couper le son")}
+            title={(props.deafened ? t("Rétablir le son") : t("Couper le son")) + shortcutHint("deafen")}
           >
             <Icon name={props.deafened ? "headphonesOff" : "headphones"} size={22} />
           </button>
@@ -350,7 +359,7 @@ export default function Stage(props: Props) {
             className="dock-btn wide"
             onClick={props.onClip}
             disabled={!clipsReady || !props.onClip}
-            title={clipsReady ? t("Enregistrer les {0} dernières secondes (Ctrl+Maj+C)", { 0: getSettings().clips.seconds }) : t("Clips désactivés (Paramètres > Clips)")}
+            title={clipsReady ? t("Enregistrer les {0} dernières secondes", { 0: getSettings().clips.seconds }) + shortcutHint("clip") : t("Clips désactivés (Paramètres > Clips)")}
             aria-label={t("Enregistrer les {0} dernières secondes", { 0: getSettings().clips.seconds })}
           >
             <span className="amber">

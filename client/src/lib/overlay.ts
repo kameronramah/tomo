@@ -100,7 +100,14 @@ async function ensureWindow(): Promise<OverlayWindow | null> {
   return creating;
 }
 
+/** Raccourci « Afficher / masquer l'overlay » : masqué jusqu'au prochain appui. */
+let hiddenByShortcut = false;
+export function toggleOverlayHidden() {
+  hiddenByShortcut = !hiddenByShortcut;
+}
+
 function wanted(): boolean {
+  if (hiddenByShortcut) return false;
   const o = getSettings().overlay;
   if (o.mode === "off") return false;
   if (o.mode === "always") return true;

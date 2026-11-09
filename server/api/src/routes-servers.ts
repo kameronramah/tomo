@@ -4,6 +4,7 @@ import { db, tx, type Role } from "./db.js";
 import { config } from "./config.js";
 import { authenticate, cleanLabel, newInviteCode, requireUser, type Principal } from "./security.js";
 import { closeRooms, identityOf, kickFromRooms, liveParticipants, pushRoomSpatial, voiceToken } from "./livekit.js";
+import { sendToServer } from "./realtime.js";
 
 type RoomRow = { id: string; server_id: string; label: string; position: number; spatial: number };
 
@@ -27,6 +28,22 @@ function accessOf(p: Principal, serverId: string): Role | "guest" | undefined {
 }
 
 const isManager = (role: string | undefined) => role === "owner" || role === "admin";
+
+/** Nouvel ordre des pièces (admins) : la liste complète des identifiants, dans l'ordre voulu. */
+export function reorderRooms(serverId: string, ids: unknown): string | null {
+  if (!Array.isArray(ids) || ids.length > 200 || !ids.every((x) => typeof x === "string")) return "Liste invalide.";
+  const existing = (db.prepare("SELECT id FROM rooms WHERE server_id = ?").all(serverId) as { id: string }[]).map((r) => r.id);
+  const wanted = new Set(ids as string[]);
+  if (wanted.size !== ids.length || wanted.size !== existing.length || !existing.every((id) => wanted.has(id))) {
+    return "La liste ne correspond pas aux pièces du serveur (quelqu'un vient d'en ajouter ou d'en retirer ?).";
+  }
+  const update = db.prepare("UPDATE rooms SET position = ? WHERE id = ? AND server_id = ?");
+  tx(() => (ids as string[]).forEach((id, i) => update.run(i, id, serverId)));
+  return null;
+}
+
+/** Prévient les membres connectés : la liste des pièces / fils a changé. */
+const changed = (serverId: string) => sendToServer(serverId, { type: "channels", serverId });
 
 function notFound(reply: FastifyReply) {
   return reply.code(404).send({ error: "Serveur introuvable ou accès refusé." });
@@ -221,7 +238,21 @@ export default async function serverRoutes(app: FastifyInstance) {
     const room = { id: randomUUID(), label, spatial: false, participants: [] };
     const position = rooms.reduce((max, r) => Math.max(max, r.position), -1) + 1;
     db.prepare("INSERT INTO rooms (id, server_id, label, position) VALUES (?, ?, ?, ?)").run(room.id, req.params.id, label, position);
+    changed(req.params.id);
     return room;
+  });
+
+  /** Ranger les pièces (glisser-déposer). */
+  app.put<{ Params: { id: string }; Body: { ids?: unknown } }>("/servers/:id/rooms/order", async (req, reply) => {
+    const me = await requireUser(req, reply);
+    if (!me) return;
+    const role = roleOf(req.params.id, me.id);
+    if (!role) return notFound(reply);
+    if (!isManager(role)) return forbidden(reply);
+    const error = reorderRooms(req.params.id, req.body?.ids);
+    if (error) return reply.code(409).send({ error });
+    changed(req.params.id);
+    return { ok: true };
   });
 
   /** Renommer (admins) ou basculer l'audio spatial (tous les membres). */
@@ -238,6 +269,7 @@ export default async function serverRoutes(app: FastifyInstance) {
         const clean = cleanLabel(label, 32);
         if (!clean) return reply.code(400).send({ error: "Nom de salon invalide (1 à 32 caractères)." });
         db.prepare("UPDATE rooms SET label = ? WHERE id = ?").run(clean, found.room.id);
+        changed(found.room.server_id);
       }
       if (spatial !== undefined) {
         if (typeof spatial !== "boolean") return reply.code(400).send({ error: "Valeur invalide." });
@@ -256,6 +288,7 @@ export default async function serverRoutes(app: FastifyInstance) {
     if (!isManager(found.role)) return forbidden(reply);
     db.prepare("DELETE FROM rooms WHERE id = ?").run(found.room.id);
     await closeRooms([found.room.id]);
+    changed(found.room.server_id);
     return { ok: true };
   });
 

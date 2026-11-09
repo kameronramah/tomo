@@ -9,6 +9,7 @@ import type { WebSocket } from "ws";
 import { verifyAccessToken, type Principal } from "./security.js";
 import { coMemberIds, friendIds, memberIds } from "./access.js";
 import { db } from "./db.js";
+import { handleTyping } from "./typing.js";
 
 /** Jeu en cours, signalé par l'appli de bureau (détection locale des programmes lancés). */
 export type Game = { name: string; since: number };
@@ -130,6 +131,8 @@ export default async function realtimeRoutes(app: FastifyInstance) {
           conn.idle = msg.idle;
           if (who.kind === "user") refreshPresence(who.id);
         }
+        // « est en train d'écrire… » (relayé seulement à ceux qui voient la conversation)
+        if (msg?.type === "typing") handleTyping(who, msg);
         // Jeu lancé / quitté (null = plus de jeu). Nom nettoyé, 40 caractères max.
         if (msg?.type === "game" && who.kind === "user") {
           const name = typeof msg.game?.name === "string" ? msg.game.name.replace(/[\u0000-\u001f]/g, "").trim().slice(0, 40) : "";

@@ -4,6 +4,16 @@ import { loadDevices } from "../lib/prefs";
 import { getPerson, usePeople, userIdOf } from "../lib/people";
 import { Icon, Logo, UserAvatar } from "./Brand";
 import { t } from "../lib/i18n";
+import { useSortable } from "../lib/sortable";
+
+function Grip(props: Record<string, unknown> & { label: string }) {
+  const { label, ...rest } = props;
+  return (
+    <button className="sort-grip" aria-label={t("Déplacer {0} (flèches)", { 0: label })} title={t("Glisser pour déplacer")} {...rest}>
+      <Icon name="grip" size={16} />
+    </button>
+  );
+}
 
 /** Premier lancement : aucun serveur. */
 export function Welcome({ name, onCreate, onJoin }: { name: string; onCreate: () => void; onJoin: () => void }) {
@@ -127,6 +137,9 @@ type HomeProps = {
   onAddChannel: () => void;
   onRenameChannel: (c: Channel) => void;
   onDeleteChannel: (c: Channel) => void;
+  /** Ranger (admins) : nouvel ordre des pièces / des fils */
+  onReorderRooms: (ids: string[]) => Promise<unknown>;
+  onReorderChannels: (ids: string[]) => Promise<unknown>;
 };
 
 /** Petit menu « ⋯ » (renommer / supprimer) pour les admins. */
@@ -159,6 +172,13 @@ export function ServerHome(p: HomeProps) {
   const { detail } = p;
   usePeople(detail.rooms.flatMap((r) => r.participants.map((x) => userIdOf(x.identity))));
   const inVoice = detail.rooms.reduce((n, r) => n + r.participants.length, 0);
+  const [arranging, setArranging] = useState(false);
+  const roomSort = useSortable("rooms", detail.rooms.map((r) => r.id), p.onReorderRooms);
+  const filSort = useSortable("fils", detail.channels.map((c) => c.id), p.onReorderChannels);
+  const rooms = roomSort.list.map((id) => detail.rooms.find((r) => r.id === id)).filter((r): r is RoomInfo => !!r);
+  const channels = filSort.list.map((id) => detail.channels.find((c) => c.id === id)).filter((c): c is Channel => !!c);
+  const canArrange = p.isManager && arranging;
+  useEffect(() => setArranging(false), [detail.id]);
 
   return (
     <div className="home">
@@ -185,9 +205,25 @@ export function ServerHome(p: HomeProps) {
                 <Icon name="userPlus" size={16} /> {t("Inviter")}
               </button>
             )}
-            {p.isManager && (
+            {p.isManager && !arranging && (
               <button className="btn soft" onClick={p.onAddRoom}>
                 <Icon name="plus" size={16} /> {t("Nouvelle pièce")}
+              </button>
+            )}
+            {p.isManager && (detail.rooms.length > 1 || detail.channels.length > 1) && (
+              <button
+                className={`btn ${arranging ? "primary" : "soft"}`}
+                onClick={() => setArranging(!arranging)}
+                aria-pressed={arranging}
+                title={t("Changer l'ordre des pièces et des fils")}
+              >
+                {arranging ? (
+                  t("Terminé")
+                ) : (
+                  <>
+                    <Icon name="grip" size={16} /> {t("Ranger")}
+                  </>
+                )}
               </button>
             )}
             {!p.isGuest && (
@@ -198,17 +234,29 @@ export function ServerHome(p: HomeProps) {
           </div>
         </header>
 
-        <section className="pieces" aria-label={t("Pièces vocales")}>
+        {canArrange && (
+          <div className="arrange-note">
+            <Icon name="grip" size={16} />
+            <span>{t("Attrape une pièce ou un fil par la poignée et pose-le où tu veux. Tout le monde voit le nouvel ordre tout de suite.")}</span>
+          </div>
+        )}
+
+        <section className={`pieces${canArrange ? " arranging" : ""}`} aria-label={t("Pièces vocales")}>
           {detail.rooms.length === 0 && <p className="muted">{t("Aucune pièce vocale.")} {p.isManager ? t("Crée-en une avec « Nouvelle pièce ».") : ""}</p>}
-          {detail.rooms.map((room) => {
+          {rooms.map((room) => {
             const here = p.voice?.roomId === room.id;
             const others = room.participants.filter((x) => x.identity !== p.voice?.identity);
             const people = here && p.voice ? [{ identity: p.voice.identity, name: p.myName, guest: p.isGuest }, ...others] : others;
             const busy = people.length > 0;
             const chat = p.unread[`room:${room.id}`] ?? 0;
             return (
-              <article key={room.id} className={`piece${here ? " here" : ""}${busy ? "" : " empty"}`}>
+              <article
+                key={room.id}
+                className={`piece${here ? " here" : ""}${busy ? "" : " empty"}${roomSort.dragging === room.id ? " dragging" : ""}`}
+                {...roomSort.itemProps(room.id)}
+              >
                 <div className="piece-head">
+                  {canArrange && <Grip label={room.label} {...roomSort.gripProps(room.id)} />}
                   <div className="col gap-4 grow" style={{ minWidth: 0 }}>
                     <h2 className="piece-title ellipsis">{room.label}</h2>
                     <span className={`small ${here ? "teal-soft strong-ish" : "muted"}`}>
@@ -221,7 +269,7 @@ export function ServerHome(p: HomeProps) {
                     </span>
                   )}
                   {chat > 0 && <span className="badge-dot" title={t("Nouveaux messages dans la discussion")} />}
-                  {p.isManager && <MoreMenu label={room.label} onRename={() => p.onRenameRoom(room)} onDelete={() => p.onDeleteRoom(room)} />}
+                  {p.isManager && !canArrange && <MoreMenu label={room.label} onRename={() => p.onRenameRoom(room)} onDelete={() => p.onDeleteRoom(room)} />}
                 </div>
                 <div className="piece-people">
                   {busy ? (
@@ -274,10 +322,11 @@ export function ServerHome(p: HomeProps) {
               </button>
             )}
           </div>
-          {detail.channels.map((c) => {
+          {channels.map((c) => {
             const n = p.unread[`channel:${c.id}`] ?? 0;
             return (
-              <div key={c.id} className={`fil${n ? " unread" : ""}`}>
+              <div key={c.id} className={`fil${n ? " unread" : ""}${filSort.dragging === c.id ? " dragging" : ""}`} {...filSort.itemProps(c.id)}>
+                {canArrange && <Grip label={c.name} {...filSort.gripProps(c.id)} />}
                 <button className="fil-main" onClick={() => p.onOpenChannel(c)}>
                   <span className="fil-hash">#</span>
                   <span className="grow col gap-2 left" style={{ minWidth: 0 }}>
@@ -290,7 +339,7 @@ export function ServerHome(p: HomeProps) {
                     n > 0 && <span className="badge amber-badge-fill">{n > 99 ? "99+" : n}</span>
                   )}
                 </button>
-                {p.isManager && <MoreMenu label={c.name} onRename={() => p.onRenameChannel(c)} onDelete={() => p.onDeleteChannel(c)} />}
+                {p.isManager && !canArrange && <MoreMenu label={c.name} onRename={() => p.onRenameChannel(c)} onDelete={() => p.onDeleteChannel(c)} />}
               </div>
             );
           })}

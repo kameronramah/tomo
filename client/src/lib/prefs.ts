@@ -60,7 +60,17 @@ export type Settings = {
     autoGain: boolean;
     outputVolume: number;
     normalize: boolean;
+    /** voice : le micro s'ouvre quand je parle ; ptt : seulement pendant que je tiens la touche */
+    mode: "voice" | "ptt";
+    /** Appuyer pour parler : délai avant de couper après avoir lâché (ms), petit son */
+    pttDelay: number;
+    pttSound: boolean;
+    /** Baisser les autres quand je parle (option, coupée au départ) : de duckAmount (0..1) */
+    duck: boolean;
+    duckAmount: number;
   };
+  /** Raccourcis : action → touches (noms de lib/hotkeys.ts), null = aucun */
+  shortcuts: Record<string, string[] | null>;
   appearance: { zoom: number; reducedMotion: boolean; compact: boolean };
   /**
    * desktop : notifications Windows / Mac quand tomo est en arrière-plan (messages privés, demandes, appels)
@@ -111,7 +121,8 @@ export type Settings = {
 
 export const DEFAULT_SETTINGS: Settings = {
   sounds: { enabled: true, volume: 0.5, voice: true, messages: true, calls: true },
-  audio: { denoise: "advanced", gate: false, gateThreshold: -50, echoCancellation: true, autoGain: true, outputVolume: 1, normalize: true },
+  audio: { denoise: "advanced", gate: false, gateThreshold: -50, echoCancellation: true, autoGain: true, outputVolume: 1, normalize: true, mode: "voice", pttDelay: 200, pttSound: true, duck: false, duckAmount: 0.5 },
+  shortcuts: {},
   appearance: { zoom: 1, reducedMotion: false, compact: false },
   notifications: { dmSound: true, mentionsOnly: false, desktop: true, desktopPreview: true, quietEnabled: false, quietFrom: "23:00", quietTo: "08:00" },
   clips: { enabled: true, seconds: 60 },
@@ -145,6 +156,7 @@ let current: Settings = (() => {
     games: { ...DEFAULT_SETTINGS.games, ...saved.games },
     captions: { ...DEFAULT_SETTINGS.captions, ...saved.captions },
     overlay: { ...DEFAULT_SETTINGS.overlay, ...saved.overlay },
+    shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...saved.shortcuts },
   };
 })();
 const settingsListeners = new Set<(s: Settings) => void>();

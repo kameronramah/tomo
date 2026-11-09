@@ -37,6 +37,20 @@ export class Realtime {
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: "game", game }));
   }
 
+  /** « Je suis en train d'écrire » (au plus toutes les 3 s par conversation). */
+  private typingSent = new Map<string, number>();
+  typing(scope: "channel" | "room" | "dm", target: string) {
+    const key = `${scope}:${target}`;
+    const now = Date.now();
+    if (now - (this.typingSent.get(key) ?? 0) < 3000) return;
+    this.typingSent.set(key, now);
+    if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: "typing", scope, target }));
+  }
+  /** Message envoyé : la prochaine frappe repréviendra tout de suite. */
+  typingDone(scope: string, target: string) {
+    this.typingSent.delete(`${scope}:${target}`);
+  }
+
   private setIdle(v: boolean) {
     this.idle = v;
     if (this.ws?.readyState === WebSocket.OPEN) this.ws.send(JSON.stringify({ type: "idle", idle: v }));

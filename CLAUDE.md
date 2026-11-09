@@ -1,7 +1,7 @@
 # CLAUDE.md — Contexte du projet tomo
 
 > Fichier lu automatiquement par Claude Code. Il résume tout ce qu'il faut savoir pour reprendre le projet.
-> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.8.1**.
+> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.9.0**.
 > Copie locale du propriétaire : `C:\Users\Kameron\Documents\tomo`.
 > Installer la dernière version : https://github.com/kameronramah/tomo/releases/latest
 
@@ -11,10 +11,11 @@
 
 **tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire). La marque s'écrit **« tomo » en minuscules, partout**.
 
-Ce qui existe (v0.8) :
-- **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils, invitations (membre + **invité d'un soir sans compte**).
-- **Messagerie** temps réel : fils, chat de chaque pièce, amis, messages privés (demandes hors amis), **appels privés** ; pièces jointes, messages vocaux, GIF (Klipy), **modifier, réactions, mentions** @pseudo / @vocal / @tous.
+Ce qui existe (v0.9) :
+- **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils (**rangés par glisser-déposer**), invitations (membre + **invité d'un soir sans compte**).
+- **Messagerie** temps réel : fils, chat de chaque pièce, amis, messages privés (demandes hors amis), **appels privés** ; pièces jointes, messages vocaux, GIF (Klipy), **modifier, réactions, mentions** @pseudo / @vocal / @tous, « en train d'écrire… ».
 - **Profils, statuts, confidentialité, blocage**, membres du serveur, notifications système, pastilles de non-lus.
+- **Micro** : **appuyer pour parler** (touche ou bouton de souris) ou **seuil de voix**, option **« baisser les autres quand je parle »** ; **raccourcis configurables qui marchent en jeu** (Paramètres › Raccourcis clavier).
 - **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **partage d'écran** HD + **mode coach** (annotations sur demande, affichées sur l'écran de celui qui partage), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
 - **Jeux** : détection du jeu lancé (« joue à … »), réglages par jeu (pièce auto, mode focus, spatial, overlay, masquer), proposition de rejoindre les potes, **stats Steam / League of Legends**.
 - **Social** : **mur des légendes** (citations, images, clips), **défis à points** (sans paris), classement du mois.
@@ -55,15 +56,17 @@ tomo/
 │   │   │                   (réactions, mentions, édition), Attachments, GifPicker, MessagesView, DmPanel,
 │   │   │                   FriendsView, ProfileCard, MemberList, ScreenView + CoachLayer, MapView,
 │   │   │                   CaptionsBar, LegendsView, ChallengesView, GameCard, GameStats, UpdateCard,
-│   │   │                   Overlay, Settings (+ SettingsProfile, SettingsGames, SettingsOverlay),
+│   │   │                   Overlay, Settings (+ SettingsProfile, SettingsGames, SettingsOverlay, SettingsVoice),
 │   │   │                   Dialogs, IncomingCall, DevPanel, TitleBar, Brand (logo, icônes, avatars)
 │   │   └── lib/            api.ts, realtime.ts, voice.ts, leveler.ts (volume uniformisé), spatial.ts,
 │   │                       speaking.ts, denoise.ts (RNNoise), clips.ts, screen.ts, coach.ts + coachScreen.ts,
 │   │                       captions.ts + captions.worker.ts (Whisper / Opus-MT), games.ts (jeux lancés),
 │   │                       gameLink.ts (Mumble Link), overlay.ts, updater.ts, i18n.ts + i18n-en.ts,
+│   │                       hotkeys.ts (raccourcis), ptt.ts (push-to-talk), sortable.ts (glisser-déposer),
 │   │                       people.ts (annuaire), desktop.ts (notifications, démarrage), badge.ts,
 │   │                       folders.ts, prefs.ts (réglages locaux), secure.ts, sounds.ts, ui.ts, dev.ts
-│   ├── src-tauri/src/      lib.rs (commandes, plugins), clips.rs, mumble.rs, games.rs (programmes ouverts)
+│   ├── src-tauri/src/      lib.rs (commandes, plugins), clips.rs, mumble.rs, games.rs (programmes ouverts),
+│   │                       input.rs (état des touches des raccourcis, sans bloquer le jeu)
 │   ├── src-tauri/capabilities/  default.json (fenêtre principale), overlay.json (overlay : écoute seulement)
 │   ├── src-tauri/examples/mumble_sim.rs   Simulateur de jeu Mumble Link
 │   └── scripts/            dev.cmd / dev.ps1 (lancer en dev), mumble-sim.cmd / .ps1
@@ -72,8 +75,8 @@ tomo/
 │   │   ├── src/            index.ts, config.ts, db.ts, security.ts, access.ts, realtime.ts (WebSocket,
 │   │   │                   présence, « joue à »), livekit.ts, routes-auth.ts, routes-servers.ts,
 │   │   │                   routes-chat.ts (messages, réactions, mentions), routes-social.ts, profiles.ts,
-│   │   │                   attachments.ts, gifs.ts, legends.ts, challenges.ts, gamestats.ts, routes-dev.ts
-│   │   └── tests/          test-api/social/attachments/profiles/messages.ps1, test-games/legends/stats.mjs
+│   │   │                   attachments.ts, gifs.ts, legends.ts, challenges.ts, gamestats.ts, typing.ts, routes-dev.ts
+│   │   └── tests/          test-api/social/attachments/profiles/messages.ps1, test-games/legends/stats/v09.mjs
 │   ├── docker-compose.yml      Production (VPS) : LiveKit + API + Caddy (HTTPS)
 │   ├── docker-compose.dev.yml  Développement local (avec DEV_TOOLS et compte de test)
 │   ├── livekit.yaml, Caddyfile, .env.example
@@ -87,7 +90,10 @@ tomo/
 
 Points techniques notables :
 - **Chaîne par voix reçue** (`setWebAudioPlugins`, en ligne droite) : volume uniformisé puis audio spatial. **Micro** : RNNoise + porte de bruit via `setProcessor` (`denoise.ts`), suivent les réglages en direct.
-- « Qui parle » : mesuré localement toutes les 40 ms (`speaking.ts`).
+- « Qui parle » : mesuré localement toutes les 40 ms (`speaking.ts`) ; pour mon micro, sur la piste traitée (ce qui part vraiment).
+- **Push-to-talk** (`ptt.ts`) : la piste micro brute est mise en `enabled = false` tant que la touche n'est pas tenue (filet de sécurité toutes les 250 ms ; un micro coupé n'est jamais rouvert). **Baisser les autres** : facteur `duck` appliqué dans `applyVolume` (`voice.ts`) quand « qui parle » me détecte.
+- **Raccourcis** : `input.rs` lit l'état des touches (Windows `GetAsyncKeyState`, Mac `CGEventSourceKeyState`) toutes les 8 ms, **seulement celles des raccourcis** (`input_set_keys`), et envoie `input:keys` à la fenêtre principale ; `hotkeys.ts` déclenche les actions. Enregistrement d'une touche : `input_record` (toutes les touches, 15 s max). Repli clavier de la fenêtre dans le navigateur. Noms des touches : « Ctrl », « Shift », « M », « Mouse4 »…
+- **Ranger** : `PUT /servers/:id/rooms/order` et `/channels/order` (liste complète), événement WebSocket `channels` → les clients rechargent le serveur.
 - **Attributs LiveKit** du participant : `clips=1`, `cc=1` (sous-titres), `coach` (`all` ou identités autorisées à annoter mon écran, après demande acceptée), `lang` (fr/en, langue de transcription). Toujours les écrire avec `{ ...attributes, clé: valeur }`.
 - **Canaux de données LiveKit** : `pos` (positions spatiales, ~10/s), `coach` (annotations).
 - **Jeux** : Rust `running_programs` (crate `sysinfo`, noms des programmes seulement) → `games.ts` (liste connue + jeux ajoutés) → WebSocket `{type:"game"}` → serveur en mémoire (`gameOf`, respecte `show_game`).
@@ -130,7 +136,7 @@ powershell -ExecutionPolicy Bypass -File server\api\tests\test-api.ps1
 ```bash
 node server/api/tests/test-games.mjs
 ```
-(idem `test-legends.mjs`, `test-stats.mjs`)
+(idem `test-legends.mjs`, `test-stats.mjs`, `test-v09.mjs`)
 ```bash
 cd client/src-tauri && cargo test --lib
 ```
@@ -145,6 +151,8 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 ## 5. Pièges déjà rencontrés (à connaître)
 
 - **Windows PowerShell 5.1** : pas de `&&` ; l'**exécution de scripts .ps1 est bloquée** → passer par les `.cmd` (`powershell -ExecutionPolicy Bypass -File …`), ne pas modifier la politique système.
+- **Fins de ligne mélangées** : certains fichiers sont en CRLF (`voice.ts`, `prefs.ts`, `Settings.tsx`…), d'autres en LF. Un script de remplacement doit normaliser en LF puis remettre le format d'origine.
+- **Pas de Python** sur le PC : utiliser Node pour les petits scripts.
 - **PowerShell et fichiers** : `[IO.File]` utilise un autre dossier courant que `cd` → toujours des chemins absolus (`"$PWD\…"`) ; les fichiers sources sont en fins de ligne LF : un remplacement de texte sur plusieurs lignes depuis PowerShell échoue → préférer l'outil d'édition. `Set-Content -Encoding utf8` ajoute un BOM (gênant dans un message de commit) → `[IO.File]::WriteAllText`.
 - Message de commit avec guillemets ou accents → l'écrire dans un fichier et `git commit -F fichier`.
 - **Chemin du projet trop long** → `LNK1104` : définir `CARGO_TARGET_DIR` vers un chemin court (`C:\t\tomo`).
@@ -156,6 +164,8 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 - **Vite** : installer une nouvelle dépendance recharge la page en dev (pré-bundle) ; le worker des sous-titres impose `worker.format = "es"` dans `vite.config.ts`.
 - **Overlay** : un jeu en **plein écran exclusif** passe par-dessus toutes les fenêtres → plein écran fenêtré / sans bordure.
 - L'**overlay de performances NVIDIA** (Alt + R) peut s'afficher sur la fenêtre : ce n'est pas tomo.
+- **Raccourcis sur Mac** : il faut l'autorisation « Surveillance de l'entrée » ; les lettres suivent la position QWERTY (pas la disposition AZERTY). Non testé sur Mac.
+- **Échap pendant l'enregistrement d'un raccourci** : ne doit pas fermer les Paramètres (`isRecordingShortcut()`).
 - Le navigateur intégré de Claude bloque le micro et la capture d'écran : tester ces parties dans l'appli de bureau (le propriétaire teste lui-même). Pour simuler, utiliser les bots (`lib/dev.ts`) depuis la console.
 
 ---
@@ -173,6 +183,8 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 ## 7. Sécurité (règles à respecter)
 
 - Mots de passe : scrypt (N=32768), 12 caractères min, comparaison à temps constant, hash factice si le pseudo n'existe pas.
+- Connexion : après 5 échecs, blocage de l'**adresse + pseudo** (1, 2, 4, 8 puis 15 min) ; 50 échecs en 1 h sur un pseudo, toutes adresses confondues → 5 min pour tout le monde. Messages : 10 par 10 s **par compte**.
+- Raccourcis : seules les touches choisies sont surveillées ; rien n'est enregistré ni envoyé.
 - Jetons de renouvellement stockés **hachés**, rotation à chaque usage ; changement de mot de passe = toutes les sessions révoquées.
 - Droits vérifiés **côté serveur** à chaque route (`access.ts`).
 - **`DEV_TOOLS=1` uniquement en dev**. Ne jamais le mettre dans le `.env` du VPS.
@@ -187,8 +199,8 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 ## 8. Où en est-on / suite logique
 
 Prochaines étapes possibles (à valider avec le propriétaire) :
-1. **Publier la v0.8.0** (secret `TAURI_SIGNING_PRIVATE_KEY` à créer une fois, puis tag) et **déployer sur le VPS** de son ami (guide `docs/HEBERGEMENT.md`) pour tester à plusieurs.
-2. Tester en vrai ce qui n'a pas pu l'être ici : overlay par-dessus un jeu, sous-titres à plusieurs, mode coach à plusieurs, liaison Steam, clé Riot, mise à jour d'une version à la suivante.
-3. Push-to-talk et raccourcis globaux (dont Ctrl+Maj+O pour l'overlay), mode radio, callouts, « qui est dispo ce soir ».
+1. **Déployer sur le VPS** de son ami (guide `docs/HEBERGEMENT.md`) pour tester à plusieurs : tant que ce n'est pas fait, ses potes peuvent installer tomo mais pas se connecter (le serveur ne tourne que sur son PC).
+2. Tester en vrai ce qui n'a pas pu l'être ici : push-to-talk et raccourcis dans un jeu, overlay par-dessus un jeu, sous-titres à plusieurs, mode coach à plusieurs, liaison Steam, clé Riot, mise à jour d'une version à la suivante.
+3. Mode radio, callouts, « qui est dispo ce soir ».
 4. Paris : en attente d'une décision sur l'usage des points.
 5. Petites améliorations listées dans la ROADMAP.

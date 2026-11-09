@@ -1,6 +1,8 @@
 import type { Room } from "livekit-client";
 import { Icon, NetworkBadge } from "./Brand";
 import { t } from "../lib/i18n";
+import { usePtt } from "../lib/ptt";
+import { shortcutHint } from "../lib/hotkeys";
 
 type Props = {
   room: Room;
@@ -19,12 +21,13 @@ type Props = {
 /** Le vocal en cours suit partout (île flottante, ou en bas du plan du serveur). */
 export default function VoiceIsland(p: Props) {
   const variant = p.variant ?? "island";
+  const ptt = usePtt();
   const mic = (
     <button
-      className={`island-btn${p.micOn ? " mic-on" : " off"}`}
+      className={`island-btn${p.micOn ? (ptt.ptt && !ptt.open ? " ptt-idle" : " mic-on") : " off"}`}
       onClick={p.onToggleMic}
       aria-label={p.micOn ? t("Couper le micro") : t("Activer le micro")}
-      title={p.micOn ? t("Couper le micro (Ctrl+Maj+M)") : t("Activer le micro (Ctrl+Maj+M)")}
+      title={(p.micOn ? t("Couper le micro") : t("Activer le micro")) + shortcutHint("mute")}
     >
       <Icon name={p.micOn ? "mic" : "micOff"} size={variant === "island" ? 18 : 16} />
     </button>
@@ -34,7 +37,7 @@ export default function VoiceIsland(p: Props) {
       className={`island-btn${p.deafened ? " off" : ""}`}
       onClick={p.onToggleDeafen}
       aria-label={p.deafened ? t("Rétablir le son") : t("Couper le son")}
-      title={p.deafened ? t("Rétablir le son (Ctrl+Maj+D)") : t("Couper le son (Ctrl+Maj+D)")}
+      title={(p.deafened ? t("Rétablir le son") : t("Couper le son")) + shortcutHint("deafen")}
     >
       <Icon name={p.deafened ? "headphonesOff" : "headphones"} size={variant === "island" ? 18 : 16} />
     </button>

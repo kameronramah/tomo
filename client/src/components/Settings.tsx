@@ -17,6 +17,9 @@ import { gameLinkSupported, onGameLink, type GameLink } from "../lib/gameLink";
 import { SCREEN_PRESETS } from "../lib/screen";
 import { APP_VERSION, checkForUpdate, getUpdateState, onUpdateState, restartNow, type UpdateState } from "../lib/updater";
 import { LANGS, lang, locale, setLang, t, type Lang } from "../lib/i18n";
+import { DuckCard, MicMode, ShortcutsSection } from "./SettingsVoice";
+import { switchDevice } from "../lib/voice";
+import { isRecordingShortcut } from "../lib/hotkeys";
 
 type Section =
   | "profile"
@@ -118,7 +121,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
   const s = useSettings();
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !isRecordingShortcut() && onClose();
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
@@ -163,7 +166,7 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
           {section === "sounds" && <Sounds s={s} />}
           {section === "appearance" && <Appearance s={s} />}
           {section === "startup" && <Startup s={s} />}
-          {section === "shortcuts" && <Shortcuts />}
+          {section === "shortcuts" && <ShortcutsSection s={s} />}
           {section === "network" && <Network api={api} realtime={realtime} voiceRoom={voiceRoom} />}
           {section === "about" && <About s={s} />}
         </div>
@@ -282,6 +285,8 @@ function Audio({ s }: { s: S }) {
     const d = { ...devices, [kind]: id || undefined };
     setDevices(d);
     saveDevices(d);
+    // En vocal : le changement s'applique tout de suite
+    void switchDevice(kind === "input" ? "audioinput" : "audiooutput", id || undefined);
   }
 
   return (
@@ -312,7 +317,7 @@ function Audio({ s }: { s: S }) {
             </select>
           </label>
         </div>
-        <span className="hint">{t("Pris en compte à la prochaine connexion à un salon. En vocal, utilise le bouton réglages du dock pour changer tout de suite.")}</span>
+        <span className="hint">{t("S'applique tout de suite, même en vocal.")}</span>
         <MicTester />
       </Card>
 
@@ -338,6 +343,9 @@ function Audio({ s }: { s: S }) {
         />
       </Card>
 
+      <MicMode s={s} />
+      <DuckCard s={s} />
+
       <Card title={t("Traitement du micro")}>
         <span className="setting-label">{t("Suppression du bruit")}</span>
         {DENOISE.map((d) => (
@@ -349,27 +357,6 @@ function Audio({ s }: { s: S }) {
             </span>
           </label>
         ))}
-        <Toggle
-          label={t("Porte de bruit")}
-          hint={t("Ton micro se coupe tout seul quand tu ne parles pas (souffle, respiration, clavier entre deux phrases).")}
-          checked={s.audio.gate}
-          onChange={(v) => updateSettings("audio", { gate: v })}
-        />
-        {s.audio.gate && (
-          <label className="setting-row">
-            <span className="grow">{t("Seuil d'ouverture")}</span>
-            <input
-              type="range"
-              min={-70}
-              max={-20}
-              step={1}
-              value={s.audio.gateThreshold}
-              onChange={(e) => updateSettings("audio", { gateThreshold: Number(e.target.value) })}
-              aria-label={t("Seuil de la porte de bruit")}
-            />
-            <span className="value">{s.audio.gateThreshold} {t("dB")}</span>
-          </label>
-        )}
         <ListenTest s={s} />
         <Toggle
           label={t("Annulation d'écho")}
@@ -384,7 +371,7 @@ function Audio({ s }: { s: S }) {
           onChange={(v) => updateSettings("audio", { autoGain: v })}
         />
         <span className="hint">
-          {t("La suppression de bruit et la porte s'appliquent tout de suite, même en vocal. L'écho et le volume du micro, à la prochaine connexion.")}
+          {t("Tous ces réglages s'appliquent tout de suite, même en vocal.")}
         </span>
       </Card>
       <CaptionsSettings s={s} />
@@ -664,36 +651,6 @@ function Startup({ s }: { s: S }) {
 }
 
 // ---------------------------------------------------------------------------
-const SHORTCUTS: [string, string][] = [
-  ["Ctrl + 1 … 9", "Aller au serveur n°1 à 9"],
-  ["Ctrl + Maj + M", "Couper / activer le micro"],
-  ["Ctrl + Maj + D", "Couper / rétablir le son"],
-  ["Ctrl + Maj + C", "Enregistrer les dernières secondes (clip)"],
-  ["Ctrl + ,", "Ouvrir les paramètres"],
-  ["Entrée", "Envoyer un message"],
-  ["Maj + Entrée", "Retour à la ligne dans un message"],
-  ["Échap", "Fermer une fenêtre ou les paramètres"],
-];
-
-function Shortcuts() {
-  return (
-    <>
-      <h1 className="title">{t("Raccourcis clavier")}</h1>
-      <Card title={t("Dans l'application")}>
-        <ul className="list">
-          {SHORTCUTS.map(([k, d]) => (
-            <li key={k}>
-              <span className="grow">{t(d)}</span>
-              <kbd>{t(k)}</kbd>
-            </li>
-          ))}
-        </ul>
-        <span className="hint">{t("Les raccourcis globaux (qui marchent pendant que tu joues, comme le push-to-talk) arrivent bientôt.")}</span>
-      </Card>
-    </>
-  );
-}
-
 // ---------------------------------------------------------------------------
 function Network({ api, realtime, voiceRoom }: { api: Api; realtime: Realtime | null; voiceRoom: Room | null }) {
   const [ping, setPing] = useState(realtime?.apiPing ?? null);

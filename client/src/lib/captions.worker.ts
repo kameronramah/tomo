@@ -69,6 +69,7 @@ self.onmessage = async (e: MessageEvent<In>) => {
   try {
     if (m.type === "load") {
       await loadAsr(m.model);
+      post({ type: "ready", what: "asr" }); // aussi quand le modèle était déjà chargé
     } else if (m.type === "transcribe") {
       const run = await (asr ?? loadAsr("onnx-community/whisper-base"));
       const out = (await run(m.audio, { language: LANG_NAME[m.lang] ?? null, task: "transcribe", chunk_length_s: 30 })) as { text: string };
