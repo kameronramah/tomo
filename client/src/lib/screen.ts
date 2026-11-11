@@ -3,16 +3,20 @@
  *
  * Profils :
  *  - jeu      : 1080p 60 i/s, H.264 (encodage matériel par la carte graphique → le PC reste libre pour jouer)
- *  - netteté  : 1440p 30 i/s, VP9 (texte, code, cartes : plus net à débit égal), on garde la résolution
- *  - maximum  : 4K 30 i/s, VP9, gros débit (connexion fibre conseillée)
+ *  - netteté  : 1440p 30 i/s, H.264 (texte, code, cartes), on garde la résolution
+ *  - maximum  : 4K 30 i/s, H.264, gros débit (connexion fibre conseillée)
  *  - économie : 720p 30 i/s, H.264, pour une petite connexion
- * Les spectateurs avec une connexion faible reçoivent automatiquement une version plus légère (simulcast).
+ * Chaque partage part en 3 versions (simulcast) : chaque spectateur reçoit la meilleure que sa
+ * connexion supporte (ex. 4K → 1440p → 1080p). Tout en H.264 : encodage par la carte graphique.
+ * (VP9 a été essayé : LiveKit n'autorise pas ses « étages » pour un partage d'écran et son
+ * encodage par le processeur s'essoufflait en 4K → les spectateurs restaient en 720p / 1080p.)
  */
 import {
   AudioPresets,
   Room,
   ScreenSharePresets,
   Track,
+  VideoPreset,
   type LocalTrackPublication,
   type Participant,
   type RemoteTrackPublication,
@@ -33,13 +37,15 @@ export type ScreenPreset = {
   bitrate: number; // bits/s
   codec: "h264" | "vp9";
   hint: "motion" | "detail";
+  /** Versions plus légères envoyées en plus (de la plus petite à la plus grande). */
+  layers: VideoPreset[];
 };
 
 export const SCREEN_PRESETS: ScreenPreset[] = [
-  { id: "game", label: t("Jeu fluide"), detail: t("1080p · 60 i/s"), width: 1920, height: 1080, fps: 60, bitrate: 8_000_000, codec: "h264", hint: "motion" },
-  { id: "sharp", label: t("Netteté"), detail: t("1440p · 30 i/s · texte, code"), width: 2560, height: 1440, fps: 30, bitrate: 9_000_000, codec: "vp9", hint: "detail" },
-  { id: "max", label: "Maximum", detail: "4K · 30 i/s · grosse connexion", width: 3840, height: 2160, fps: 30, bitrate: 16_000_000, codec: "vp9", hint: "detail" },
-  { id: "eco", label: t("Économie"), detail: t("720p · 30 i/s · petite connexion"), width: 1280, height: 720, fps: 30, bitrate: 2_500_000, codec: "h264", hint: "motion" },
+  { id: "game", label: t("Jeu fluide"), detail: t("1080p · 60 i/s"), width: 1920, height: 1080, fps: 60, bitrate: 8_000_000, codec: "h264", hint: "motion", layers: [ScreenSharePresets.h720fps15, ScreenSharePresets.h1080fps30] },
+  { id: "sharp", label: t("Netteté"), detail: t("1440p · 30 i/s · texte, code"), width: 2560, height: 1440, fps: 30, bitrate: 10_000_000, codec: "h264", hint: "detail", layers: [new VideoPreset(1280, 720, 2_500_000, 30), new VideoPreset(1920, 1080, 5_000_000, 30)] },
+  { id: "max", label: "Maximum", detail: "4K · 30 i/s · grosse connexion", width: 3840, height: 2160, fps: 30, bitrate: 18_000_000, codec: "h264", hint: "detail", layers: [new VideoPreset(1920, 1080, 5_000_000, 30), new VideoPreset(2560, 1440, 9_000_000, 30)] },
+  { id: "eco", label: t("Économie"), detail: t("720p · 30 i/s · petite connexion"), width: 1280, height: 720, fps: 30, bitrate: 2_500_000, codec: "h264", hint: "motion", layers: [ScreenSharePresets.h720fps15] },
 ];
 
 export const presetById = (id: string) => SCREEN_PRESETS.find((p) => p.id === id) ?? SCREEN_PRESETS[0];
@@ -54,18 +60,22 @@ export async function startScreenShare(room: Room, presetId: ScreenPresetId, wit
     selfBrowserSurface: "exclude",
     surfaceSwitching: "include",
   };
-  const publish: TrackPublishOptions = {
+  await room.localParticipant.setScreenShareEnabled(true, capture, screenPublishOptions(p));
+}
+
+/** Réglages d'envoi d'un partage (aussi utilisés par le bot de test, pour qu'il se comporte pareil). */
+export function screenPublishOptions(p: ScreenPreset): TrackPublishOptions {
+  return {
     videoCodec: p.codec,
     backupCodec: { codec: "vp8" },
     screenShareEncoding: { maxBitrate: p.bitrate, maxFramerate: p.fps, priority: "high" },
-    // Versions plus légères pour les spectateurs à faible débit
-    screenShareSimulcastLayers: p.fps >= 60 ? [ScreenSharePresets.h1080fps30, ScreenSharePresets.h720fps15] : [ScreenSharePresets.h720fps15],
+    // Versions plus légères pour les spectateurs à faible débit (le serveur choisit pour chacun)
+    screenShareSimulcastLayers: p.layers,
     degradationPreference: p.hint === "motion" ? "maintain-framerate" : "maintain-resolution",
     audioPreset: AudioPresets.musicHighQualityStereo,
     dtx: false,
     red: false,
   };
-  await room.localParticipant.setScreenShareEnabled(true, capture, publish);
 }
 
 export async function stopScreenShare(room: Room) {

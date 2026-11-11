@@ -27,7 +27,7 @@ winget install Microsoft.VisualStudio.2022.BuildTools --override "--wait --passi
    client\scripts\dev.cmd
    ```
    Le script recharge le PATH, vérifie que l'API de dev répond, installe les dépendances si besoin, puis lance `npm run tauri dev`. Il passe par un `.cmd` pour ne pas dépendre de la politique d'exécution des scripts PowerShell. Sur un autre système : `cd client && npm install && npm run tauri dev`.
-3. L'appli pointe par défaut sur l'instance `http://localhost:3000` : crée un compte, puis un serveur.
+3. En dev, l'appli pointe sur l'instance `http://localhost:3000` (modifiable sur l'écran de connexion) ; les versions publiées utilisent d'office `https://tomo.grylix.dev`, sans choix possible : crée un compte, puis un serveur.
 
 > Astuce : `npm run dev` lance seulement la partie web sur http://localhost:1420. Chaque onglet a sa propre session : pratique pour simuler plusieurs joueurs. Ce qui demande la partie Rust (jeux détectés, overlay, clips sur disque, mise à jour automatique, coffre-fort) ne marche que dans l'appli de bureau.
 
@@ -60,7 +60,7 @@ Le serveur de dev crée automatiquement un **compte de test** (`DEV_USERNAME` / 
 $en=[IO.File]::ReadAllText("$PWD\src\lib\i18n-en.ts"); Get-ChildItem src -Recurse -Include *.ts,*.tsx | % { [regex]::Matches([IO.File]::ReadAllText($_.FullName), '\bt\(("(?:[^"\\]|\\.)*")') | % { $_.Groups[1].Value } } | Sort-Object -Unique | ? { -not $en.Contains("  $($_):") }
 ```
 
-L'adresse de l'instance par défaut peut être fixée à la compilation : `VITE_TOMO_INSTANCE=https://tomo-api.duckdns.org npm run tauri build`.
+L'adresse de l'instance par défaut peut être fixée à la compilation : `VITE_TOMO_INSTANCE=https://autre-adresse npm run tauri build`.
 
 ## Construire l'exécutable
 ```bash

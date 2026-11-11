@@ -100,13 +100,13 @@ Points techniques notables :
 - **Attributs LiveKit** du participant : `clips=1`, `cc=1` (sous-titres), `coach` (`all` ou identités autorisées à annoter mon écran, après demande acceptée), `lang` (fr/en, langue de transcription). Toujours les écrire avec `{ ...attributes, clé: valeur }`.
 - **Canaux de données LiveKit** : `pos` (positions spatiales, ~10/s), `coach` (annotations).
 - **Jeux** : Rust `running_programs` (crate `sysinfo`, noms des programmes seulement) → `games.ts` (liste connue + jeux ajoutés) → WebSocket `{type:"game"}` → serveur en mémoire (`gameOf`, respecte `show_game`).
-- **Sous-titres** : Transformers.js 3.7 dans un Web Worker ; modèles `onnx-community/whisper-*` et `Xenova/opus-mt-fr-en` / `en-fr` téléchargés depuis Hugging Face au premier usage ; WebGPU si dispo.
+- **Sous-titres** : Transformers.js 3.7 dans un Web Worker ; modèles `onnx-community/whisper-*` et `Xenova/opus-mt-fr-en` / `en-fr` téléchargés depuis Hugging Face au premier usage ; WebGPU si dispo. Modèle « auto » = `whisper-small` avec WebGPU, `whisper-base` sinon. Découpage dans `captions.ts` (300 ms gardées avant le premier son, bruits de moins de 180 ms ignorés, phrase coupée en route recollée à la suivante puis retraduite en entier) ; le worker traite les demandes une par une.
 - **Overlay** : fenêtre Tauri `overlay` créée depuis le JS (`overlay.ts`), transparente, `setIgnoreCursorEvents(true)`, état envoyé par `emitTo("overlay", "overlay:state")` toutes les 200 ms. `macOSPrivateApi` activé (transparence sur Mac).
 - **Mise à jour** (`updater.ts`, `UpdateCard.tsx`) : plugin `updater` + `process` ; endpoint `releases/latest/download/latest.json`. Au lancement : `updateAtLaunch` (8 s max) installe d'office et relance (écran « Mise à jour en cours… »). Pendant l'utilisation : vérif toutes les 30 min, téléchargement en arrière-plan, **pop-up jamais pendant un vocal**, « Plus tard » → revient au prochain départ du vocal ; jamais de redémarrage tout seul. Version navigateur : `/version.json` (écrit par `~/maj-tomo.sh`) relu toutes les 10 min → pop-up « Recharger ». `GET /version` → `{ minClient }` (constante `MIN_CLIENT` dans `server/api/src/index.ts`) : en dessous, « Mise à jour obligatoire ».
 - **Déploiement du serveur** : sur le VPS, un minuteur (`tomo-maj-auto.timer`, toutes les 5 min) lance `~/maj-tomo.sh` dès qu'il y a du nouveau sur `main` : **un `git push` met le serveur et la version web à jour tout seuls**, sans redémarrer LiveKit (le vocal continue). Donc ne pousser sur `main` que du code testé, et **garder l'API compatible avec la version précédente de l'appli** (ne pas supprimer / renommer une route ou un champ encore utilisé ; sinon monter `MIN_CLIENT`). Clé publique dans `tauri.conf.json`, **clé privée** dans `C:\Users\Kameron\.tauri\tomo-updater.key` (jamais dans le dépôt ; secret GitHub `TAURI_SIGNING_PRIVATE_KEY`).
 - **Langues** : `t("texte français")` + `i18n-en.ts` ; changer de langue recharge la fenêtre ; les erreurs du serveur passent aussi par `t()` dans `errorMessage`.
 - Clips : `AudioWorklet` → tampon circulaire → WAV écrit par Rust ; « Mettre au mur » l'envoie comme pièce jointe (type `audio/wav`).
-- « Rester connecté » : jeton de renouvellement dans le coffre-fort du système (crate `keyring`).
+- « Rester connecté » : jeton de renouvellement dans le coffre-fort du système (crate `keyring`). Le coffre-fort survit à la désinstallation → `client/src-tauri/windows/hooks.nsh` efface les entrées `session:…` à la désinstallation Windows (sauf mise à jour `/UPDATE`). Pas d'équivalent sur Mac.
 
 ---
 
@@ -171,7 +171,7 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 - L'**overlay de performances NVIDIA** (Alt + R) peut s'afficher sur la fenêtre : ce n'est pas tomo.
 - **Raccourcis sur Mac** : il faut l'autorisation « Surveillance de l'entrée » ; les lettres suivent la position QWERTY (pas la disposition AZERTY). Non testé sur Mac.
 - **Échap pendant l'enregistrement d'un raccourci** : ne doit pas fermer les Paramètres (`isRecordingShortcut()`).
-- Le navigateur intégré de Claude bloque le micro et la capture d'écran : tester ces parties dans l'appli de bureau (le propriétaire teste lui-même). Pour simuler, utiliser les bots (`lib/dev.ts`) depuis la console.
+- Le navigateur intégré de Claude bloque le micro et la capture d'écran : **dans ce cas, tester avec Claude in Chrome** (outils `mcp__claude-in-chrome__*`) sur la version web de dev (http://localhost:1420, un onglet par compte), au lieu de laisser le test de côté. Le choix de l'écran à partager demande un clic du propriétaire. Pour simuler d'autres personnes, utiliser les bots (`lib/dev.ts`) depuis la console. Ce qui n'existe que dans l'appli de bureau (overlay, fenêtre coach-screen, raccourcis en jeu) se teste dans l'appli.
 
 ---
 

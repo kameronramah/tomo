@@ -20,12 +20,17 @@ export default function Overlay() {
   const right = p.corner.endsWith("r");
   return (
     <div className={`ov${bottom ? " bottom" : ""}${right ? " right" : ""}`} style={{ opacity: p.opacity }}>
+      {s.coach?.map((name) => (
+        <div key={name} className="ov-card ov-coach">
+          <strong>{name}</strong> {t("veut annoter ton écran : réponds dans tomo")}
+        </div>
+      ))}
       {p.voices && (
         <div className="ov-card">
           {s.voices.map((v) => (
             <div key={v.id} className={`ov-voice${v.speaking ? " speaking" : ""}`}>
-              <span className="ov-avatar" style={{ background: v.color }}>
-                {initials(v.name)}
+              <span className="ov-avatar" style={{ background: v.photo ? undefined : v.color }}>
+                {v.photo ? <img src={v.photo} alt="" draggable={false} /> : initials(v.name)}
               </span>
               <span className="ov-name">{v.name}</span>
               {v.muted && <span className="ov-muted">{t("micro coupé")}</span>}

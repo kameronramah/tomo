@@ -189,7 +189,11 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
   const ctx = new AudioContext();
   await ctx.resume().catch(() => {});
   const room = new Room({
-    adaptiveStream: true,
+    // Pas d'« adaptive stream » : il choisissait la qualité d'un partage d'écran d'après la taille
+    // de la vidéo affichée (4K reçu en 360p dans une fenêtre normale). Les seules vidéos sont des
+    // partages d'écran : ScreenView demande la meilleure qualité pour celui qu'on regarde et met
+    // les autres en pause. Le serveur baisse quand même la qualité si la connexion ne suit pas.
+    adaptiveStream: false,
     dynacast: true,
     webAudioMix: { audioContext: ctx },
     audioCaptureDefaults: {
@@ -207,7 +211,9 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
   const stopDevices = watchMicConstraints(room);
 
   room
-    .on(RoomEvent.TrackSubscribed, (track, _pub, participant) => {
+    .on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
+      // Un partage d'écran ne se télécharge que quand on le regarde (ScreenView le réactive).
+      if (track.kind === Track.Kind.Video && pub.source === Track.Source.ScreenShare) pub.setEnabled(false);
       if (track.kind === Track.Kind.Audio) {
         audioContainer().appendChild(track.attach());
         applyVolume(participant);

@@ -3,6 +3,7 @@ import { Icon, NetworkBadge } from "./Brand";
 import { t } from "../lib/i18n";
 import { usePtt } from "../lib/ptt";
 import { shortcutHint } from "../lib/hotkeys";
+import { CoachPending } from "./CoachLayer";
 
 type Props = {
   room: Room;
@@ -49,6 +50,7 @@ export default function VoiceIsland(p: Props) {
         <button className="island-btn" onClick={p.onOpen} title={t("Revenir à {0}", { 0: p.label })} aria-label={t("Revenir à {0}", { 0: p.label })}>
           <span className="island-dot" aria-hidden="true" />
         </button>
+        <CoachPending room={p.room} onOpen={p.onOpen} compact />
         {mic}
         {deaf}
         <button className="island-btn leave" onClick={p.onLeave} aria-label={p.isCall ? t("Raccrocher") : t("Quitter")} title={p.isCall ? t("Raccrocher") : t("Quitter")}>
@@ -70,6 +72,7 @@ export default function VoiceIsland(p: Props) {
             </span>
           </span>
         </button>
+        <CoachPending room={p.room} onOpen={p.onOpen} />
         <div className="row gap-6">
           {mic}
           {deaf}
@@ -89,6 +92,7 @@ export default function VoiceIsland(p: Props) {
           <span className="strong ellipsis">{p.label}</span>
           <NetworkBadge room={p.room} />
         </button>
+        <CoachPending room={p.room} onOpen={p.onOpen} compact />
         {mic}
         {deaf}
         <button className="island-leave" onClick={p.onLeave}>

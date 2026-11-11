@@ -46,8 +46,8 @@ Le « joue à … » n'est pas en base : chaque connexion WebSocket annonce son 
 
 | Action | Membre | Admin | Créateur |
 |---|---|---|---|
-| Pièces, fils, code membre, épingler au mur, lancer un défi | ✅ | ✅ | ✅ |
-| Créer / renommer / supprimer pièces et fils, codes invités, exclure, @tous, retirer une légende ou annuler un défi des autres | | ✅ | ✅ |
+| Pièces, fils, code membre, code invité d'un soir, épingler au mur, lancer un défi | ✅ | ✅ | ✅ |
+| Créer / renommer / supprimer pièces et fils, voir / révoquer les codes, exclure, @tous, retirer une légende ou annuler un défi des autres | | ✅ | ✅ |
 | Nommer / retirer des admins, supprimer le serveur | | | ✅ |
 
 Un **invité** (code invité, sans compte) a un jeton limité à **un seul serveur**, qui expire avec le code.

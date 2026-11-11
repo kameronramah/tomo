@@ -313,7 +313,7 @@ export default async function serverRoutes(app: FastifyInstance) {
   /**
    * Créer une invitation.
    * - member : pour un ami qui a (ou va créer) un compte. Tous les membres peuvent en créer.
-   * - guest  : sans compte, pour une soirée (1 à 24 h). Réservé aux admins.
+   * - guest  : sans compte, pour une soirée (1 à 24 h). Tous les membres peuvent aussi en créer.
    */
   app.post<{ Params: { id: string }; Body: { kind?: unknown; hours?: unknown; maxUses?: unknown } }>(
     "/servers/:id/invites",
@@ -323,7 +323,6 @@ export default async function serverRoutes(app: FastifyInstance) {
       const role = roleOf(req.params.id, me.id);
       if (!role) return notFound(reply);
       const kind = req.body?.kind === "guest" ? "guest" : "member";
-      if (kind === "guest" && !isManager(role)) return forbidden(reply, "Seuls les admins peuvent créer des codes invités.");
 
       const hoursRaw = Number(req.body?.hours ?? (kind === "guest" ? 6 : 168));
       const hours = kind === "guest" ? Math.min(Math.max(hoursRaw, 1), 24) : Math.min(Math.max(hoursRaw, 1), 24 * 30);

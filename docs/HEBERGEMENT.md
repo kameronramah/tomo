@@ -70,13 +70,12 @@ docker compose logs -f
 
 ### Vérifier que ça marche
 - `https://<API_DOMAIN>/health` doit répondre `{"ok":true}`.
-- Dans l'appli tomo : sur l'écran de connexion, « Instance : … modifier » → `https://<API_DOMAIN>`, puis crée ton compte et ton serveur.
+- Dans l'appli tomo : elle se connecte d'office à `https://tomo.grylix.dev` (adresse fixée dans `client/src/lib/prefs.ts`, `VPS_INSTANCE` ; à changer si l'API déménage). Crée ton compte et ton serveur.
 - Une fois tes potes inscrits, tu peux fermer les inscriptions avec `REGISTRATION=closed` dans `.env` (puis `docker compose up -d`).
 
 ### Ce que tes potes doivent faire
 1. Installer tomo depuis https://github.com/kameronramah/tomo/releases/latest.
-2. Au premier lancement, sur l'écran de connexion : « Instance : … modifier » → `https://<API_DOMAIN>` (l'adresse que tu leur donnes).
-3. Créer leur compte, puis « Rejoindre avec un code » avec le code d'invitation que tu crées dans ton serveur (bouton « Inviter »).
+2. Créer leur compte, puis « Rejoindre avec un code » avec le code d'invitation que tu crées dans ton serveur (bouton « Inviter »).
 
 Pour un invité d'un soir, pas besoin de compte : « J'ai un code invité » sur l'écran de connexion.
 

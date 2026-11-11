@@ -23,7 +23,13 @@ function write(key: string, value: unknown) {
   }
 }
 
-const DEFAULT_INSTANCE = (import.meta.env.VITE_TOMO_INSTANCE as string | undefined) ?? "http://localhost:3000";
+/** Le serveur tomo (VPS). En dev, l'API locale. VITE_TOMO_INSTANCE permet d'en forcer une autre à la compilation. */
+const VPS_INSTANCE = "https://tomo.grylix.dev";
+const DEFAULT_INSTANCE =
+  (import.meta.env.VITE_TOMO_INSTANCE as string | undefined) ?? (import.meta.env.DEV ? "http://localhost:3000" : VPS_INSTANCE);
+
+/** Choisir l'adresse du serveur n'est possible qu'en dev : pour tout le monde, c'est le VPS d'office. */
+export const INSTANCE_EDITABLE = import.meta.env.DEV;
 
 export function normalizeInstance(url: string): string {
   let u = url.trim().replace(/\/+$/, "");
@@ -35,7 +41,9 @@ export function normalizeInstance(url: string): string {
 }
 
 // Adresse nettoyée (un « / » final, comme « https://tomo.grylix.dev/ », donnerait des adresses en « //auth »)
-export const loadInstance = () => normalizeInstance(read<string>(KEYS.instance, DEFAULT_INSTANCE));
+// Hors dev, une ancienne adresse gardée sur le PC (ex. localhost) est ignorée.
+export const loadInstance = () =>
+  normalizeInstance(INSTANCE_EDITABLE ? read<string>(KEYS.instance, DEFAULT_INSTANCE) : DEFAULT_INSTANCE);
 export const saveInstance = (url: string) => write(KEYS.instance, normalizeInstance(url));
 
 export type Devices = { input?: string; output?: string };
@@ -92,7 +100,7 @@ export type Settings = {
   /** Mise à jour automatique (téléchargée en arrière-plan, installée au redémarrage) */
   updates: { auto: boolean };
   /** Sous-titres : modèle Whisper (plus gros = plus juste mais plus lent), traduction vers ma langue */
-  captions: { model: string; translate: boolean };
+  captions: { model: string; translate: boolean; v?: number };
   /** Overlay en jeu : quand l'afficher, où, et quoi */
   overlay: {
     mode: "game" | "always" | "off";
@@ -129,7 +137,7 @@ export const DEFAULT_SETTINGS: Settings = {
   clips: { enabled: true, seconds: 60 },
   startup: { minimized: true },
   updates: { auto: true },
-  captions: { model: "onnx-community/whisper-base", translate: true },
+  captions: { model: "auto", translate: true, v: 2 },
   overlay: { mode: "game", corner: "tl", opacity: 0.9, voices: true, chat: true, captions: true },
   games: { detect: true, propose: true, perGame: {}, custom: [], seen: [] },
   spatial: { range: 25, showMap: true },
@@ -155,7 +163,13 @@ let current: Settings = (() => {
     startup: { ...DEFAULT_SETTINGS.startup, ...saved.startup },
     updates: { ...DEFAULT_SETTINGS.updates, ...saved.updates },
     games: { ...DEFAULT_SETTINGS.games, ...saved.games },
-    captions: { ...DEFAULT_SETTINGS.captions, ...saved.captions },
+    captions: {
+      ...DEFAULT_SETTINGS.captions,
+      ...saved.captions,
+      // l'ancien réglage d'office (« Équilibré ») passe une fois à « Automatique », plus juste quand le PC suit
+      ...(saved.captions && !saved.captions.v && saved.captions.model === "onnx-community/whisper-base" ? { model: "auto" } : {}),
+      v: 2,
+    },
     overlay: { ...DEFAULT_SETTINGS.overlay, ...saved.overlay },
     shortcuts: { ...DEFAULT_SETTINGS.shortcuts, ...saved.shortcuts },
   };

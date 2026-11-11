@@ -2,7 +2,7 @@ import { useEffect, useReducer, useRef } from "react";
 import { RoomEvent, type Room } from "livekit-client";
 import { MAP_HALF, type SpatialEngine } from "../lib/spatial";
 import { getSettings, updateSettings } from "../lib/prefs";
-import { Avatar, Icon } from "./Brand";
+import { Icon, UserAvatar } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
 import { t } from "../lib/i18n";
 
@@ -100,7 +100,7 @@ export default function MapView({ room, engine }: Props) {
           const audible = d <= range;
           return (
             <span key={p.identity} className={`map-pin${audible ? "" : " far"}`} style={toPct(r.x, r.y)} title={t("{0} · {1} m", { 0: p.name || p.identity, 1: Math.round(d) })}>
-              <Avatar name={p.name || p.identity} size={38} speaking={speaking.has(p.identity) && audible} />
+              <UserAvatar identity={p.identity} name={p.name || p.identity} size={38} speaking={speaking.has(p.identity) && audible} />
               <span className="map-label">
                 {p.name || p.identity}
                 <em>{Math.round(d)} {t("m")}</em>
@@ -111,7 +111,7 @@ export default function MapView({ room, engine }: Props) {
 
         <span className="map-pin me" style={toPct(engine.me.x, engine.me.y)}>
           {game && <span className="map-facing" style={{ transform: `rotate(${engine.me.yaw}rad)` }} />}
-          <Avatar name={me.name || me.identity} size={44} speaking={speaking.has(me.identity)} />
+          <UserAvatar identity={me.identity} name={me.name || me.identity} size={44} speaking={speaking.has(me.identity)} />
           <span className="map-label">{t("Toi")}</span>
         </span>
       </div>

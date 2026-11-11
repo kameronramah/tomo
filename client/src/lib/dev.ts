@@ -5,6 +5,7 @@
 import { Room, Track, createLocalAudioTrack, type LocalAudioTrack } from "livekit-client";
 import type { Api } from "./api";
 import { getSpatial } from "./voice";
+import { presetById, screenPublishOptions, type ScreenPresetId } from "./screen";
 
 type Bot = { name: string; room: Room; ctx: AudioContext; gain: GainNode; timer: number; talking: boolean; walk: number };
 
@@ -78,19 +79,30 @@ export async function addBot(api: Api, roomId: string) {
 }
 
 /**
- * Un bot partage un « faux écran » : animation 1080p à 60 i/s (blocs qui bougent,
- * compteur, petit texte) pour tester l'affichage, la netteté et la fluidité des partages.
+ * Un bot partage un « faux écran » (blocs qui bougent, compteur, petit texte) pour tester
+ * l'affichage, la netteté et la fluidité des partages. Il envoie avec les mêmes réglages
+ * qu'un vrai partage (profil « Jeu fluide » par défaut, 1080p 60 i/s).
+ * Depuis la console : (await import("/src/lib/dev.ts")).addScreenBotPreset("max")
  */
-export async function addScreenBot(api: Api, roomId: string) {
+let lastBotTarget: { api: Api; roomId: string } | null = null;
+export async function addScreenBotPreset(presetId: ScreenPresetId) {
+  if (!lastBotTarget) throw new Error("Ajoute d'abord un bot écran depuis le panneau");
+  return addScreenBot(lastBotTarget.api, lastBotTarget.roomId, presetId);
+}
+
+export async function addScreenBot(api: Api, roomId: string, presetId: ScreenPresetId = "game") {
+  lastBotTarget = { api, roomId };
+  const preset = presetById(presetId);
   const name = "Bot Écran";
   const { url, token } = await api.devBotToken(roomId, name);
   const room = new Room();
   await room.connect(url, token, { autoSubscribe: false });
 
   const canvas = document.createElement("canvas");
-  canvas.width = 1920;
-  canvas.height = 1080;
+  canvas.width = preset.width;
+  canvas.height = preset.height;
   const g = canvas.getContext("2d")!;
+  g.scale(preset.width / 1920, preset.height / 1080); // dessin prévu en 1920 × 1080
   let frame = 0;
   const start = performance.now();
   const draw = () => {
@@ -118,19 +130,18 @@ export async function addScreenBot(api: Api, roomId: string) {
     g.font = "bold 64px Inter, sans-serif";
     g.fillText("tomo · partage de test", 80, 130);
     g.font = "28px Inter, sans-serif";
-    g.fillText(`Image n° ${frame} · ${t.toFixed(2)} s · 1920 × 1080 · 60 i/s visés`, 80, 190);
+    g.fillText(`Image n° ${frame} · ${t.toFixed(2)} s · ${preset.width} × ${preset.height} · ${preset.fps} i/s visés`, 80, 190);
     g.font = "14px Consolas, monospace";
     g.fillStyle = "#9aa1b2";
     for (let i = 0; i < 6; i++) g.fillText("Petit texte pour juger la netteté : 0123456789 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ", 80, 960 + i * 18);
   };
   draw();
-  const timer = window.setInterval(draw, 1000 / 60);
-  const track = canvas.captureStream(60).getVideoTracks()[0];
+  const timer = window.setInterval(draw, 1000 / preset.fps);
+  const track = canvas.captureStream(preset.fps).getVideoTracks()[0];
   await room.localParticipant.publishTrack(track, {
     source: Track.Source.ScreenShare,
     name: "bot-screen",
-    videoCodec: "h264",
-    screenShareEncoding: { maxBitrate: 8_000_000, maxFramerate: 60 },
+    ...screenPublishOptions(preset),
   });
   // Mode coach : le bot laisse annoter son écran (pour tester les annotations).
   await room.localParticipant.setAttributes({ coach: "all" }).catch(() => {});

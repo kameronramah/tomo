@@ -27,6 +27,7 @@ type Msg =
   | { t: "mark"; id: string; share: string; tool: Tool; pts: [number, number][] }
   | { t: "clear"; share: string }
   | { t: "ask"; share: string }
+  | { t: "pending"; share: string; to: string }
   | { t: "answer"; share: string; to: string; ok: boolean };
 
 const TOPIC = "coach";
@@ -66,6 +67,8 @@ export class Coach {
   requests: CoachRequest[] = [];
   /** Mes demandes envoyées : identité du partageur → état */
   asked = new Map<string, "pending" | "refused">();
+  /** Pseudos connus (pour afficher quelqu'un qui a quitté le vocal) */
+  private names = new Map<string, string>();
   private listeners = new Set<() => void>();
   private off: () => void;
 
@@ -83,12 +86,16 @@ export class Coach {
       for (const share of [...this.asked.keys()]) if (canAnnotate(this.participant(share), room.localParticipant.identity)) this.asked.delete(share);
       this.emit();
     };
-    const onLeft = (p: RemoteParticipant) => {
-      this.requests = this.requests.filter((r) => r.identity !== p.identity);
-      this.emit();
+    // Une demande reste affichée jusqu'à ma réponse, même si la personne quitte le vocal.
+    // Quand elle revient, on lui rappelle que sa demande est toujours en attente.
+    const onJoined = (p: RemoteParticipant) => {
+      if (!this.requests.some((r) => r.identity === p.identity)) return;
+      setTimeout(() => {
+        if (this.requests.some((r) => r.identity === p.identity)) this.publish({ t: "pending", share: room.localParticipant.identity, to: p.identity }, [p.identity]);
+      }, 1500);
     };
-    room.on(RoomEvent.DataReceived, onData).on(RoomEvent.ParticipantAttributesChanged, onAttrs).on(RoomEvent.ParticipantDisconnected, onLeft);
-    this.off = () => room.off(RoomEvent.DataReceived, onData).off(RoomEvent.ParticipantAttributesChanged, onAttrs).off(RoomEvent.ParticipantDisconnected, onLeft);
+    room.on(RoomEvent.DataReceived, onData).on(RoomEvent.ParticipantAttributesChanged, onAttrs).on(RoomEvent.ParticipantConnected, onJoined);
+    this.off = () => room.off(RoomEvent.DataReceived, onData).off(RoomEvent.ParticipantAttributesChanged, onAttrs).off(RoomEvent.ParticipantConnected, onJoined);
   }
 
   private participant(identity: string): Participant | undefined {
@@ -100,7 +107,17 @@ export class Coach {
     if (msg.t === "ask") {
       // Demande d'annoter MON écran
       if (msg.share !== me.identity || !me.isScreenShareEnabled || canAnnotate(me, from.identity)) return;
-      if (!this.requests.some((r) => r.identity === from.identity)) this.requests.push({ identity: from.identity, name: from.name || from.identity, at: Date.now() });
+      // Redemande (ou retour dans le vocal) : la demande existante est simplement rafraîchie
+      const old = this.requests.find((r) => r.identity === from.identity);
+      if (old) old.name = from.name || old.name;
+      else this.requests.push({ identity: from.identity, name: from.name || from.identity, at: Date.now() });
+      this.emit();
+      return;
+    }
+    if (msg.t === "pending") {
+      // Ma demande est toujours en attente chez celui qui partage (je suis revenu dans le vocal)
+      if (msg.to !== me.identity || from.identity !== msg.share || canAnnotate(from, me.identity)) return;
+      this.asked.set(msg.share, "pending");
       this.emit();
       return;
     }
@@ -153,6 +170,21 @@ export class Coach {
     this.emit();
   }
 
+  /** Nom affiché d'une demande (pseudo à jour si la personne est là). */
+  requestName(r: CoachRequest) {
+    return this.room.remoteParticipants.get(r.identity)?.name || r.name;
+  }
+
+  /** Pseudo d'une personne, même absente du vocal. */
+  nameOf(identity: string) {
+    return this.room.remoteParticipants.get(identity)?.name || this.names.get(identity) || identity;
+  }
+
+  /** La personne qui a fait la demande est-elle dans le vocal ? */
+  isHere(identity: string) {
+    return this.room.remoteParticipants.has(identity);
+  }
+
   /** Mon trait (envoyé ~15 fois par seconde pendant qu'on dessine). */
   send(share: string, id: string, tool: Tool, pts: [number, number][]) {
     const me = this.room.localParticipant;
@@ -168,6 +200,8 @@ export class Coach {
   // ---- Côté partageur -----------------------------------------------------------------
   async answer(identity: string, ok: boolean) {
     const me = this.room.localParticipant;
+    const req = this.requests.find((r) => r.identity === identity);
+    if (req) this.names.set(identity, this.requestName(req));
     this.requests = this.requests.filter((r) => r.identity !== identity);
     if (ok) {
       const a = allowedList(me);

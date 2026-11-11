@@ -621,7 +621,7 @@ input[type="range"] { height: auto; padding: 0; border: none; background: none; 
 }
 .gif-btn:hover, .gif-btn.on { background: var(--surface-3); color: var(--text); }
 .gif-picker {
-  position: absolute; right: clamp(12px, 2vw, 32px); bottom: 76px; z-index: 6; width: min(380px, calc(100% - 24px)); height: min(440px, 70%);
+  position: absolute; right: clamp(12px, 2vw, 32px); bottom: 76px; z-index: 21; width: min(380px, calc(100% - 24px)); height: min(440px, 70%);
   display: flex; flex-direction: column; gap: 10px; padding: 12px; background: var(--surface-2); border-radius: 20px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.55), inset 0 0 0 1px var(--line-2);
 }
@@ -1055,8 +1055,13 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 
 /* ---- Fiche profil ---- */
 .profile-backdrop { position: fixed; inset: 0; z-index: 60; background: rgba(5, 6, 9, 0.45); display: flex; align-items: center; justify-content: center; padding: 16px; }
-.pcard { position: relative; width: 380px; max-width: 100%; max-height: calc(100vh - 32px); overflow-y: auto; background: var(--surface); border-radius: 24px; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), inset 0 0 0 1px var(--surface-3); }
-.profile-banner { height: 120px; background-size: cover; background-position: center; }
+.pcard { position: relative; width: 380px; max-width: 100%; background: var(--surface); border-radius: 24px; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.6), inset 0 0 0 1px var(--surface-3); }
+.profile-banner { height: 120px; background-size: cover; background-position: center; border-radius: 24px 24px 0 0; }
+/* Fiche entière visible sans défilement : on resserre sur les petites fenêtres */
+@media (max-height: 640px) {
+  .profile-backdrop .profile-banner { height: 76px; }
+  .profile-backdrop .profile-body { gap: 10px; padding-bottom: 16px; }
+}
 .profile-body { padding: 0 20px 20px; display: flex; flex-direction: column; gap: 14px; }
 .profile-top { display: flex; align-items: flex-end; justify-content: space-between; margin-top: -44px; }
 .profile-top .avatar { box-shadow: 0 0 0 6px var(--surface); }
@@ -1067,7 +1072,8 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .profile-actions { display: flex; gap: 8px; }
 .profile-actions .btn { flex: 1; }
 .profile-close { position: absolute; top: 10px; right: 10px; z-index: 2; background: rgba(0, 0, 0, 0.45) !important; color: #fff !important; }
-.profile-menu-pop { right: 0; top: 36px; min-width: 210px; }
+/* Le menu « … » s'ouvre vers le haut : il reste dans la fiche, rien n'est coupé */
+.profile-menu-pop { right: 0; bottom: calc(100% + 6px); min-width: 210px; }
 
 /* ---- Paramètres : profil et confidentialité ---- */
 .banner-drop { height: 120px; border-radius: 16px; border: 1.5px dashed var(--line-2); background: var(--bg) center / cover no-repeat; display: flex; align-items: center; justify-content: center; gap: 10px; color: var(--muted); font-size: 13px; cursor: pointer; position: relative; overflow: hidden; }
@@ -1298,7 +1304,8 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .caption-line { margin: 0; font-size: 15px; line-height: 1.45; }
 .caption-line.pending { opacity: .6; }
 /* Le bandeau flotte juste au-dessus du dock */
-.stage-main > .captions-bar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 104px; z-index: 6; width: min(820px, calc(100% - 32px)); margin: 0; }
+/* z-index 4 : sous le dock (5), pour que ses menus (partage, réglages) passent par-dessus */
+.stage-main > .captions-bar { position: absolute; left: 50%; transform: translateX(-50%); bottom: 104px; z-index: 4; width: min(820px, calc(100% - 32px)); margin: 0; }
 
 /* ---- v0.8 - Overlay en jeu (fenêtre transparente) ---- */
 html.overlay-mode, html.overlay-mode body, html.overlay-mode #root { background: transparent !important; overflow: hidden; }
@@ -1309,11 +1316,14 @@ html.overlay-mode, html.overlay-mode body, html.overlay-mode #root { background:
 .ov-voice { display: flex; align-items: center; gap: 8px; padding: 2px 0; opacity: .75; }
 .ov-voice.speaking { opacity: 1; }
 .ov-avatar { width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; font-weight: 700; color: #0E1014; flex: none; }
+.ov-avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: block; }
 .ov-voice.speaking .ov-avatar { box-shadow: 0 0 0 2px #0E1014, 0 0 0 4px #2DD4BF; }
 .ov-name { font-weight: 600; }
 .ov-muted { font-size: 11px; color: #FFB020; }
 .ov-room { margin-top: 4px; font-size: 11px; color: #9aa1b2; }
 .ov-chat strong { color: #2DD4BF; }
+.ov-coach { border-color: rgba(255, 176, 32, .6); }
+.ov-coach strong { color: #FFB020; }
 .ov-caption strong { color: #FFB020; }
 .ov-dim { color: #9aa1b2; font-size: 11px; }
 
@@ -1424,3 +1434,13 @@ span.key-chip { cursor: default; }
 .launch-bar span { display: block; height: 100%; background: var(--teal); transition: width 0.2s; }
 .update-modal { max-width: 440px; display: flex; flex-direction: column; gap: 18px; }
 .update-modal-actions { justify-content: flex-end; }
+
+/* Mot de passe : on a notre propre bouton « œil », on cache celui de WebView2 / Edge */
+.input-with-action input::-ms-reveal,
+.input-with-action input::-ms-clear { display: none; }
+
+/* ---- v0.11 - Mode coach : demandes en attente visibles partout ---- */
+.coach-pending { display: inline-flex; align-items: center; gap: 6px; min-width: 0; padding: 6px 10px; border-radius: 10px; border: 1px solid rgba(255, 176, 32, .45); background: rgba(255, 176, 32, .12); color: #FFB020; font-size: 13px; font-weight: 600; cursor: pointer; }
+.coach-pending:hover { background: rgba(255, 176, 32, .2); }
+.coach-pending.compact { padding: 0 9px; height: 34px; border-radius: 999px; }
+.coach-pending-count { font-variant-numeric: tabular-nums; }

@@ -35,7 +35,7 @@
     "publisher": "tomo",
     "shortDescription": "Le vocal pour jouer entre potes",
     "windows": {
-      "nsis": { "languages": ["French"], "displayLanguageSelector": false, "installMode": "currentUser" }
+      "nsis": { "languages": ["French"], "displayLanguageSelector": false, "installMode": "currentUser", "installerHooks": "./windows/hooks.nsh" }
     },
     "macOS": {
       "minimumSystemVersion": "11.0",

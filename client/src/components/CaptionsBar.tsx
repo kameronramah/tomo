@@ -30,7 +30,9 @@ export default function CaptionsBar() {
             ? t("Préparation des sous-titres… {0} % (une seule fois, le modèle est gardé ensuite)", { 0: c.status.progress })
             : c.status.state === "error"
               ? t("Sous-titres indisponibles sur ce PC.")
-              : t("Calculé sur ton PC : rien n'est envoyé ailleurs.")}
+              : c.status.translation !== undefined && getSettings().captions.translate
+                ? t("Préparation de la traduction… {0} % (une seule fois)", { 0: c.status.translation })
+                : t("Calculé sur ton PC : rien n'est envoyé ailleurs.")}
         </span>
         <label className="row gap-6 small">
           <input

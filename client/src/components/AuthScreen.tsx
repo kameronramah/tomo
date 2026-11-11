@@ -4,6 +4,7 @@ import { errorMessage } from "../lib/ui";
 import { Icon, Logo, Wordmark } from "./Brand";
 import { t } from "../lib/i18n";
 import { APP_VERSION } from "../lib/updater";
+import { INSTANCE_EDITABLE } from "../lib/prefs";
 
 /** forgot : demander un code par e-mail · reset : taper le code et le nouveau mot de passe */
 type Mode = "login" | "register" | "guest" | "forgot" | "reset";
@@ -368,6 +369,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
             <p className="hint center">{t("Pas d'adresse e-mail, ou plus accès à ta boîte ? Demande à l'admin de ton serveur tomo : il peut te donner un code de secours.")}</p>
           )}
 
+          {INSTANCE_EDITABLE && (
           <div className="instance">
             {editInstance ? (
               <span className="row gap-8">
@@ -393,6 +395,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
               </span>
             )}
           </div>
+          )}
         </form>
       </section>
     </div>

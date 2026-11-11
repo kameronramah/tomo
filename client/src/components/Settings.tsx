@@ -387,9 +387,11 @@ function Audio({ s }: { s: S }) {
 }
 
 const CAPTION_MODELS = [
+  { id: "auto", label: t("Automatique (recommandé)"), detail: t("« Précis » si ta carte graphique suit, sinon « Équilibré »") },
   { id: "onnx-community/whisper-tiny", label: t("Rapide"), detail: t("≈ 40 Mo · le plus réactif, un peu moins juste") },
-  { id: "onnx-community/whisper-base", label: t("Équilibré (recommandé)"), detail: t("≈ 80 Mo · bon compromis") },
-  { id: "onnx-community/whisper-small", label: t("Précis"), detail: t("≈ 250 Mo · plus juste, demande une bonne carte graphique") },
+  { id: "onnx-community/whisper-base", label: t("Équilibré"), detail: t("≈ 80 Mo · correct, tourne partout") },
+  { id: "onnx-community/whisper-small", label: t("Précis"), detail: t("≈ 600 Mo · nettement plus juste, demande une carte graphique") },
+  { id: "onnx-community/whisper-large-v3-turbo", label: t("Très précis"), detail: t("≈ 1,5 Go · le plus juste, demande une carte graphique récente") },
 ];
 
 /** Paramètres des sous-titres (dans Audio et micro). */

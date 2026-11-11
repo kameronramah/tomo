@@ -13,13 +13,17 @@ import { currentGame, gamePrefs } from "./games";
 import { speakingDetector } from "./speaking";
 import { getCaptions } from "./captions";
 import { colorFor } from "./ui";
+import { coachFor } from "./coach";
+import { ensurePeople, getPerson, userIdOf } from "./people";
 
 export type OverlayState = {
   room: string;
-  voices: { id: string; name: string; speaking: boolean; muted: boolean; color: string }[];
+  voices: { id: string; name: string; speaking: boolean; muted: boolean; color: string; photo?: string | null }[];
   chat: { id: string; name: string; text: string }[];
   captions: { id: string; name: string; text: string; translated: boolean }[];
   prefs: Settings["overlay"];
+  /** Demandes d'annotation de mon écran en attente (noms) : toujours affichées */
+  coach?: string[];
 };
 
 const W = 340;
@@ -39,6 +43,8 @@ let win: OverlayWindow | null = null;
 let creating: Promise<OverlayWindow | null> | null = null;
 let shownCorner = "";
 let shown = false;
+/** L'overlay en jeu est-il affiché ? (sinon les demandes d'annotation passent par la fenêtre coach) */
+export const overlayShown = () => shown;
 const recentChat: { id: string; name: string; text: string; at: number }[] = [];
 
 /** Message du chat de la pièce (affiché quelques secondes dans l'overlay). */
@@ -118,6 +124,7 @@ function wanted(): boolean {
 function stateFor(room: Room, label: string): OverlayState {
   const speaking = speakingDetector(room).speaking;
   const people = [room.localParticipant, ...room.remoteParticipants.values()];
+  ensurePeople(people.map((p) => userIdOf(p.identity)));
   const now = Date.now();
   const captions = getCaptions()
     ?.lines.filter((l) => !l.pending && now - l.at < CAPTION_MS)
@@ -131,10 +138,12 @@ function stateFor(room: Room, label: string): OverlayState {
       speaking: speaking.has(p.identity),
       muted: !p.isMicrophoneEnabled,
       color: colorFor(p.name || p.identity).bg,
+      photo: getPerson(userIdOf(p.identity))?.avatarUrl ?? null,
     })),
     chat: recentChat.filter((m) => now - m.at < CHAT_MS).slice(-2),
     captions: captions ?? [],
     prefs: getSettings().overlay,
+    coach: room.localParticipant.isScreenShareEnabled ? coachFor(room).requests.map((r) => coachFor(room).requestName(r)) : [],
   };
 }
 

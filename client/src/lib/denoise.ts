@@ -28,23 +28,35 @@ async function prepare(ctx: AudioContext) {
   return wasm;
 }
 
+/** Force un nœud à recevoir un seul canal (le stéréo est mélangé, pas coupé). */
+function mono(node: AudioNode) {
+  node.channelCount = 1;
+  node.channelCountMode = "explicit";
+  node.channelInterpretation = "speakers";
+}
+
 export type Chain = { input: AudioNode; output: AudioNode; dispose: () => void };
 
 /** Construit la chaîne de traitement (RNNoise puis porte de bruit) dans un contexte audio. */
 export async function buildChain(ctx: AudioContext, audio: Settings["audio"]): Promise<Chain> {
   const binary = await prepare(ctx);
-  const input = ctx.createGain();
+  // Le micro arrive parfois en stéréo (selon le micro / Windows). RNNoise et la porte ne traitent
+  // que le 1er canal (maxChannels: 1) et laissaient le 2e muet → voix dans l'oreille gauche seulement.
+  // On mélange donc tout en mono dès l'entrée ; le mono est ensuite joué des deux côtés.
+  const input = new GainNode(ctx, { channelCount: 1, channelCountMode: "explicit", channelInterpretation: "speakers" });
   let last: AudioNode = input;
   const nodes: AudioNode[] = [input];
   let rn: RnnoiseWorkletNode | null = null;
   if (audio.denoise === "advanced") {
     rn = new RnnoiseWorkletNode(ctx, { maxChannels: 1, wasmBinary: binary });
+    mono(rn);
     last.connect(rn);
     last = rn;
     nodes.push(rn);
   }
   if (audio.gate) {
     const gate = new NoiseGateWorkletNode(ctx, { openThreshold: audio.gateThreshold, closeThreshold: audio.gateThreshold - 6, holdMs: 250, maxChannels: 1 });
+    mono(gate);
     last.connect(gate);
     last = gate;
     nodes.push(gate);

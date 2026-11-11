@@ -63,7 +63,7 @@ Check "Léa rejoint avec le code" ($acc.ok -and $acc.data.role -eq "member")
 $r = Call POST "/servers/$S/rooms" @{ label = "Pirate" } $TL
 Check "Léa (membre) ne peut pas créer de salon (403)" ($r.status -eq 403)
 $r = Call POST "/servers/$S/invites" @{ kind = "guest" } $TL
-Check "Léa (membre) ne peut pas créer de code invité (403)" ($r.status -eq 403)
+Check "Léa (membre) peut créer un code invité" ($r.ok -and $r.data.kind -eq "guest")
 
 $tok = Call POST "/rooms/$($room.data.id)/token" $null $TL
 Check "Léa obtient un jeton vocal" ($tok.ok -and $tok.data.token -and $tok.data.identity -like "u:*")

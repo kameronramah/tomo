@@ -16,7 +16,7 @@ Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout 
 - **Windows** : `tomo_…_x64-setup.exe`, double-clic (pas besoin d'être administrateur).
 - **Mac** (Intel et Apple) : `tomo_…_universal.dmg`, glisser tomo dans Applications. Premier lancement : clic droit › Ouvrir (l'app n'est pas signée par Apple).
 
-Ensuite, tomo **se met à jour tout seul** (Paramètres › À propos). Au premier lancement, indique l'adresse de ton instance tomo (le serveur de ton groupe).
+Ensuite, tomo **se met à jour tout seul** (Paramètres › À propos). L'appli se connecte d'office au serveur tomo (`https://tomo.grylix.dev`) : rien à régler.
 
 ---
 

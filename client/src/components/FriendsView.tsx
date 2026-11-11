@@ -107,7 +107,7 @@ export default function FriendsView({ api, friends, onChanged, onMessage, onCall
             {list.map((f) => (
               <li key={f.id}>
                 <span className="avatar-wrap">
-                  <Avatar name={f.username} size={38} />
+                  <Avatar name={f.displayName ?? f.username} src={f.avatarUrl} size={38} />
                   {f.status === "friend" && <span className={`status-dot${f.online ? "" : " off"}`} />}
                 </span>
                 <span className="grow col gap-2">

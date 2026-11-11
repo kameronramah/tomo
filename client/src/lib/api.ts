@@ -213,7 +213,7 @@ export class Api {
   private access: string | null = null;
   private refresh: string | null = null;
   private remember = false;
-  private refreshing: Promise<boolean> | null = null;
+  private refreshing: Promise<"ok" | "lost" | "later"> | null = null;
   /** Appelé quand la session est perdue (expirée, révoquée). */
   onSessionLost: (() => void) | null = null;
 
@@ -238,7 +238,10 @@ export class Api {
       throw new ApiError(t("Serveur tomo injoignable. Vérifie ta connexion."), 0);
     }
     if (res.status === 401 && retry && this.refresh && !path.startsWith("/auth/")) {
-      if (await this.renew()) return this.request<T>(method, path, body, false);
+      const renewed = await this.renew();
+      if (renewed === "ok") return this.request<T>(method, path, body, false);
+      // Serveur momentanément injoignable (mise à jour, coupure réseau) : on garde la session.
+      if (renewed === "later") throw new ApiError(t("Serveur tomo injoignable. Vérifie ta connexion."), 0);
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -261,17 +264,25 @@ export class Api {
     return v;
   }
 
-  /** Renouvelle la session (une seule fois même si plusieurs requêtes échouent en même temps). */
-  private renew(): Promise<boolean> {
+  /**
+   * Renouvelle la session (une seule fois même si plusieurs requêtes échouent en même temps).
+   * - "ok" : nouveaux jetons ;
+   * - "lost" : le serveur refuse le jeton (expiré, révoqué) → il faut se reconnecter ;
+   * - "later" : serveur injoignable, en cours de mise à jour ou trop sollicité → on garde la session et on réessaiera.
+   */
+  private renew(): Promise<"ok" | "lost" | "later"> {
     if (!this.refreshing) {
       this.refreshing = (async () => {
         try {
           const r = await this.request<AuthResult>("POST", "/auth/refresh", { refreshToken: this.refresh }, false);
           await this.setTokens(r);
-          return true;
-        } catch {
-          await this.clear();
-          return false;
+          return "ok" as const;
+        } catch (e) {
+          if (e instanceof ApiError && (e.status === 400 || e.status === 401)) {
+            await this.clear();
+            return "lost" as const;
+          }
+          return "later" as const;
         } finally {
           this.refreshing = null;
         }
@@ -299,7 +310,14 @@ export class Api {
     if (!saved) return null;
     this.refresh = saved;
     this.remember = true;
-    if (!(await this.renew())) return null;
+    // Au lancement, le réseau ou le serveur peut mettre quelques secondes à répondre : on réessaie
+    // sans jamais effacer la session gardée (sauf si le serveur la refuse vraiment).
+    let renewed = await this.renew();
+    for (let i = 0; renewed === "later" && i < 3; i++) {
+      await new Promise((r) => setTimeout(r, 2000));
+      renewed = await this.renew();
+    }
+    if (renewed !== "ok") return null;
     const user = await this.request<User>("GET", "/me");
     return { kind: "user", user };
   }
@@ -437,7 +455,7 @@ export class Api {
     } catch {
       throw new ApiError(t("Envoi du fichier impossible. Vérifie ta connexion."), 0);
     }
-    if (res.status === 401 && retry && this.refresh && (await this.renew())) return this.uploadAttachment(file, meta, false);
+    if (res.status === 401 && retry && this.refresh && (await this.renew()) === "ok") return this.uploadAttachment(file, meta, false);
     const data = await res.json().catch(() => ({}));
     if (res.status === 413) throw new ApiError(t("Fichier trop lourd (25 Mo maximum)."), 413);
     if (!res.ok) throw new ApiError(data.error ?? `Erreur serveur (${res.status})`, res.status);

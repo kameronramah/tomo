@@ -17,15 +17,15 @@ function contentRect(v: HTMLVideoElement) {
 }
 
 /** Re-rend quand le mode coach ou les autorisations changent. */
-function useCoach(room: Room) {
+export function useCoach(room: Room) {
   const coach = coachFor(room);
   const [, tick] = useReducer((x: number) => x + 1, 0);
   useEffect(() => {
     const off = coach.on(tick);
-    room.on(RoomEvent.ParticipantAttributesChanged, tick);
+    room.on(RoomEvent.ParticipantAttributesChanged, tick).on(RoomEvent.ParticipantConnected, tick).on(RoomEvent.ParticipantDisconnected, tick);
     return () => {
       off();
-      room.off(RoomEvent.ParticipantAttributesChanged, tick);
+      room.off(RoomEvent.ParticipantAttributesChanged, tick).off(RoomEvent.ParticipantConnected, tick).off(RoomEvent.ParticipantDisconnected, tick);
     };
   }, [coach, room]);
   return coach;
@@ -136,7 +136,7 @@ export default function CoachLayer({
   }
 
   const openAll = isMine && coach.allowed() === "all";
-  const allowedNames = isMine && coach.allowed() !== "all" ? (coach.allowed() as string[]).map((id) => ({ id, name: room.remoteParticipants.get(id)?.name || id })) : [];
+  const allowedNames = isMine && coach.allowed() !== "all" ? (coach.allowed() as string[]).map((id) => ({ id, name: coach.nameOf(id) })) : [];
 
   return (
     <>
@@ -165,7 +165,12 @@ export default function CoachLayer({
         {!isMine && !allowed && (
           <>
             {asked === "pending" ? (
-              <span className="coach-hint">{t("Demande envoyée, en attente de réponse…")}</span>
+              <>
+                <span className="coach-hint">{t("Demande envoyée, en attente de réponse…")}</span>
+                <button className="coach-btn" onClick={() => coach.ask(share)} title={t("Renvoyer la demande à celui qui partage")}>
+                  {t("Relancer")}
+                </button>
+              </>
             ) : (
               <>
                 {asked === "refused" && <span className="coach-hint">{t("Demande refusée.")}</span>}
@@ -216,7 +221,10 @@ export function CoachRequests({ room }: { room: Room }) {
       {coach.requests.map((r) => (
         <div key={r.identity} className="coach-request">
           <Icon name="pen" size={16} />
-          <span className="grow">{t("{0} veut annoter ton écran", { 0: r.name })}</span>
+          <span className="grow">
+            {t("{0} veut annoter ton écran", { 0: coach.requestName(r) })}
+            {!coach.isHere(r.identity) && <span className="muted small"> · {t("a quitté le vocal")}</span>}
+          </span>
           <button className="btn primary small" onClick={() => void coach.answer(r.identity, true)}>
             {t("Autoriser")}
           </button>
@@ -226,5 +234,22 @@ export function CoachRequests({ room }: { room: Room }) {
         </div>
       ))}
     </div>
+  );
+}
+
+/**
+ * Rappel dans le vocal en cours (île, panneau du serveur) quand je ne regarde pas la scène :
+ * des potes attendent ma réponse pour annoter mon écran. Un clic ramène à la pièce.
+ */
+export function CoachPending({ room, onOpen, compact }: { room: Room; onOpen: () => void; compact?: boolean }) {
+  const coach = useCoach(room);
+  const n = coach.requests.length;
+  if (!n) return null;
+  const label = n === 1 ? t("{0} veut annoter ton écran", { 0: coach.requestName(coach.requests[0]) }) : t("{0} demandes pour annoter ton écran", { 0: n });
+  return (
+    <button className={`coach-pending${compact ? " compact" : ""}`} onClick={onOpen} title={label} aria-label={label}>
+      <Icon name="pen" size={15} />
+      {compact ? <span className="coach-pending-count">{n}</span> : <span className="ellipsis">{label}</span>}
+    </button>
   );
 }

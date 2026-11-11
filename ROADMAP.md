@@ -114,6 +114,8 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 Repérées en route. À glisser entre deux grosses fonctionnalités.
 
 ### Interface
+- [x] Désinstaller tomo (Windows) efface la session « rester connecté » : à la réinstallation, il faut redonner ses identifiants (pas pendant une mise à jour)
+- [ ] Même chose sur Mac : une appli jetée à la corbeille ne prévient pas, le jeton reste dans le Trousseau (piste : effacer la session si l'appli ne trouve plus son dossier de réglages)
 - [x] Bloc « En vocal » : le ping passe à la ligne quand le panneau latéral est étroit
 - [x] Pseudo coupé dans la carte profil en fenêtre étroite (3 boutons à côté)
 - [x] Le ping affiche « — ms » pendant les 5 premières secondes d'une connexion vocale (mesuré tout de suite par WebRTC)
@@ -142,6 +144,9 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Carte spatiale : se déplacer aux flèches du clavier ; onde autour de l'avatar qui parle
 - [ ] Partage d'écran : choisir la qualité reçue, changer de profil sans arrêter, vignette « en direct », AV1
 - [x] Sous-titres : ne pas recharger le modèle à chaque entrée dans une pièce
+- [x] Sous-titres plus justes : début des phrases gardé, bruits ignorés, phrases coupées recollées (et traduites en entier), modèle « Automatique » (Précis si la carte graphique suit) + « Très précis »
+- [ ] Sous-titres : reconnaître la langue parlée au lieu de se fier à la langue de tomo de la personne
+- [ ] Traduction : essayer un modèle plus gros (Opus-MT se trompe sur le langage familier, ex. « il lui reste presque plus de vie »)
 
 ### Jeux
 - [ ] Liste des jeux connus : la compléter (et « javaw.exe = Minecraft » peut se tromper avec d'autres programmes Java)

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import type { Api, Invite, Member, Role, ServerSummary } from "../lib/api";
 import { errorMessage, formatExpiry, ROLE_LABEL } from "../lib/ui";
-import { Avatar, Icon } from "./Brand";
+import { Icon, UserAvatar } from "./Brand";
 import { t } from "../lib/i18n";
 
 export function Modal({
@@ -423,12 +423,12 @@ export function ManageServerDialog({
         <ul className="list">
           {members.map((m) => (
             <li key={m.id}>
-              <Avatar name={m.username} size={32} />
+              <UserAvatar userId={m.id} name={m.username} size={32} />
               <span className="grow">
                 {m.username}
                 {m.id === myId && <span className="muted"> {t("(toi)")}</span>}
               </span>
-              <span className={`role-tag ${m.role}`}>{ROLE_LABEL[m.role]}</span>
+              <span className={`role-tag${m.role === "member" ? "" : ` ${m.role}`}`}>{ROLE_LABEL[m.role]}</span>
               {isOwner && m.role !== "owner" && (
                 <button
                   className="btn small"

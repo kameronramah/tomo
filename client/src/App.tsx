@@ -893,7 +893,7 @@ export default function App() {
   const isGuest = session.kind === "guest";
   const isManager = active?.role === "owner" || active?.role === "admin";
   const voiceRoomInfo = voice?.kind === "room" ? detail?.rooms.find((r) => r.id === voice.roomId) : undefined;
-  const openInvite = () => active && setDialog({ kind: "invite", server: active, guests: isManager });
+  const openInvite = () => active && setDialog({ kind: "invite", server: active, guests: true });
   const openChannel = serverView.type === "channel" ? detail?.channels.find((c) => c.id === serverView.id) : undefined;
   const dmFriend = dmView.type === "dm" ? friends.find((f) => f.id === dmView.userId) : undefined;
   // Plan du serveur : visible dans une pièce vocale ou un fil (pas sur l'accueil, qui montre déjà tout)
@@ -1284,7 +1284,7 @@ export default function App() {
         />
       )}
 
-      {incoming && <IncomingCall from={incoming.from.name} onAccept={acceptCall} onDecline={declineCall} />}
+      {incoming && <IncomingCall from={incoming.from.name} fromId={incoming.from.id} onAccept={acceptCall} onDecline={declineCall} />}
 
       {toast && (
         <div className={`toast${toast.ok ? " ok" : ""}`} role="alert" onClick={() => setToast(undefined)}>

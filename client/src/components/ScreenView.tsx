@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import type { RemoteParticipant, Room } from "livekit-client";
+import { VideoQuality, type RemoteParticipant, type RemoteTrackPublication, type Room } from "livekit-client";
 import type { Share } from "../lib/screen";
 import { screenVolumeMemory, setScreenVolume } from "../lib/voice";
-import { Avatar, Icon } from "./Brand";
+import { Icon, UserAvatar } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
 import { t } from "../lib/i18n";
 import CoachLayer from "./CoachLayer";
@@ -58,6 +58,25 @@ export default function ScreenView({ room, shares, onStopMine, onCapture }: Prop
     };
   }, [track]);
 
+  // Le partage regardé : pleine qualité. Les autres : en pause (rien n'est téléchargé).
+  const currentPub = current?.publication;
+  useEffect(() => {
+    const remotes = shares.filter((s) => !s.isLocal).map((s) => s.publication as RemoteTrackPublication);
+    for (const pub of remotes) {
+      const on = pub === currentPub;
+      pub.setEnabled(on);
+      if (on) pub.setVideoQuality(VideoQuality.HIGH);
+    }
+  }, [shares, currentPub, track]);
+  const sharesRef = useRef(shares);
+  sharesRef.current = shares;
+  useEffect(
+    () => () => {
+      for (const s of sharesRef.current) if (!s.isLocal) (s.publication as RemoteTrackPublication).setEnabled(false);
+    },
+    [],
+  );
+
   // Plein écran : la vidéo couvre la fenêtre, et la fenêtre passe en plein écran.
   useEffect(() => {
     if (inTauri) getCurrentWindow().setFullscreen(full).catch(() => {});
@@ -78,7 +97,7 @@ export default function ScreenView({ room, shares, onStopMine, onCapture }: Prop
     <div className={`screen-view${full ? " full" : ""}`}>
       <div className="screen-bar">
         <span className="row gap-8 grow">
-          <Avatar name={who} size={26} speaking={speaking.has(current.participant.identity)} />
+          <UserAvatar identity={current.participant.identity} name={who} size={26} speaking={speaking.has(current.participant.identity)} />
           <strong className="ellipsis">{current.isLocal ? t("Ton écran") : t("Écran de {0}", { 0: who })}</strong>
           <span className="screen-quality" title={t("Qualité reçue")}>
             {quality}
@@ -144,7 +163,7 @@ export default function ScreenView({ room, shares, onStopMine, onCapture }: Prop
       <div className="screen-people">
         {[room.localParticipant, ...room.remoteParticipants.values()].map((p) => (
           <span key={p.identity} className="screen-person" title={p.name || p.identity}>
-            <Avatar name={p.name || p.identity} size={30} speaking={speaking.has(p.identity)} />
+            <UserAvatar identity={p.identity} name={p.name || p.identity} size={30} speaking={speaking.has(p.identity)} />
             {!p.isMicrophoneEnabled && (
               <span className="mini-muted">
                 <Icon name="micOff" size={10} />

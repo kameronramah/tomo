@@ -8,6 +8,7 @@
  */
 import { RoomEvent, Track, type LocalTrackPublication, type Room } from "livekit-client";
 import { inTauri, notify } from "./desktop";
+import { overlayShown } from "./overlay";
 import { coachActive, coachFor, type Mark, type CoachRequest } from "./coach";
 
 export type CoachScreenState = { marks: Mark[]; requests: CoachRequest[] };
@@ -101,8 +102,11 @@ export function startCoachScreen(room: Room) {
     const pub = myScreenPub(room);
     const settings = pub?.track?.mediaStreamTrack.getSettings() as (MediaTrackSettings & { displaySurface?: string }) | undefined;
     const wholeScreen = !!settings && settings.displaySurface !== "window" && settings.displaySurface !== "browser";
-    const marks = coach.visible(me.identity);
-    const want = !!pub && wholeScreen && (coachActive(me) || coach.requests.length > 0 || marks.length > 0);
+    // Traits : seulement si tout l'écran est partagé (sinon on ne sait pas où les poser).
+    // Demandes en attente : toujours affichées par-dessus, sauf si l'overlay en jeu les montre déjà.
+    const marks = wholeScreen ? coach.visible(me.identity) : [];
+    const requests = overlayShown() ? [] : coach.requests.map((r) => ({ ...r, name: coach.requestName(r) }));
+    const want = !!pub && ((wholeScreen && (coachActive(me) || marks.length > 0)) || requests.length > 0);
     if (!want) {
       if (shown && win) await win.hide().catch(() => {});
       shown = false;
@@ -120,7 +124,7 @@ export function startCoachScreen(room: Room) {
         await w.setSize(new PhysicalSize(m.size.width, m.size.height)).catch(() => {});
       }
     }
-    const state: CoachScreenState = { marks, requests: coach.requests };
+    const state: CoachScreenState = { marks, requests };
     const json = JSON.stringify(state);
     if (json !== lastSent || marks.length) {
       lastSent = json;
