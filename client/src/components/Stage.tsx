@@ -436,7 +436,15 @@ export default function Stage(props: Props) {
         </div>
       </div>
       </div>
-      {props.chatOpen && props.chat && <aside className="stage-chat">{props.chat}</aside>}
+      {props.chatOpen && props.chat && (
+        <aside className="stage-chat">
+          {props.chat}
+          {/* Visible seulement quand le chat recouvre le vocal (fenêtre très étroite) */}
+          <button className="icon-btn sm stage-chat-close" onClick={props.onToggleChat} aria-label={t("Fermer le chat")} title={t("Fermer le chat")}>
+            <Icon name="x" size={16} />
+          </button>
+        </aside>
+      )}
     </section>
   );
 }

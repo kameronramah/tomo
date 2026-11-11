@@ -132,7 +132,7 @@ export class Coach {
     if (!canAnnotate(this.participant(msg.share), from.identity)) return;
     if (msg.t === "clear") this.clearFrom(msg.share, from.identity);
     else if (msg.t === "mark" && Array.isArray(msg.pts) && msg.pts.length <= 400)
-      this.put({ id: msg.id, share: msg.share, by: from.identity, tool: msg.tool, pts: msg.pts, color: colorFor(from.name || from.identity).bg, at: Date.now() });
+      this.put({ id: msg.id, share: msg.share, by: from.identity, tool: msg.tool, pts: msg.pts, color: colorFor(from.name || from.identity).fg, at: Date.now() });
   }
 
   dispose() {
@@ -188,7 +188,7 @@ export class Coach {
   /** Mon trait (envoyé ~15 fois par seconde pendant qu'on dessine). */
   send(share: string, id: string, tool: Tool, pts: [number, number][]) {
     const me = this.room.localParticipant;
-    this.put({ id, share, by: me.identity, tool, pts, color: colorFor(me.name || me.identity).bg, at: Date.now() });
+    this.put({ id, share, by: me.identity, tool, pts, color: colorFor(me.name || me.identity).fg, at: Date.now() });
     this.publish({ t: "mark", id, share, tool, pts: pts.map(([x, y]) => [Math.round(x * 1000) / 1000, Math.round(y * 1000) / 1000]) });
   }
 

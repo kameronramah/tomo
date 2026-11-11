@@ -71,22 +71,12 @@ export function NetworkBadge({ room, showLabel = false }: { room: Room | null; s
 }
 
 /** Logo tomo : deux bulles qui se répondent. `cut` = couleur du fond (découpe entre les bulles). */
-export function Logo({ size = 28, cut = "var(--panel)" }: { size?: number; cut?: string }) {
+/** Logo : deux cercles qui se touchent, deux potes (turquoise et ambre). */
+export function Logo({ size = 28 }: { size?: number; /** ancien réglage, plus utilisé */ cut?: string }) {
   return (
-    <svg viewBox="0 0 64 64" width={size} height={size} aria-hidden="true">
-      <path
-        d="M34 22h12a12 12 0 0 1 12 12v4a12 12 0 0 1-12 12h-2v8l-9-8h-1a12 12 0 0 1-12-12v-4a12 12 0 0 1 12-12z"
-        fill="var(--amber)"
-      />
-      <path
-        d="M18 6h12a12 12 0 0 1 12 12v4a12 12 0 0 1-12 12h-1l-9 8v-8h-2A12 12 0 0 1 6 22v-4A12 12 0 0 1 18 6z"
-        fill="var(--teal)"
-        stroke={cut}
-        strokeWidth="3"
-      />
-      <rect x="15.5" y="16" width="3" height="8" rx="1.5" fill={cut} />
-      <rect x="22.5" y="12" width="3" height="16" rx="1.5" fill={cut} />
-      <rect x="29.5" y="16" width="3" height="8" rx="1.5" fill={cut} />
+    <svg viewBox="0 0 32 32" width={size} height={size} aria-hidden="true">
+      <circle cx="11" cy="15" r="9" fill="var(--teal)" />
+      <circle cx="24" cy="20" r="6" fill="var(--amber)" />
     </svg>
   );
 }
@@ -94,7 +84,7 @@ export function Logo({ size = 28, cut = "var(--panel)" }: { size?: number; cut?:
 export function Wordmark({ size = 17 }: { size?: number }) {
   return (
     <span className="wordmark" style={{ fontSize: size }}>
-      {t("tom")}<span className="amber">{t("o")}</span>
+      tomo
     </span>
   );
 }

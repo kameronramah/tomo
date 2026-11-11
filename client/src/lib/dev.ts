@@ -108,10 +108,10 @@ export async function addScreenBot(api: Api, roomId: string, presetId: ScreenPre
   const draw = () => {
     const t = (performance.now() - start) / 1000;
     frame++;
-    g.fillStyle = "#0e1014";
+    g.fillStyle = "#0e0d10";
     g.fillRect(0, 0, 1920, 1080);
     // Grille
-    g.strokeStyle = "#1c2029";
+    g.strokeStyle = "#232227";
     for (let x = 0; x < 1920; x += 80) g.strokeRect(x, 0, 80, 1080);
     for (let y = 0; y < 1080; y += 80) g.strokeRect(0, y, 1920, 80);
     // Blocs en mouvement (fluidité)
@@ -126,13 +126,13 @@ export async function addScreenBot(api: Api, roomId: string, presetId: ScreenPre
     g.fillStyle = "#ffffff";
     g.fillRect(((t * 600) % 2000) - 40, 0, 8, 1080);
     // Textes (netteté)
-    g.fillStyle = "#eceef3";
+    g.fillStyle = "#f4f0ea";
     g.font = "bold 64px Inter, sans-serif";
     g.fillText("tomo · partage de test", 80, 130);
     g.font = "28px Inter, sans-serif";
     g.fillText(`Image n° ${frame} · ${t.toFixed(2)} s · ${preset.width} × ${preset.height} · ${preset.fps} i/s visés`, 80, 190);
     g.font = "14px Consolas, monospace";
-    g.fillStyle = "#9aa1b2";
+    g.fillStyle = "#a8a29c";
     for (let i = 0; i < 6; i++) g.fillText("Petit texte pour juger la netteté : 0123456789 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ", 80, 960 + i * 18);
   };
   draw();

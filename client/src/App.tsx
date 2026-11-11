@@ -6,7 +6,6 @@ import {
   type ChosenStatus,
   type DmSummary,
   type MyProfile,
-  type Person,
   type Friend,
   type Message,
   type RoomInfo,
@@ -38,12 +37,13 @@ import ProfileCard from "./components/ProfileCard";
 import { EmailGate } from "./components/EmailAccount";
 import { speakingDetector } from "./lib/speaking";
 import { errorMessage } from "./lib/ui";
+import { useMedia } from "./lib/useMedia";
 import { removeAllBots, setLoopback } from "./lib/dev";
 import AuthScreen from "./components/AuthScreen";
 import ServerRail, { type Mode } from "./components/ServerRail";
 import MessagesView, { RequestsView, type DmView } from "./components/MessagesView";
 import DmPanel from "./components/DmPanel";
-import MemberList from "./components/MemberList";
+import MemberList, { useServerPeople } from "./components/MemberList";
 import ServerPlan from "./components/ServerPlan";
 import VoiceIsland from "./components/VoiceIsland";
 import { NetworkBadge } from "./components/Brand";
@@ -139,6 +139,10 @@ export default function App() {
       // pas de mémoire : tant pis
     }
   };
+  // Fenêtre étroite : le plan se replie tout seul ; on peut l'ouvrir par-dessus le reste (planPeek).
+  const smallWindow = useMedia("(max-width: 900px)");
+  const mediumWindow = useMedia("(max-width: 1100px)");
+  const [planPeek, setPlanPeek] = useState(false);
 
   const voiceRef = useRef<Voice | null>(null);
   voiceRef.current = voice;
@@ -388,15 +392,7 @@ export default function App() {
   useEffect(() => void setAppBadge(messagesBadge + mentionTotal), [messagesBadge, mentionTotal]);
 
   /** Membres du serveur ouvert (pour proposer les @mentions). */
-  const [serverPeople, setServerPeople] = useState<Person[]>([]);
-  useEffect(() => {
-    if (!detail?.id) return setServerPeople([]);
-    let alive = true;
-    const load = () => api.people(detail.id).then((p) => alive && setServerPeople(p)).catch(() => {});
-    load();
-    const t = setInterval(load, 30_000);
-    return () => ((alive = false), clearInterval(t));
-  }, [api, detail?.id]);
+  const serverPeople = useServerPeople(api, realtime, detail?.id);
   const mentionables = useMemo(
     () =>
       serverPeople
@@ -898,6 +894,9 @@ export default function App() {
   const dmFriend = dmView.type === "dm" ? friends.find((f) => f.id === dmView.userId) : undefined;
   // Plan du serveur : visible dans une pièce vocale ou un fil (pas sur l'accueil, qui montre déjà tout)
   const planVisible = mode === "servers" && !!detail && ((stageVisible && voice?.kind === "room") || !!openChannel);
+  // Le chat du salon ouvert prend de la place : le plan se replie plus tôt.
+  const planNarrow = smallWindow || (mediumWindow && chatOpen && stageVisible);
+  const planIsCollapsed = planNarrow ? !planPeek : planCollapsed;
 
   // ---- Zone principale ----
   let main: React.ReactNode;
@@ -1188,8 +1187,12 @@ export default function App() {
 
       <div className={`content-wrap${voice && !stageVisible && !planVisible ? " with-island" : ""}`}>
         {planVisible && detail ? (
-          <div className="with-plan">
+          <div className={`with-plan${planNarrow ? " narrow" : ""}${planNarrow && planPeek ? " peek" : ""}`}>
+            {planNarrow && planPeek && <div className="plan-peek-away" onClick={() => setPlanPeek(false)} />}
             <ServerPlan
+              people={serverPeople}
+              myId={myId}
+              onOpenProfile={setProfileId}
               detail={detail}
               isManager={isManager}
               isGuest={isGuest}
@@ -1205,17 +1208,17 @@ export default function App() {
               openRoomId={stageVisible && voice?.kind === "room" ? voice.roomId : undefined}
               openChannelId={openChannel?.id}
               joiningRoomId={joiningRoomId}
-              collapsed={planCollapsed}
-              onToggleCollapsed={() => setPlanCollapsed(!planCollapsed)}
-              onOpenHome={() => setServerView({ type: "home" })}
-              onJoinRoom={enterRoom}
-              onOpenChannel={(c) => setServerView({ type: "channel", id: c.id })}
+              collapsed={planIsCollapsed}
+              onToggleCollapsed={() => (planNarrow ? setPlanPeek(!planPeek) : setPlanCollapsed(!planCollapsed))}
+              onOpenHome={() => (setPlanPeek(false), setServerView({ type: "home" }))}
+              onJoinRoom={(r) => (setPlanPeek(false), enterRoom(r))}
+              onOpenChannel={(c) => (setPlanPeek(false), setServerView({ type: "channel", id: c.id }))}
               onAddRoom={() => setDialog({ kind: "addRoom", serverId: detail.id })}
               onManage={() => active && setDialog({ kind: "manage", server: active })}
               footer={
                 voice && !stageVisible ? (
                   <VoiceIsland
-                    variant={planCollapsed ? "mini" : "panel"}
+                    variant={planIsCollapsed ? "mini" : "panel"}
                     room={voice.room}
                     label={voice.kind === "call" ? t("Appel · {0}", { 0: voice.roomLabel }) : (voiceRoomInfo?.label ?? voice.roomLabel)}
                     isCall={voice.kind === "call"}

@@ -16,25 +16,11 @@ function seen(ts: number) {
   return d === 1 ? t("vu hier") : t("vu il y a {0} jours", { 0: d });
 }
 
-/** Membres d'un serveur, rangés par « en vocal / en ligne / hors ligne », avec recherche. */
-export default function MemberList({
-  api,
-  realtime,
-  serverId,
-  myId,
-  onOpenProfile,
-}: {
-  api: Api;
-  realtime: Realtime | null;
-  serverId: string;
-  myId: string;
-  onOpenProfile: (userId: string) => void;
-}) {
+/** Membres d'un serveur (avec présence, pièce et jeu), rechargés toutes les 15 s et à chaque changement de présence. */
+export function useServerPeople(api: Api, realtime: Realtime | null, serverId: string | null | undefined) {
   const [people, setPeople] = useState<Person[]>([]);
-  const [q, setQ] = useState("");
-  const get = usePeople();
-
   useEffect(() => {
+    if (!serverId) return setPeople([]);
     let alive = true;
     const load = () =>
       api
@@ -57,6 +43,26 @@ export default function MemberList({
       off?.();
     };
   }, [api, serverId, realtime]);
+  return people;
+}
+
+/** Membres d'un serveur, rangés par « en vocal / en ligne / hors ligne », avec recherche. */
+export default function MemberList({
+  api,
+  realtime,
+  serverId,
+  myId,
+  onOpenProfile,
+}: {
+  api: Api;
+  realtime: Realtime | null;
+  serverId: string;
+  myId: string;
+  onOpenProfile: (userId: string) => void;
+}) {
+  const people = useServerPeople(api, realtime, serverId);
+  const [q, setQ] = useState("");
+  const get = usePeople();
 
   const filter = q.trim().toLowerCase();
   const rows = people

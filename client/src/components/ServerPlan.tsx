@@ -1,10 +1,14 @@
 import type { ReactNode } from "react";
-import type { Channel, RoomInfo, ServerDetail } from "../lib/api";
-import { getPerson, usePeople, userIdOf } from "../lib/people";
+import type { Channel, Person, RoomInfo, ServerDetail } from "../lib/api";
+import { STATUS_LABEL, getPerson, usePeople, userIdOf } from "../lib/people";
 import { Icon, UserAvatar } from "./Brand";
 import { t } from "../lib/i18n";
 
 type Props = {
+  /** Membres du serveur (présence, pièce, jeu) */
+  people: Person[];
+  myId: string;
+  onOpenProfile: (userId: string) => void;
   detail: ServerDetail;
   isManager: boolean;
   isGuest: boolean;
@@ -93,9 +97,14 @@ export default function ServerPlan(p: Props) {
                 {here && <span className="live-dot" aria-hidden="true" />}
                 <strong className="grow ellipsis">{room.label}</strong>
                 {chat > 0 && <span className="count amber">{chat}</span>}
-                <span className={`small ${here ? "teal-soft" : room.spatial ? "amber" : "muted"}`}>
-                  {p.joiningRoomId === room.id ? "…" : here ? t("tu es ici") : room.spatial ? "spatial" : people.length ? "" : "vide"}
+                <span className={`plan-room-state small ${here ? "teal-soft" : room.spatial ? "amber" : "muted"}`}>
+                  {p.joiningRoomId === room.id ? "…" : here ? t("tu es ici") : room.spatial ? t("spatial") : people.length ? "" : t("vide")}
                 </span>
+                {!here && p.joiningRoomId !== room.id && (
+                  <span className="plan-join" aria-hidden="true">
+                    {t("Rejoindre")}
+                  </span>
+                )}
               </span>
               {people.length > 0 && (
                 <span className="plan-people">
@@ -128,9 +137,36 @@ export default function ServerPlan(p: Props) {
             </button>
           );
         })}
+        <PlanOnline people={p.people} myId={p.myId} onOpenProfile={p.onOpenProfile} />
       </div>
 
       {p.footer && <div className="plan-footer">{p.footer}</div>}
     </aside>
+  );
+}
+
+/** « En ligne, pas en vocal » : qui est là et à quoi il joue, sans quitter le vocal. */
+function PlanOnline(p: { people: Person[]; myId: string; onOpenProfile: (userId: string) => void }) {
+  const get = usePeople();
+  const online = p.people
+    .map((x) => ({ ...x, ...(x.guest ? {} : get(x.id)) }))
+    .filter((x) => !x.room && x.status !== "offline" && x.id !== p.myId)
+    .sort((a, b) => Number(!!b.game) - Number(!!a.game) || a.displayName.localeCompare(b.displayName));
+  if (online.length === 0) return null;
+  const shown = online.slice(0, 5);
+  return (
+    <section className="plan-online" aria-label={t("En ligne, pas en vocal")}>
+      <span className="plan-online-title">{t("En ligne, pas en vocal")}</span>
+      {shown.map((x) => (
+        <button key={x.id} className="plan-online-row" onClick={() => !x.guest && p.onOpenProfile(x.id)} disabled={x.guest}>
+          <UserAvatar userId={x.guest ? null : x.id} name={x.displayName} size={28} />
+          <span className="grow ellipsis strong-ish">{x.displayName}</span>
+          <span className={`small ellipsis plan-online-sub${x.game ? "" : x.status === "idle" ? " amber" : " muted"}`}>
+            {x.game ? x.game.name : (x.customStatus ?? STATUS_LABEL[x.status])}
+          </span>
+        </button>
+      ))}
+      {online.length > shown.length && <span className="muted small pad">{t("et {0} autres", { 0: online.length - shown.length })}</span>}
+    </section>
   );
 }

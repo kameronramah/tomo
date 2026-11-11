@@ -137,47 +137,46 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
             ? t("Tape le code reçu et choisis un nouveau mot de passe. Tous tes appareils seront déconnectés.")
             : t("Un ami t'a donné un code invité ? Entre sans compte, le temps d'une soirée.");
 
+  // Connexion et inscription : une bascule en haut de la carte (si les inscriptions sont ouvertes).
+  const tabs = (mode === "login" || mode === "register") && registration === "open";
+
   return (
     <div className="auth">
-      <section className="auth-brand">
-        <div className="row gap-16">
-          <Logo size={72} />
-          <Wordmark size={44} />
+      {/* Ambiance : des potes qui flottent autour, comme dans un vocal (décoratif) */}
+      <div className="auth-ambient" aria-hidden="true">
+        <span className="auth-halo teal" />
+        <span className="auth-halo amber" />
+        <span className="auth-float f1 speaking" style={{ background: "#143A36", color: "#5EEAD4" }}>N</span>
+        <span className="auth-float f2" style={{ background: "#3A1F2B", color: "#F5A3C0" }}>L</span>
+        <span className="auth-float f3" style={{ background: "#2C2445", color: "#C4B5FD" }}>S</span>
+        <span className="auth-float f4" style={{ background: "#1D2C45", color: "#9CC2FF" }}>M</span>
+        <span className="auth-float f5" style={{ background: "#3A2E17", color: "#FFC457" }}>K</span>
+        <span className="auth-float f6" style={{ background: "#213A22", color: "#A7E3A0" }}>T</span>
+        <span className="auth-say s1">{t("« on lance ? »")}</span>
+        <span className="auth-say s2">{t("« j'arrive ! »")}</span>
+      </div>
+
+      <div className="auth-scroll">
+      <main className={`auth-center${mode === "register" || mode === "reset" ? " wide" : ""}`}>
+        <div className="auth-head">
+          <span className="auth-brandline">
+            <Logo size={56} />
+            <Wordmark size={40} />
+          </span>
+          <p className="muted">{t("Le vocal pensé pour jouer entre potes.")}</p>
         </div>
 
-        <div className="col gap-28">
-          <h1 className="display">{t("Le vocal pensé pour jouer entre potes.")}</h1>
-          <ul className="feature-list">
-            <li>
-              <span className="feature-icon teal">
-                <Icon name="orbit" />
-              </span>
-              {t("Audio spatial, activable en un clic")}
-            </li>
-            <li>
-              <span className="feature-icon amber">
-                <Icon name="rewind" />
-              </span>
-              {t("Garde les dernières secondes du salon en un raccourci")}
-            </li>
-            <li>
-              <span className="feature-icon">
-                <Icon name="lock" />
-              </span>
-              {t("Auto-hébergé, gratuit, tes données restent chez vous")}
-            </li>
-          </ul>
-        </div>
-
-        <span className="muted small">tomo {APP_VERSION} · open source</span>
-      </section>
-
-      <section className="auth-form-wrap">
-        <form className="auth-form" onSubmit={submit}>
-          <div className="auth-compact-brand row gap-10">
-            <Logo size={52} cut="var(--bg)" />
-            <Wordmark size={32} />
-          </div>
+        <form className="auth-card" onSubmit={submit}>
+          {tabs ? (
+            <div className="segmented auth-tabs" role="tablist" aria-label={t("Connexion ou inscription")}>
+              <button type="button" role="tab" aria-selected={mode === "login"} className={mode === "login" ? "on" : ""} onClick={() => mode !== "login" && switchMode("login")}>
+                {t("Se connecter")}
+              </button>
+              <button type="button" role="tab" aria-selected={mode === "register"} className={mode === "register" ? "on" : ""} onClick={() => mode !== "register" && switchMode("register")}>
+                {t("Créer un compte")}
+              </button>
+            </div>
+          ) : null}
 
           {recovering && (
             <div className="auth-steps" aria-hidden="true">
@@ -192,14 +191,17 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
             </div>
           )}
 
-          <div className="col gap-6">
-            <h2 className="title">{title}</h2>
-            <span className="muted">{subtitle}</span>
-          </div>
+          {mode !== "login" || !tabs ? (
+            <div className="col gap-6">
+              {!tabs && <h1 className="title">{title}</h1>}
+              <span className="muted">{subtitle}</span>
+            </div>
+          ) : null}
 
           {notice && !recovering && <p className="notice">{notice}</p>}
           {info && <p className="notice">{info}</p>}
 
+          <div className="auth-fields">
           {mode === "guest" && (
             <label className="field">
               {t("Code invité")}
@@ -307,6 +309,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
               />
             </label>
           )}
+          </div>
 
           {mode !== "guest" && mode !== "forgot" && (
             <label className="check">
@@ -346,58 +349,62 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
             </button>
           )}
 
-          <div className="divider">{t("ou")}</div>
-
-          {mode === "login" ? (
-            <div className="col gap-10">
-              {registration === "open" && (
-                <button type="button" className="btn outline lg" onClick={() => switchMode("register")}>
-                  {t("Créer un compte")}
-                </button>
-              )}
-              <button type="button" className="btn ghost" onClick={() => switchMode("guest")}>
-                {t("J'ai un code invité")}
-              </button>
-            </div>
-          ) : (
-            <button type="button" className="btn outline lg" onClick={() => switchMode("login")}>
+          {mode !== "login" && mode !== "register" && (
+            <button type="button" className="btn outline" onClick={() => switchMode("login")}>
               {recovering ? t("Retour à la connexion") : t("J'ai déjà un compte")}
+            </button>
+          )}
+          {mode === "register" && !tabs && (
+            <button type="button" className="btn outline" onClick={() => switchMode("login")}>
+              {t("J'ai déjà un compte")}
+            </button>
+          )}
+          {mode === "login" && !tabs && registration === "open" && (
+            <button type="button" className="btn outline" onClick={() => switchMode("register")}>
+              {t("Créer un compte")}
             </button>
           )}
 
           {recovering && (
             <p className="hint center">{t("Pas d'adresse e-mail, ou plus accès à ta boîte ? Demande à l'admin de ton serveur tomo : il peut te donner un code de secours.")}</p>
           )}
-
-          {INSTANCE_EDITABLE && (
-          <div className="instance">
-            {editInstance ? (
-              <span className="row gap-8">
-                <input value={instance} onChange={(e) => setInstance(e.target.value)} aria-label={t("Adresse de l'instance tomo")} />
-                <button
-                  type="button"
-                  className="btn small"
-                  onClick={() => {
-                    onChangeInstance(instance);
-                    setEditInstance(false);
-                  }}
-                >
-                  {t("OK")}
-                </button>
-              </span>
-            ) : (
-              <span className="row gap-8 muted small">
-                <Icon name="lock" size={14} />
-                {t("Instance :")} {api.baseUrl.replace(/^https?:\/\//, "")}
-                <button type="button" className="link" onClick={() => setEditInstance(true)}>
-                  {t("modifier")}
-                </button>
-              </span>
-            )}
-          </div>
-          )}
         </form>
-      </section>
+
+        {mode === "login" && (
+          <button type="button" className="btn ghost auth-guest" onClick={() => switchMode("guest")}>
+            <Icon name="lock" size={16} /> {t("J'ai un code invité, juste pour ce soir")}
+          </button>
+        )}
+      </main>
+
+      <div className="auth-foot">
+        {INSTANCE_EDITABLE &&
+          (editInstance ? (
+            <span className="auth-instance">
+              <input value={instance} onChange={(e) => setInstance(e.target.value)} aria-label={t("Adresse de l'instance tomo")} />
+              <button
+                type="button"
+                className="btn small"
+                onClick={() => {
+                  onChangeInstance(instance);
+                  setEditInstance(false);
+                }}
+              >
+                {t("OK")}
+              </button>
+            </span>
+          ) : (
+            <span className="auth-instance">
+              <span className="live-dot" aria-hidden="true" />
+              {t("Instance :")} {api.baseUrl.replace(/^https?:\/\//, "")}
+              <button type="button" className="btn small soft" onClick={() => setEditInstance(true)}>
+                {t("Changer")}
+              </button>
+            </span>
+          ))}
+        <span className="muted small">tomo {APP_VERSION}</span>
+      </div>
+      </div>
     </div>
   );
 }

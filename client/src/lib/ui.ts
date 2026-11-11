@@ -1,13 +1,14 @@
 import { locale, t } from "./i18n";
 /** Petites aides d'affichage. */
 
+// Fond sombre teinté + initiales claires (refonte v0.12) : plus doux que des pastilles vives.
 const PALETTE = [
-  { bg: "#2DD4BF", fg: "#062A26" },
-  { bg: "#A78BFA", fg: "#1E1236" },
-  { bg: "#60A5FA", fg: "#0B1F3A" },
-  { bg: "#F472B6", fg: "#3A0B24" },
-  { bg: "#FFB020", fg: "#3A2604" },
-  { bg: "#A3E635", fg: "#1C2A05" },
+  { bg: "#143A36", fg: "#5EEAD4" },
+  { bg: "#2C2445", fg: "#C4B5FD" },
+  { bg: "#1D2C45", fg: "#9CC2FF" },
+  { bg: "#3A1F2B", fg: "#F5A3C0" },
+  { bg: "#3A2E17", fg: "#FFC457" },
+  { bg: "#213A22", fg: "#A7E3A0" },
 ];
 
 /** Couleur stable dérivée du nom. */

@@ -177,11 +177,13 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 
 ## 6. Charte graphique (validée)
 
-- Fond graphite `#0E1014`, panneaux `#13161C`, cartes `#161920`, texte `#ECEEF3`.
-- **Turquoise signal `#2DD4BF`** (actions, « qui parle »), **ambre écho `#FFB020`** (accents, statuts), rouge `#E5484D` (quitter, erreurs).
+- **Refonte v0.12 (validée le 11 novembre 2026)** : même organisation qu'avant (colonne des serveurs, plan, scène, chat), mais chaque zone est un **bloc arrondi séparé par 12 px**, boutons en pilules, chat en bulles. La **colonne des serveurs reste toujours fine** (des ronds, 44 px ; clic droit sur un dossier pour le renommer / le défaire). **Fenêtre étroite** : le plan se replie tout seul (≤ 900 px, ou ≤ 1100 px avec le chat du salon ouvert) et s'ouvre par-dessus ; sous 860 px le chat recouvre le vocal (bouton pour fermer). Connexion : inscription sur deux colonnes pour tenir sans défiler. **Grand écran** : les pages prennent toute la largeur (pas de contenu centré avec de grandes marges) ; les cartes des Paramètres passent sur deux colonnes quand il y a la place.
+- Graphite **réchauffé** : fond `#0E0D10`, panneaux `#17161A`, cartes `#19181C`, blocs de la scène `#131216`, texte ivoire `#F4F0EA` (variables en haut de `App.css` + section « v0.12 — Refonte » à la fin).
+- **Turquoise signal `#2DD4BF`** (actions, « qui parle » : ondes autour de l'avatar + étiquette), **ambre écho `#FFB020`** (non-lus, mentions, accents), rouge `#E5484D` (erreurs ; « Quitter » en rouge doux `#3A1D20` / `#FF9A9E`). Le **micro** est le plus gros bouton du dock, en clair.
+- Avatars sans photo : fond sombre teinté + initiales claires (`colorFor` dans `lib/ui.ts` ; `.fg` = couleur vive pour le coach et l'overlay).
 - Polices : **Space Grotesk** (titres), **Inter** (texte). Icônes en traits fins (composant `Icon` dans `Brand.tsx`), jamais d'emoji dans l'interface (sauf les réactions choisies par les gens).
-- Logo : deux bulles qui se répondent (turquoise avec onde sonore, ambre) — composant `Logo`, icônes générées depuis `client/app-icon.svg` (`npx tauri icon app-icon.svg`).
-- Maquettes de référence : https://claude.ai/artifact/ULPkHanxgN7nAbgsNQRk1X (v0.2–v0.6) et https://claude.ai/artifact/HVWgLBMvzvko38Gyi7npGU (v0.7–v0.8). L'appli fait foi.
+- Logo : **deux cercles** (turquoise, ambre plus petit) — composant `Logo`, mot « tomo » sans couleur ; icônes générées depuis `client/app-icon.svg` (`npx tauri icon app-icon.svg`, puis supprimer les dossiers `android/` et `ios/` créés).
+- Maquettes de la refonte : https://claude.ai/artifact/23Zkmj2gZzmnr7doRuvTdg (page « Écrans détaillés »). Anciennes : https://claude.ai/artifact/ULPkHanxgN7nAbgsNQRk1X (v0.2–v0.6) et https://claude.ai/artifact/HVWgLBMvzvko38Gyi7npGU (v0.7–v0.8). L'appli fait foi.
 
 ---
 

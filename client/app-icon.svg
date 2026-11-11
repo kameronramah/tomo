@@ -1,10 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
-  <rect x="0" y="0" width="1024" height="1024" rx="232" fill="#13161C"/>
-  <g transform="translate(144 144) scale(11.5)">
-    <path d="M34 22h12a12 12 0 0 1 12 12v4a12 12 0 0 1-12 12h-2v8l-9-8h-1a12 12 0 0 1-12-12v-4a12 12 0 0 1 12-12z" fill="#FFB020"/>
-    <path d="M18 6h12a12 12 0 0 1 12 12v4a12 12 0 0 1-12 12h-1l-9 8v-8h-2A12 12 0 0 1 6 22v-4A12 12 0 0 1 18 6z" fill="#2DD4BF" stroke="#13161C" stroke-width="3"/>
-    <rect x="15.5" y="16" width="3" height="8" rx="1.5" fill="#13161C"/>
-    <rect x="22.5" y="12" width="3" height="16" rx="1.5" fill="#13161C"/>
-    <rect x="29.5" y="16" width="3" height="8" rx="1.5" fill="#13161C"/>
+  <rect x="0" y="0" width="1024" height="1024" rx="232" fill="#17161A"/>
+  <g transform="translate(128 128) scale(24)">
+    <circle cx="11" cy="15" r="9" fill="#2DD4BF"/>
+    <circle cx="24" cy="20" r="6" fill="#FFB020"/>
   </g>
 </svg>

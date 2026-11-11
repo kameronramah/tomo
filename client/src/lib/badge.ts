@@ -27,7 +27,7 @@ function drawFavicon(withDot: boolean): string {
   if (withDot) {
     g.beginPath();
     g.arc(24, 24, 7.5, 0, Math.PI * 2);
-    g.fillStyle = "#0E1014";
+    g.fillStyle = "#0E0D10";
     g.fill();
     g.beginPath();
     g.arc(24, 24, 5.5, 0, Math.PI * 2);

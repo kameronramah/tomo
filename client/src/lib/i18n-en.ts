@@ -522,6 +522,8 @@ export const EN: Record<string, string> = {
   "Réduire": "Minimize",
   "Réduire la colonne en icônes": "Collapse the column to icons",
   "Réduire le plan": "Collapse the map",
+  "Fermer le chat": "Close chat",
+  "{0} (clic droit : renommer, défaire)": "{0} (right-click: rename, ungroup)",
   "Réduire les animations": "Reduce motion",
   "Réinitialiser": "Reset",
   "Réseau": "Network",
@@ -1078,4 +1080,18 @@ export const EN: Record<string, string> = {
   "tomo {0} est téléchargée. L'installation prend quelques secondes, puis tomo se relance.": "tomo {0} is downloaded. Installing takes a few seconds, then tomo restarts.",
   "Recharger maintenant": "Reload now",
   "Mettre à jour maintenant": "Update now",
+
+  // ---- v0.12 : refonte ----
+  "Dans la pièce": "In the room",
+  "Dans la pièce · {0}": "In the room · {0}",
+  "parle": "talking",
+  "partage son écran": "sharing their screen",
+  "En ligne, pas en vocal": "Online, not in voice",
+  "et {0} autres": "and {0} more",
+  "spatial": "spatial",
+  "vide": "empty",
+  "« on lance ? »": "“shall we start?”",
+  "« j'arrive ! »": "“on my way!”",
+  "Connexion ou inscription": "Sign in or sign up",
+  "J'ai un code invité, juste pour ce soir": "I have a guest code, just for tonight",
 };

@@ -114,6 +114,10 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 Repérées en route. À glisser entre deux grosses fonctionnalités.
 
 ### Interface
+- [ ] Refonte v0.12 : nettoyer dans `App.css` les anciens styles devenus inutiles (ancienne connexion `auth-brand`, `feature-list`, `screen-people`…) et, dans `ServerRail.tsx`, le code de l'ancienne colonne large (branches `!collapsed`)
+- [ ] Plan replié : la pastille d'une pièce affiche parfois « 0 » alors que j'y suis (le compteur ne me compte pas tout de suite)
+- [ ] Colonne des serveurs : vraies info-bulles au survol (nom du serveur, qui est en vocal) à la place de l'info-bulle du système
+- [ ] Refonte v0.12 : vérifier en vrai, à plusieurs, le bloc « En ligne, pas en vocal » du plan et le Mac (`:has()` et requêtes de conteneur demandent macOS 13.3+)
 - [x] Désinstaller tomo (Windows) efface la session « rester connecté » : à la réinstallation, il faut redonner ses identifiants (pas pendant une mise à jour)
 - [ ] Même chose sur Mac : une appli jetée à la corbeille ne prévient pas, le jeton reste dans le Trousseau (piste : effacer la session si l'appli ne trouve plus son dossier de réglages)
 - [x] Bloc « En vocal » : le ping passe à la ligne quand le panneau latéral est étroit

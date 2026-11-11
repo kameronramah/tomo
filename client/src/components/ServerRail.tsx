@@ -146,10 +146,13 @@ export default function ServerRail(props: Props) {
   const [dragging, setDragging] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
   const [menu, setMenu] = useState<string | null>(null);
+  /** Où afficher le menu d'un dossier (clic droit) : en coordonnées de la fenêtre */
+  const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [renaming, setRenaming] = useState<string | null>(null);
   const [addOpen, setAddOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
-  const collapsed = layout.collapsed;
+  // v0.12 : la colonne reste toujours fine (des ronds), pour laisser la place au reste.
+  const collapsed = true;
   const byId = new Map(servers.map((s) => [s.id, s]));
 
   const dragProps = (id: string) =>
@@ -228,7 +231,13 @@ export default function ServerRail(props: Props) {
             className={`rail-server folder${containsActive && !f.open ? " active" : ""}`}
             onClick={() => layout.toggleFolder(f.id)}
             aria-expanded={f.open}
-            title={collapsed ? f.name : undefined}
+            title={collapsed ? t("{0} (clic droit : renommer, défaire)", { 0: f.name }) : undefined}
+            onContextMenu={(e) => {
+              if (isGuest) return;
+              e.preventDefault();
+              setMenuPos({ x: e.clientX, y: e.clientY });
+              setMenu(f.id);
+            }}
           >
             <span className="rail-badge">
               {f.open ? (
@@ -275,14 +284,39 @@ export default function ServerRail(props: Props) {
           )}
           {menu === f.id && (
             <>
-              <div className="click-away" onClick={() => setMenu(null)} />
-              <div className="popover room-menu" role="menu">
-                <button role="menuitem" className="menu-item" onClick={() => (setMenu(null), setRenaming(f.id))}>
-                  <Icon name="edit" size={16} /> {t("Renommer")}
-                </button>
-                <button role="menuitem" className="menu-item" onClick={() => (setMenu(null), layout.ungroup(f.id))}>
-                  <Icon name="folder" size={16} /> {t("Défaire le dossier")}
-                </button>
+              <div className="click-away" onClick={() => (setMenu(null), setRenaming(null))} />
+              <div className="popover rail-folder-menu" role="menu" style={{ left: menuPos.x + 8, top: menuPos.y }}>
+                {renaming === f.id ? (
+                  <input
+                    className="rail-rename"
+                    defaultValue={f.name}
+                    autoFocus
+                    maxLength={32}
+                    aria-label={t("Nom du dossier")}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        layout.renameFolder(f.id, (e.target as HTMLInputElement).value);
+                        setRenaming(null);
+                        setMenu(null);
+                      }
+                      if (e.key === "Escape") {
+                        e.stopPropagation();
+                        setRenaming(null);
+                        setMenu(null);
+                      }
+                    }}
+                  />
+                ) : (
+                  <>
+                    <span className="section-title">{f.name}</span>
+                    <button role="menuitem" className="menu-item" onClick={() => setRenaming(f.id)}>
+                      <Icon name="edit" size={16} /> {t("Renommer")}
+                    </button>
+                    <button role="menuitem" className="menu-item" onClick={() => (setMenu(null), layout.ungroup(f.id))}>
+                      <Icon name="folder" size={16} /> {t("Défaire le dossier")}
+                    </button>
+                  </>
+                )}
               </div>
             </>
           )}
@@ -295,20 +329,12 @@ export default function ServerRail(props: Props) {
   return (
     <nav className={`rail${collapsed ? " collapsed" : ""}`} aria-label={t("Navigation")}>
       <div className="rail-brand">
-        <Logo size={28} cut="var(--rail)" />
+        <Logo size={30} />
         {!collapsed && (
           <span className="grow">
             <Wordmark size={18} />
           </span>
         )}
-        <button
-          className="icon-btn sm"
-          onClick={() => layout.setCollapsed(!collapsed)}
-          aria-label={collapsed ? t("Afficher les noms des serveurs") : t("Réduire la colonne en icônes")}
-          title={collapsed ? t("Afficher les noms") : t("Réduire")}
-        >
-          <Icon name="sidebar" size={16} />
-        </button>
       </div>
 
       {!isGuest && (
@@ -353,7 +379,11 @@ export default function ServerRail(props: Props) {
           const s = byId.get(e.id);
           return s ? serverRow(s, false) : null;
         })}
-        {dragging && !collapsed && <span className={`rail-drop-end${over === "end" ? " on" : ""}`}>{t("Lâche ici pour sortir du dossier")}</span>}
+        {dragging && (
+          <span className={`rail-drop-end${over === "end" ? " on" : ""}`} title={t("Lâche ici pour sortir du dossier")}>
+            {collapsed ? <Icon name="plus" size={15} /> : t("Lâche ici pour sortir du dossier")}
+          </span>
+        )}
         {!isGuest && !collapsed && servers.length > 1 && !dragging && !layout.entries.some((e) => e.kind === "folder") && (
           <span className="rail-hint">{t("Glisse un serveur sur un autre pour créer un dossier")}</span>
         )}
@@ -380,12 +410,12 @@ export default function ServerRail(props: Props) {
             </span>
           )}
         </button>
-        {!collapsed && props.onOpenDev && (
+        {props.onOpenDev && (
           <button className="icon-btn sm dev-btn" onClick={props.onOpenDev} aria-label={t("Outils de test")} title={t("Outils de test")}>
             <Icon name="flask" size={16} />
           </button>
         )}
-        {!collapsed && !isGuest && (
+        {!isGuest && (
           <button className="icon-btn sm" onClick={props.onOpenSettings} aria-label={t("Paramètres")} title={t("Paramètres (Ctrl+,)")}>
             <Icon name="settings" size={16} />
           </button>

@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { VideoQuality, type RemoteParticipant, type RemoteTrackPublication, type Room } from "livekit-client";
 import type { Share } from "../lib/screen";
-import { screenVolumeMemory, setScreenVolume } from "../lib/voice";
-import { Icon, UserAvatar } from "./Brand";
+import { screenVolumeMemory, setParticipantVolume, setScreenVolume, volumeMemory } from "../lib/voice";
+import { Icon, SpeakingBars, UserAvatar } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
 import { t } from "../lib/i18n";
 import CoachLayer from "./CoachLayer";
@@ -93,8 +93,11 @@ export default function ScreenView({ room, shares, onStopMine, onCapture }: Prop
   const volume = screenVolumeMemory.get(who) ?? 1;
   const quality = stats.h ? `${stats.h >= 2100 ? "4K" : `${stats.h}p`} · ${stats.fps} i/s` : "connexion…";
 
+  const people = [room.localParticipant, ...room.remoteParticipants.values()];
+
   return (
     <div className={`screen-view${full ? " full" : ""}`}>
+      <div className="screen-main">
       <div className="screen-bar">
         <span className="row gap-8 grow">
           <UserAvatar identity={current.participant.identity} name={who} size={26} speaking={speaking.has(current.participant.identity)} />
@@ -159,19 +162,58 @@ export default function ScreenView({ room, shares, onStopMine, onCapture }: Prop
         </div>
       )}
 
-      {/* Les autres participants, en petit */}
-      <div className="screen-people">
-        {[room.localParticipant, ...room.remoteParticipants.values()].map((p) => (
-          <span key={p.identity} className="screen-person" title={p.name || p.identity}>
-            <UserAvatar identity={p.identity} name={p.name || p.identity} size={30} speaking={speaking.has(p.identity)} />
-            {!p.isMicrophoneEnabled && (
-              <span className="mini-muted">
-                <Icon name="micOff" size={10} />
-              </span>
-            )}
-          </span>
-        ))}
       </div>
+
+      {/* Qui est là : une liste à droite de l'écran (le volume de chacun s'ouvre au survol) */}
+      <aside className="screen-side" aria-label={t("Dans la pièce")}>
+        <span className="screen-side-title">{t("Dans la pièce · {0}", { 0: people.length })}</span>
+        {people.map((p) => {
+          const name = p.name || p.identity;
+          const isMe = p === room.localParticipant;
+          const talking = speaking.has(p.identity);
+          const muted = !p.isMicrophoneEnabled;
+          return (
+            <div key={p.identity} className={`screen-row${talking ? " speaking" : ""}`}>
+              <div className="screen-row-main">
+                <UserAvatar identity={p.identity} name={name} size={34} />
+                <span className="grow col">
+                  <strong className="ellipsis">
+                    {name}
+                    {isMe && <span className="muted"> {t("(toi)")}</span>}
+                  </strong>
+                  <span className={`small ellipsis${muted ? " screen-row-muted" : talking ? " teal-soft" : " muted"}`}>
+                    {muted ? t("micro coupé") : talking ? t("parle") : p.isScreenShareEnabled ? t("partage son écran") : ""}
+                  </span>
+                </span>
+                {talking && <SpeakingBars />}
+                {muted && <Icon name="micOff" size={15} label={t("Micro coupé")} />}
+                {p.isScreenShareEnabled && (
+                  <span className="amber">
+                    <Icon name="screenShare" size={15} label={t("Partage son écran")} />
+                  </span>
+                )}
+              </div>
+              {!isMe && (
+                <label className="volume">
+                  <Icon name="volume" size={14} />
+                  <input
+                    type="range"
+                    min={0}
+                    max={1}
+                    step={0.05}
+                    value={volumeMemory.get(name) ?? 1}
+                    onChange={(e) => {
+                      setParticipantVolume(p as RemoteParticipant, Number(e.target.value));
+                      setTick((x) => x + 1);
+                    }}
+                    aria-label={t("Volume de {0}", { 0: name })}
+                  />
+                </label>
+              )}
+            </div>
+          );
+        })}
+      </aside>
     </div>
   );
 }

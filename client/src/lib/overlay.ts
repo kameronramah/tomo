@@ -137,7 +137,7 @@ function stateFor(room: Room, label: string): OverlayState {
       name: p.name || p.identity,
       speaking: speaking.has(p.identity),
       muted: !p.isMicrophoneEnabled,
-      color: colorFor(p.name || p.identity).bg,
+      color: colorFor(p.name || p.identity).fg,
       photo: getPerson(userIdOf(p.identity))?.avatarUrl ?? null,
     })),
     chat: recentChat.filter((m) => now - m.at < CHAT_MS).slice(-2),

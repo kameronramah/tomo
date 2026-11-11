@@ -5,7 +5,7 @@ import { Avatar, Icon } from "./Brand";
 import { ProfileView } from "./ProfileCard";
 import { t } from "../lib/i18n";
 
-const ACCENTS = ["#2DD4BF", "#FFB020", "#5B8DEF", "#A78BFA", "#F472B6", "#2A2F3B"];
+const ACCENTS = ["#2DD4BF", "#FFB020", "#5B8DEF", "#A78BFA", "#F472B6", "#34323A"];
 const BIO_MAX = 190;
 
 function Card({ title, children }: { title: string; children: ReactNode }) {
