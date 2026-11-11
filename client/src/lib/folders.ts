@@ -96,6 +96,38 @@ export function useServerLayout(instance: string, serverIds: string[]) {
       base.splice(i < 0 ? base.length : i, 0, { kind: "server", id: dragged });
       save(base);
     },
+    /** Lâcher un serveur juste avant / après un autre (ou un dossier) : il prend cette place. */
+    placeNear(dragged: string, targetId: string, after: boolean) {
+      if (dragged === targetId) return;
+      const base = without(entries, dragged);
+      const i = base.findIndex((e) => e.id === targetId);
+      if (i >= 0) {
+        base.splice(i + (after ? 1 : 0), 0, { kind: "server", id: dragged });
+        return save(base);
+      }
+      // la cible est rangée dans un dossier : le serveur s'y glisse à côté d'elle
+      const fi = base.findIndex((e) => e.kind === "folder" && e.servers.includes(targetId));
+      if (fi >= 0) {
+        const f = base[fi] as Folder;
+        const list = [...f.servers];
+        list.splice(list.indexOf(targetId) + (after ? 1 : 0), 0, dragged);
+        base[fi] = { ...f, servers: list };
+        return save(base);
+      }
+      // la cible a disparu (dossier vidé par ce déplacement) : on garde la place d'origine
+      const oi = entries.findIndex((e) => e.id === targetId);
+      base.splice(oi < 0 ? base.length : Math.min(oi, base.length), 0, { kind: "server", id: dragged });
+      save(base);
+    },
+    /** Déplacer un dossier entier avant / après une autre entrée (ou à la fin). */
+    moveFolder(folderId: string, targetId: string | null, after: boolean) {
+      const f = entries.find((e) => e.kind === "folder" && e.id === folderId);
+      if (!f || folderId === targetId) return;
+      const base = entries.filter((e) => e.id !== folderId);
+      const i = targetId ? base.findIndex((e) => e.id === targetId) : -1;
+      base.splice(i < 0 ? base.length : i + (after ? 1 : 0), 0, f);
+      save(base);
+    },
     toggleFolder(id: string) {
       save(entries.map((e) => (e.kind === "folder" && e.id === id ? { ...e, open: !e.open } : e)));
     },

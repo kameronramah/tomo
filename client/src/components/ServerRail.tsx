@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { ChosenStatus, MyProfile, ServerSummary, Session } from "../lib/api";
 import { useServerLayout, type Folder } from "../lib/folders";
 import { STATUS_LABEL } from "../lib/people";
@@ -149,44 +150,163 @@ export default function ServerRail(props: Props) {
   /** Où afficher le menu d'un dossier (clic droit) : en coordonnées de la fenêtre */
   const [menuPos, setMenuPos] = useState({ x: 0, y: 0 });
   const [renaming, setRenaming] = useState<string | null>(null);
+  /** Dossier fermé survolé : petite fiche à droite avec ses serveurs */
+  const [peek, setPeek] = useState<{ id: string; x: number; y: number } | null>(null);
+  /** Petit délai avant de fermer la fiche : le temps d'y amener la souris pour cliquer un serveur */
+  const peekTimer = useRef<number | undefined>(undefined);
+  const keepPeek = () => window.clearTimeout(peekTimer.current);
+  const closePeekSoon = () => {
+    keepPeek();
+    peekTimer.current = window.setTimeout(() => setPeek(null), 180);
+  };
   const [addOpen, setAddOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   // v0.12 : la colonne reste toujours fine (des ronds), pour laisser la place au reste.
   const collapsed = true;
   const byId = new Map(servers.map((s) => [s.id, s]));
 
-  const dragProps = (id: string) =>
-    isGuest
-      ? {}
-      : {
-          draggable: true,
-          onDragStart: (e: React.DragEvent) => {
-            e.dataTransfer.setData("text/tomo-server", id);
-            e.dataTransfer.effectAllowed = "move";
-            setDragging(id);
-          },
-          onDragEnd: () => (setDragging(null), setOver(null)),
-        };
+  /*
+   * Glisser-déposer fait maison (pas celui du navigateur, qui montre un rectangle et une copie
+   * de l'icône) : l'icône quitte sa place et suit la souris.
+   * Ce qu'on fait glisser : « s:<id> » (un serveur) ou « f:<id> » (un dossier entier).
+   */
+  const listRef = useRef<HTMLDivElement>(null);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  /** Position de l'icône qui suit la souris (coin haut gauche) */
+  const ghostPos = useRef({ x: 0, y: 0 });
 
-  const dropZone = (zone: string, onDrop: (dragged: string) => void) =>
-    dragging
-      ? {
-          onDragOver: (e: React.DragEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setOver(zone);
-          },
-          onDragLeave: () => setOver((o) => (o === zone ? null : o)),
-          onDrop: (e: React.DragEvent) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const id = e.dataTransfer.getData("text/tomo-server") || dragging;
-            setDragging(null);
-            setOver(null);
-            if (id) onDrop(id);
-          },
-        }
-      : {};
+  type Pos = "before" | "after" | "into";
+  type Hit = { id: string; kind: "server" | "nested" | "folder"; pos: Pos } | "end" | null;
+
+  /**
+   * Ce qu'il y a sous la souris. Sur un serveur : le bord haut / bas le place avant / après
+   * (ranger), le milieu crée un dossier. Sur un dossier : le bord haut / bas le place avant /
+   * après, le milieu (ou n'importe où dans un dossier ouvert) l'y fait entrer.
+   */
+  function hitTest(key: string, x: number, y: number): Hit {
+    const folderDrag = key.startsWith("f:");
+    const at = document.elementFromPoint(x, y);
+    let el = at?.closest<HTMLElement>("[data-drop-id]") ?? null;
+    // un dossier ne va pas dans un dossier : ses serveurs renvoient au bloc du dossier
+    if (el && folderDrag && el.dataset.dropKind === "nested") el = el.parentElement?.closest<HTMLElement>("[data-drop-id]") ?? null;
+    if (!el) return at && listRef.current?.contains(at) ? "end" : null;
+    const id = el.dataset.dropId!;
+    const kind = el.dataset.dropKind as "server" | "nested" | "folder";
+    if (key === `${kind === "folder" ? "f" : "s"}:${id}`) return null;
+    const ref = kind === "folder" && !folderDrag ? (el.querySelector(".rail-folder-head") ?? el) : el;
+    const r = ref.getBoundingClientRect();
+    const ry = (y - r.top) / r.height;
+    if (folderDrag || kind === "nested") return { id, kind, pos: ry < 0.5 ? "before" : "after" };
+    if (ry < 0.28) return { id, kind, pos: "before" };
+    if (ry > 0.72 && !(kind === "folder" && el.dataset.dropOpen)) return { id, kind, pos: "after" };
+    return { id, kind, pos: "into" };
+  }
+
+  function applyDrop(key: string, hit: Exclude<Hit, null>) {
+    const dragged = key.slice(2);
+    const folderDrag = key.startsWith("f:");
+    if (hit === "end") return folderDrag ? layout.moveFolder(dragged, null, true) : layout.dropBefore(dragged, null);
+    if (folderDrag) layout.moveFolder(dragged, hit.id, hit.pos === "after");
+    else if (hit.pos !== "into") layout.placeNear(dragged, hit.id, hit.pos === "after");
+    else if (hit.kind === "folder") layout.dropOnFolder(dragged, hit.id);
+    else layout.dropOnServer(dragged, hit.id);
+  }
+
+  const placeGhost = () => {
+    const g = ghostRef.current;
+    if (g) g.style.transform = `translate(${ghostPos.current.x}px, ${ghostPos.current.y}px)`;
+  };
+
+  /** Appuyer puis bouger de quelques pixels : le glisser commence (sinon c'est un simple clic). */
+  const startDrag = (key: string) => (e: React.PointerEvent<HTMLElement>) => {
+    if (isGuest || e.button !== 0) return;
+    const sx = e.clientX;
+    const sy = e.clientY;
+    // l'icône garde l'endroit où on l'a attrapée
+    const badge = (e.currentTarget.querySelector(".rail-badge") ?? e.currentTarget).getBoundingClientRect();
+    const dx = sx - badge.left;
+    const dy = sy - badge.top;
+    let started = false;
+    let hit: Hit = null;
+    let scroll = 0;
+    let raf = 0;
+
+    const scrollLoop = () => {
+      if (scroll && listRef.current) listRef.current.scrollTop += scroll;
+      raf = requestAnimationFrame(scrollLoop);
+    };
+    const move = (ev: PointerEvent) => {
+      if (!started) {
+        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 5) return;
+        started = true;
+        setPeek(null);
+        document.body.classList.add("rail-dragging");
+        setDragging(key);
+        raf = requestAnimationFrame(scrollLoop);
+      }
+      ghostPos.current = { x: ev.clientX - dx, y: ev.clientY - dy };
+      placeGhost();
+      // près du haut / du bas de la liste : elle défile toute seule
+      const lr = listRef.current?.getBoundingClientRect();
+      scroll = lr ? (ev.clientY < lr.top + 28 ? -6 : ev.clientY > lr.bottom - 28 ? 6 : 0) : 0;
+      hit = hitTest(key, ev.clientX, ev.clientY);
+      const o = hit === null ? null : hit === "end" ? "end" : `${hit.pos}:${hit.id}`;
+      setOver((p) => (p === o ? p : o));
+    };
+    const stop = (commit: boolean) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", cancel);
+      window.removeEventListener("keydown", esc, true);
+      if (!started) return;
+      cancelAnimationFrame(raf);
+      document.body.classList.remove("rail-dragging");
+      setDragging(null);
+      setOver(null);
+      // le relâcher ne doit pas compter comme un clic (ouvrir le serveur, plier le dossier)
+      const swallow = (c: MouseEvent) => (c.stopPropagation(), c.preventDefault());
+      window.addEventListener("click", swallow, true);
+      setTimeout(() => window.removeEventListener("click", swallow, true), 0);
+      if (commit && hit) applyDrop(key, hit);
+    };
+    const up = () => stop(true);
+    const cancel = () => stop(false);
+    const esc = (k: KeyboardEvent) => {
+      if (k.key !== "Escape" || !started) return;
+      k.stopPropagation();
+      stop(false);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", cancel);
+    window.addEventListener("keydown", esc, true);
+  };
+
+  // l'icône qui suit la souris est créée au premier mouvement : on la place tout de suite
+  useLayoutEffect(placeGhost, [dragging]);
+
+  const dropClass = (id: string) =>
+    over === `into:${id}` ? " drop-target" : over === `before:${id}` ? " drop-before" : over === `after:${id}` ? " drop-after" : "";
+
+  /** L'icône qui suit la souris pendant le glisser */
+  function ghost() {
+    if (!dragging) return null;
+    const id = dragging.slice(2);
+    let inner: React.ReactNode = null;
+    if (dragging.startsWith("s:")) {
+      const s = byId.get(id);
+      inner = s ? <ServerBadge name={s.name} src={s.iconUrl} size={34} /> : null;
+    } else {
+      const f = layout.entries.find((e): e is Folder => e.kind === "folder" && e.id === id);
+      inner = f ? folderPreview(f.servers.map((sid) => byId.get(sid)).filter((s): s is ServerSummary => !!s)) : null;
+    }
+    return createPortal(
+      <div ref={ghostRef} className={`rail-ghost${over?.startsWith("into:") ? " merging" : ""}`} aria-hidden="true">
+        <div className="rail-ghost-in">{inner}</div>
+      </div>,
+      document.body,
+    );
+  }
 
   function serverRow(s: ServerSummary, nested: boolean) {
     const active = mode === "servers" && s.id === activeId;
@@ -195,15 +315,17 @@ export default function ServerRail(props: Props) {
     return (
       <button
         key={s.id}
-        className={`rail-server${active ? " active" : ""}${nested ? " nested" : ""}${over === `s:${s.id}` ? " drop-target" : ""}`}
+        className={`rail-server${active ? " active" : ""}${nested ? " nested" : ""}${dropClass(s.id)}${dragging === `s:${s.id}` ? " drag-origin" : ""}`}
         onClick={() => props.onSelectServer(s.id)}
-        title={collapsed ? `${s.name}${sub ? ` · ${sub}` : ""}` : undefined}
+        title={collapsed && !dragging ? `${s.name}${sub ? ` · ${sub}` : ""}` : undefined}
+        aria-label={s.name}
         aria-current={active ? "true" : undefined}
-        {...dragProps(s.id)}
-        {...(nested ? {} : dropZone(`s:${s.id}`, (d) => layout.dropOnServer(d, s.id)))}
+        data-drop-id={s.id}
+        data-drop-kind={nested ? "nested" : "server"}
+        onPointerDown={startDrag(`s:${s.id}`)}
       >
         <span className="rail-badge">
-          <ServerBadge name={s.name} size={nested ? 30 : 34} />
+          <ServerBadge name={s.name} src={s.iconUrl} size={nested ? 30 : 34} />
           {props.serverDots.has(s.id) && !active ? (
             <span className="new-dot" title={t("Nouveaux messages")} />
           ) : (
@@ -220,21 +342,93 @@ export default function ServerRail(props: Props) {
     );
   }
 
+  /**
+   * Dossier fermé : une tuile avec les premiers serveurs en petit (image ou initiales lisibles).
+   * Au-delà de 4, la dernière case dit combien il en reste.
+   */
+  function folderPreview(items: ServerSummary[]) {
+    const extra = items.length > 4 ? items.length - 3 : 0;
+    const shown = extra ? items.slice(0, 3) : items.slice(0, 4);
+    return (
+      <span className={`folder-mini n${Math.min(items.length, 4)}`} aria-hidden="true">
+        {shown.map((s) => (
+          <ServerBadge key={s.id} name={s.name} src={s.iconUrl} size={items.length === 1 ? 26 : 19} />
+        ))}
+        {extra > 0 && <span className="folder-more">+{extra}</span>}
+      </span>
+    );
+  }
+
+  /** Fiche du dossier survolé : son nom et ses serveurs (avec qui est en vocal). */
+  function peekCard() {
+    if (!peek || dragging) return null;
+    const f = layout.entries.find((e): e is Folder => e.kind === "folder" && e.id === peek.id);
+    if (!f || f.open) return null;
+    const items = f.servers.map((id) => byId.get(id)).filter((s): s is ServerSummary => !!s);
+    return createPortal(
+      <div
+        className="popover folder-peek"
+        style={{ left: peek.x, top: peek.y }}
+        role="menu"
+        aria-label={f.name}
+        onMouseEnter={keepPeek}
+        onMouseLeave={closePeekSoon}
+      >
+        <span className="folder-peek-title">
+          <Icon name="folder" size={14} />
+          <span className="ellipsis">{f.name}</span>
+          <span className="muted small">{items.length}</span>
+        </span>
+        <div className="folder-peek-list">
+          {items.map((s) => (
+            <button
+              key={s.id}
+              role="menuitem"
+              className={`folder-peek-item${mode === "servers" && s.id === activeId ? " on" : ""}`}
+              onClick={() => (setPeek(null), props.onSelectServer(s.id))}
+            >
+              <ServerBadge name={s.name} src={s.iconUrl} size={22} />
+              <span className="grow ellipsis">{s.name}</span>
+              {s.inVoice > 0 && <span className={`rail-sub ${props.voiceServerId === s.id ? "teal" : "amber"}`}>{s.inVoice}</span>}
+            </button>
+          ))}
+        </div>
+        {!isGuest && <span className="hint">{t("Clic sur le dossier : le déplier · clic droit : renommer")}</span>}
+      </div>,
+      document.body,
+    );
+  }
+
   function folderBlock(f: Folder) {
     const items = f.servers.map((id) => byId.get(id)).filter((s): s is ServerSummary => !!s);
     const live = items.some((s) => s.inVoice > 0);
     const containsActive = items.some((s) => s.id === activeId);
     return (
-      <div key={f.id} className={`rail-folder${f.open ? " open" : ""}${over === `f:${f.id}` ? " drop-target" : ""}`} {...dropZone(`f:${f.id}`, (d) => layout.dropOnFolder(d, f.id))}>
+      <div
+        key={f.id}
+        className={`rail-folder${f.open ? " open" : ""}${dropClass(f.id)}${dragging === `f:${f.id}` ? " drag-origin" : ""}`}
+        data-drop-id={f.id}
+        data-drop-kind="folder"
+        data-drop-open={f.open ? "1" : undefined}
+      >
         <div className="rail-folder-head">
           <button
             className={`rail-server folder${containsActive && !f.open ? " active" : ""}`}
-            onClick={() => layout.toggleFolder(f.id)}
+            onClick={() => (setPeek(null), layout.toggleFolder(f.id))}
             aria-expanded={f.open}
-            title={collapsed ? t("{0} (clic droit : renommer, défaire)", { 0: f.name }) : undefined}
+            onPointerDown={startDrag(`f:${f.id}`)}
+            aria-label={t("Dossier {0} : {1}", { 0: f.name, 1: items.map((s) => s.name).join(", ") })}
+            onMouseEnter={(e) => {
+              if (f.open || dragging || menu) return;
+              keepPeek();
+              const r = e.currentTarget.getBoundingClientRect();
+              setPeek({ id: f.id, x: r.right + 6, y: r.top + r.height / 2 });
+            }}
+            onMouseLeave={closePeekSoon}
             onContextMenu={(e) => {
               if (isGuest) return;
               e.preventDefault();
+              setPeek(null);
               setMenuPos({ x: e.clientX, y: e.clientY });
               setMenu(f.id);
             }}
@@ -245,11 +439,7 @@ export default function ServerRail(props: Props) {
                   <Icon name="folder" size={17} />
                 </span>
               ) : (
-                <span className="folder-mini" aria-hidden="true">
-                  {items.slice(0, 4).map((s) => (
-                    <ServerBadge key={s.id} name={s.name} size={12} />
-                  ))}
-                </span>
+                folderPreview(items)
               )}
               {collapsed && live && !f.open && <span className="rail-dot amber" />}
             </span>
@@ -373,7 +563,9 @@ export default function ServerRail(props: Props) {
         )}
       </div>
 
-      <div className="rail-list" {...dropZone("end", (d) => layout.dropBefore(d, null))}>
+      <div className="rail-list" ref={listRef}>
+        {ghost()}
+        {peekCard()}
         {layout.entries.map((e) => {
           if (e.kind === "folder") return folderBlock(e);
           const s = byId.get(e.id);

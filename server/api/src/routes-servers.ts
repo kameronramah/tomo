@@ -5,6 +5,7 @@ import { config } from "./config.js";
 import { authenticate, cleanLabel, newInviteCode, requireUser, type Principal } from "./security.js";
 import { closeRooms, identityOf, kickFromRooms, liveParticipants, pushRoomSpatial, voiceToken } from "./livekit.js";
 import { sendToServer } from "./realtime.js";
+import { attachmentUrl, claimServerImage, sweepAttachments } from "./attachments.js";
 
 type RoomRow = { id: string; server_id: string; label: string; position: number; spatial: number };
 
@@ -75,18 +76,19 @@ export default async function serverRoutes(app: FastifyInstance) {
     if (!me) return;
     const servers = (
       me.kind === "guest"
-        ? db.prepare("SELECT id, name, 'guest' AS role FROM servers WHERE id = ?").all(me.serverId)
+        ? db.prepare("SELECT id, name, icon_id, 'guest' AS role FROM servers WHERE id = ?").all(me.serverId)
         : db
             .prepare(
-              "SELECT s.id, s.name, m.role FROM servers s JOIN members m ON m.server_id = s.id WHERE m.user_id = ? ORDER BY m.joined_at",
+              "SELECT s.id, s.name, s.icon_id, m.role FROM servers s JOIN members m ON m.server_id = s.id WHERE m.user_id = ? ORDER BY m.joined_at",
             )
             .all(me.id)
-    ) as { id: string; name: string; role: string }[];
+    ) as { id: string; name: string; icon_id: string | null; role: string }[];
 
     const rooms = servers.flatMap((s) => roomsOf(s.id));
     const live = await liveParticipants(rooms.map((r) => r.id));
-    return servers.map((s) => ({
+    return servers.map(({ icon_id, ...s }) => ({
       ...s,
+      iconUrl: attachmentUrl(icon_id),
       inVoice: rooms.filter((r) => r.server_id === s.id).reduce((n, r) => n + (live.get(r.id)?.length ?? 0), 0),
     }));
   });
@@ -128,28 +130,50 @@ export default async function serverRoutes(app: FastifyInstance) {
     if (!me) return;
     const role = accessOf(me, req.params.id);
     if (!role) return notFound(reply);
-    const server = db.prepare("SELECT id, name FROM servers WHERE id = ?").get(req.params.id) as { id: string; name: string };
+    const server = db.prepare("SELECT id, name, icon_id FROM servers WHERE id = ?").get(req.params.id) as { id: string; name: string; icon_id: string | null };
     const rooms = roomsOf(server.id);
     const live = await liveParticipants(rooms.map((r) => r.id));
     return {
-      ...server,
+      id: server.id,
+      name: server.name,
+      iconUrl: attachmentUrl(server.icon_id),
       role,
       rooms: rooms.map((r) => ({ id: r.id, label: r.label, spatial: !!r.spatial, participants: live.get(r.id) ?? [] })),
       channels: db.prepare("SELECT id, name FROM channels WHERE server_id = ? ORDER BY position, rowid").all(server.id),
     };
   });
 
-  app.patch<{ Params: { id: string }; Body: { name?: unknown } }>("/servers/:id", async (req, reply) => {
-    const me = await requireUser(req, reply);
-    if (!me) return;
-    const role = roleOf(req.params.id, me.id);
-    if (!role) return notFound(reply);
-    if (!isManager(role)) return forbidden(reply);
-    const name = cleanLabel(req.body?.name, 40);
-    if (!name) return reply.code(400).send({ error: "Nom de serveur invalide (1 à 40 caractères)." });
-    db.prepare("UPDATE servers SET name = ? WHERE id = ?").run(name, req.params.id);
-    return { id: req.params.id, name };
-  });
+  /** Renommer le serveur et / ou changer son image (admins). `iconId: null` retire l'image. */
+  app.patch<{ Params: { id: string }; Body: { name?: unknown; iconId?: unknown } }>(
+    "/servers/:id",
+    { config: { rateLimit: { max: 30, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const me = await requireUser(req, reply);
+      if (!me) return;
+      const role = roleOf(req.params.id, me.id);
+      if (!role) return notFound(reply);
+      if (!isManager(role)) return forbidden(reply);
+      const { name: rawName, iconId } = req.body ?? {};
+      if (rawName === undefined && iconId === undefined) return reply.code(400).send({ error: "Rien à modifier." });
+      if (rawName !== undefined) {
+        const name = cleanLabel(rawName, 40);
+        if (!name) return reply.code(400).send({ error: "Nom de serveur invalide (1 à 40 caractères)." });
+        db.prepare("UPDATE servers SET name = ? WHERE id = ?").run(name, req.params.id);
+      }
+      if (iconId !== undefined) {
+        if (iconId !== null) {
+          if (typeof iconId !== "string") return reply.code(400).send({ error: "Image invalide." });
+          const err = claimServerImage(me.id, req.params.id, iconId);
+          if (err) return reply.code(400).send({ error: err });
+        }
+        db.prepare("UPDATE servers SET icon_id = ? WHERE id = ?").run((iconId as string | null) ?? null, req.params.id);
+        sweepAttachments(); // l'ancienne image part
+      }
+      changed(req.params.id); // les membres connectés rechargent (nom, image)
+      const s = db.prepare("SELECT name, icon_id FROM servers WHERE id = ?").get(req.params.id) as { name: string; icon_id: string | null };
+      return { id: req.params.id, name: s.name, iconUrl: attachmentUrl(s.icon_id) };
+    },
+  );
 
   app.delete<{ Params: { id: string } }>("/servers/:id", async (req, reply) => {
     const me = await requireUser(req, reply);

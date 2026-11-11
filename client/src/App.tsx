@@ -529,6 +529,7 @@ export default function App() {
         }
         case "channels":
           if (e.serverId === activeId || e.serverId === detail?.id) loadDetail();
+          loadServers(); // nom ou image du serveur changés : la colonne de gauche suit
           return;
         case "friends":
           loadFriends();
@@ -579,7 +580,7 @@ export default function App() {
         }
       }
     },
-    [myId, activeId, detail?.id, loadDetail, loadFriends, loadMe],
+    [myId, activeId, detail?.id, loadDetail, loadServers, loadFriends, loadMe],
   );
 
   useEffect(() => {

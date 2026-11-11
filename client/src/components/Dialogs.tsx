@@ -1,7 +1,8 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Api, Invite, Member, Role, ServerSummary } from "../lib/api";
 import { errorMessage, formatExpiry, ROLE_LABEL } from "../lib/ui";
-import { Icon, UserAvatar } from "./Brand";
+import { Icon, ServerBadge, UserAvatar } from "./Brand";
+import { imageSize } from "./SettingsProfile";
 import { t } from "../lib/i18n";
 
 export function Modal({
@@ -306,6 +307,28 @@ export function ManageServerDialog({
   const [error, setError] = useState<string>();
   const [info, setInfo] = useState<string>();
   const [confirm, setConfirm] = useState<null | { title: string; message: string; label: string; run: () => Promise<void> }>(null);
+  const [icon, setIcon] = useState(server.iconUrl ?? null);
+  const [iconBusy, setIconBusy] = useState(false);
+  const iconInput = useRef<HTMLInputElement>(null);
+
+  /** Envoie l'image choisie puis la met comme image du serveur (null : la retire). */
+  async function changeIcon(file: File | null) {
+    setError(undefined);
+    setInfo(undefined);
+    if (file && !/^image\/(png|jpeg|gif|webp)$/.test(file.type)) return setError(t("Choisis une image PNG, JPG, GIF ou WebP."));
+    if (file && file.size > 8 * 1024 * 1024) return setError(t("Image trop lourde (8 Mo maximum)."));
+    setIconBusy(true);
+    try {
+      const att = file ? await api.uploadAttachment(file, { name: file.name, ...(await imageSize(file)) }) : null;
+      const res = await api.setServerIcon(server.id, att?.id ?? null);
+      setIcon(res.iconUrl);
+      onChanged();
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setIconBusy(false);
+    }
+  }
 
   const loadMembers = () => api.members(server.id).then(setMembers).catch((e) => setError(errorMessage(e)));
   const loadInvites = () => api.invites(server.id).then(setInvites).catch((e) => setError(errorMessage(e)));
@@ -347,6 +370,53 @@ export function ManageServerDialog({
 
       {tab === "general" && (
         <div className="col gap-20">
+          {isManager && (
+            <div className="row gap-16 server-icon-edit">
+              <input
+                ref={iconInput}
+                type="file"
+                accept="image/png,image/jpeg,image/gif,image/webp"
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  e.target.value = "";
+                  if (f) changeIcon(f);
+                }}
+              />
+              <button
+                type="button"
+                className="server-icon-drop"
+                onClick={() => iconInput.current?.click()}
+                onDragOver={(e) => e.preventDefault()}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  const f = e.dataTransfer.files[0];
+                  if (f) changeIcon(f);
+                }}
+                disabled={iconBusy}
+                aria-label={icon ? t("Changer l'image du serveur") : t("Ajouter une image au serveur")}
+              >
+                <ServerBadge name={name.trim() || server.name} src={icon} size={72} />
+                <span className="server-icon-edit-badge" aria-hidden="true">
+                  <Icon name="image" size={14} />
+                </span>
+              </button>
+              <div className="col gap-6">
+                <strong>{t("Image du serveur")}</strong>
+                <div className="row gap-8 wrap">
+                  <button className="btn small" onClick={() => iconInput.current?.click()} disabled={iconBusy}>
+                    {iconBusy ? t("Envoi…") : icon ? t("Changer l'image") : t("Ajouter une image")}
+                  </button>
+                  {icon && (
+                    <button className="btn ghost small" onClick={() => changeIcon(null)} disabled={iconBusy}>
+                      {t("Retirer")}
+                    </button>
+                  )}
+                </div>
+                <span className="hint">{t("Image carrée de préférence (affichée en rond). GIF accepté. 8 Mo maximum. Tout le monde la voit.")}</span>
+              </div>
+            </div>
+          )}
           {isManager && (
             <form
               className="row gap-8 align-end"

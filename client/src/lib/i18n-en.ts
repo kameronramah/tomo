@@ -1094,4 +1094,18 @@ export const EN: Record<string, string> = {
   "« j'arrive ! »": "“on my way!”",
   "Connexion ou inscription": "Sign in or sign up",
   "J'ai un code invité, juste pour ce soir": "I have a guest code, just for tonight",
+  // v0.12.1 — image de serveur, dossiers
+  "Image du serveur": "Server picture",
+  "Changer l'image du serveur": "Change the server picture",
+  "Ajouter une image au serveur": "Add a picture to the server",
+  "Changer l'image": "Change picture",
+  "Ajouter une image": "Add a picture",
+  "Image carrée de préférence (affichée en rond). GIF accepté. 8 Mo maximum. Tout le monde la voit.":
+    "Square picture preferred (shown as a circle). GIFs allowed. 8 MB max. Everyone sees it.",
+  "Dossier {0} : {1}": "Folder {0}: {1}",
+  "Clic sur le dossier : le déplier · clic droit : renommer": "Click the folder to expand it · right-click: rename",
+  "Image invalide.": "Invalid picture.",
+  "Image introuvable (renvoie-la).": "Picture not found (send it again).",
+  "Ce fichier n'est pas une image (PNG, JPG, GIF ou WebP).": "This file isn't a picture (PNG, JPG, GIF or WebP).",
+  "Rien à modifier.": "Nothing to change.",
 };

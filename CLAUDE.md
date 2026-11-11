@@ -140,7 +140,7 @@ powershell -ExecutionPolicy Bypass -File server\api\tests\test-api.ps1
 ```bash
 node server/api/tests/test-games.mjs
 ```
-(idem `test-legends.mjs`, `test-stats.mjs`, `test-v09.mjs`, `test-email.mjs`)
+(idem `test-legends.mjs`, `test-stats.mjs`, `test-v09.mjs`, `test-email.mjs`, `test-server-icon.mjs`)
 ```bash
 cd client/src-tauri && cargo test --lib
 ```

@@ -18,7 +18,7 @@ function Card({ title, children }: { title: string; children: ReactNode }) {
 }
 
 /** Dimensions d'une image locale (pour l'envoi). */
-function imageSize(file: File): Promise<{ width: number; height: number } | undefined> {
+export function imageSize(file: File): Promise<{ width: number; height: number } | undefined> {
   return new Promise((resolve) => {
     const url = URL.createObjectURL(file);
     const img = new Image();

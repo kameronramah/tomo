@@ -125,6 +125,8 @@ for (const sql of [
   // --- Adresse e-mail (v0.10) : sert seulement à récupérer son compte, jamais montrée aux autres ---
   "ALTER TABLE users ADD COLUMN email TEXT", // en minuscules
   "ALTER TABLE users ADD COLUMN email_verified INTEGER NOT NULL DEFAULT 0",
+  // --- Image de serveur (v0.12.1) ---
+  "ALTER TABLE servers ADD COLUMN icon_id TEXT", // pièce jointe (image) affichée à la place des initiales
 ]) {
   try {
     db.exec(sql);

@@ -233,11 +233,14 @@ export function StatusDot({ status, size = 12, inline = false }: { status: Prese
 }
 
 /** Petite pastille carrée aux initiales d'un serveur. */
-export function ServerBadge({ name, size = 40 }: { name: string; size?: number }) {
+export function ServerBadge({ name, size = 40, src }: { name: string; size?: number; /** Image du serveur (sinon : initiales) */ src?: string | null }) {
   const c = colorFor(name);
   return (
-    <span className="server-badge" style={{ width: size, height: size, background: c.bg, color: c.fg, fontSize: size * 0.32 }}>
-      {initials(name)}
+    <span
+      className={`server-badge${src ? " photo" : ""}`}
+      style={{ width: size, height: size, background: src ? undefined : c.bg, color: c.fg, fontSize: size * 0.32 }}
+    >
+      {src ? <img src={src} alt="" draggable={false} /> : initials(name)}
     </span>
   );
 }

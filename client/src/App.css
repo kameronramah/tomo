@@ -205,6 +205,17 @@ input[type="range"] { height: auto; padding: 0; border: none; background: none; 
   flex-shrink: 0; border-radius: 30%; display: grid; place-items: center;
   font-family: var(--font-display); font-weight: 700;
 }
+.server-badge.photo { overflow: hidden; background: var(--surface); }
+.server-icon-edit { align-items: center; }
+.server-icon-drop { position: relative; padding: 0; border: none; background: none; cursor: pointer; border-radius: 50%; line-height: 0; }
+.server-icon-drop .server-badge { border-radius: 50%; }
+.server-icon-drop:hover .server-badge { filter: brightness(0.8); }
+.server-icon-drop:disabled { cursor: progress; opacity: 0.6; }
+.server-icon-edit-badge {
+  position: absolute; right: -2px; bottom: -2px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--teal); color: #08201d; box-shadow: 0 0 0 3px var(--panel);
+}
+.server-badge.photo img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
 .quick-switch { display: flex; gap: 8px; padding: 0 2px; flex-wrap: wrap; }
 .quick { position: relative; padding: 0; border: 2px solid transparent; border-radius: 12px; background: none; cursor: pointer; line-height: 0; }
 .quick.on { border-color: var(--teal); }
@@ -590,10 +601,15 @@ input[type="range"] { height: auto; padding: 0; border: none; background: none; 
 .voice-note-player { display: flex; align-items: center; gap: 10px; padding: 7px 14px 7px 7px; background: var(--surface); border-radius: 999px; max-width: 100%; }
 .voice-note-player .play { width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--teal); color: var(--teal-ink); display: grid; place-items: center; cursor: pointer; flex-shrink: 0; }
 .voice-note-player .play:hover { background: var(--teal-strong); }
-.voice-note-player .seek { border: none; background: none; padding: 0; cursor: pointer; min-width: 0; }
+.voice-note-player .seek { border: none; background: none; padding: 0; cursor: pointer; min-width: 0; flex: 0 1 238px; overflow: hidden; }
 .voice-note-player .dur { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 34px; }
 .wave { display: flex; align-items: center; gap: 2px; height: 26px; }
-.wave span { width: 3px; border-radius: 2px; background: var(--line-2); transition: background 0.1s; }
+.wave span { width: 3px; flex: 0 1 3px; min-width: 1px; border-radius: 2px; background: var(--line-2); transition: background 0.1s; }
+/* L'onde se resserre quand la place manque (chat du salon étroit) au lieu de déborder */
+.voice-note-player { width: min(100%, 340px); box-sizing: border-box; }
+.voice-note-player .seek { flex: 1 1 0; }
+.voice-note-player .seek .wave { width: 100%; gap: 0; justify-content: space-between; }
+.voice-note-player .seek .wave span { width: auto; flex: 0 1 3px; min-width: 1px; }
 .wave span.on { background: var(--teal); }
 
 /* Fichiers en attente d'envoi */
@@ -834,7 +850,45 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .rail-server.active { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--surface-3); }
 .rail-server.active .server-badge { box-shadow: 0 0 0 2px var(--rail), 0 0 0 4px var(--teal); }
 .rail-server.drop-target, .rail-folder.drop-target { box-shadow: inset 0 0 0 2px var(--teal); background: var(--teal-bg); }
-.rail-server[draggable="true"] { cursor: grab; }
+/* Glisser un serveur / un dossier : l'icône quitte sa place et suit la souris */
+.rail { user-select: none; -webkit-user-select: none; }
+.rail img { -webkit-user-drag: none; }
+body.rail-dragging, body.rail-dragging * { cursor: grabbing !important; }
+.rail-server.drag-origin .rail-badge, .rail-folder.drag-origin { opacity: 0; }
+.rail-ghost { position: fixed; left: 0; top: 0; z-index: 1000; pointer-events: none; will-change: transform; }
+.rail-ghost-in {
+  display: grid; place-items: center; border-radius: 12px;
+  transform: scale(1.08) rotate(-3deg); filter: drop-shadow(0 10px 18px rgba(0, 0, 0, 0.55));
+  transition: transform 0.18s cubic-bezier(0.3, 1.4, 0.5, 1), opacity 0.18s;
+  animation: tomo-lift 0.18s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.rail-ghost-in .server-badge { border-radius: 11px; }
+.rail-ghost.merging .rail-ghost-in { transform: translate(12px, 12px) scale(0.62) rotate(0deg); opacity: 0.95; }
+@keyframes tomo-lift { from { transform: scale(1) rotate(0deg); } }
+/* Regrouper : la cible grossit, respire, et un anneau turquoise s'en échappe */
+.rail-server.drop-target .rail-badge,
+.rail-folder.drop-target > .rail-folder-head .rail-badge { animation: tomo-merge 0.9s ease-in-out infinite; }
+.rail-server.drop-target .rail-badge::after,
+.rail-folder.drop-target > .rail-folder-head .rail-badge::after {
+  content: ""; position: absolute; inset: -5px; border-radius: 15px; border: 2px solid var(--teal);
+  pointer-events: none; animation: tomo-ring 0.9s ease-out infinite;
+}
+.rail.collapsed .rail-folder.drop-target:not(.open) { box-shadow: none; background: transparent; }
+@keyframes tomo-merge { 0%, 100% { transform: scale(1.08); } 50% { transform: scale(1.16); } }
+@keyframes tomo-ring { from { opacity: 0.9; transform: scale(0.92); } to { opacity: 0; transform: scale(1.3); } }
+@media (prefers-reduced-motion: reduce) {
+  .rail-ghost-in { animation: none; transition: none; }
+  .rail-server.drop-target .rail-badge, .rail-folder.drop-target > .rail-folder-head .rail-badge { animation: none; transform: scale(1.1); }
+  .rail-server.drop-target .rail-badge::after, .rail-folder.drop-target > .rail-folder-head .rail-badge::after { animation: none; opacity: 1; }
+}
+/* Ranger : trait turquoise là où le serveur (ou le dossier) va se poser */
+.rail-folder { position: relative; }
+.rail-server.drop-before::before, .rail-server.drop-after::after,
+.rail-folder.drop-before::before, .rail-folder.drop-after::after {
+  content: ""; position: absolute; left: 4px; right: 4px; height: 3px; border-radius: 2px; background: var(--teal); pointer-events: none; z-index: 2;
+}
+.rail-server.drop-before::before, .rail-folder.drop-before::before { top: -3px; }
+.rail-server.drop-after::after, .rail-folder.drop-after::after { bottom: -3px; }
 .rail.collapsed .rail-server { width: 52px; justify-content: center; padding: 6px 0; }
 .rail-badge { position: relative; display: grid; place-items: center; flex-shrink: 0; }
 .rail-badge .server-badge { border-radius: 11px; }
@@ -958,7 +1012,7 @@ input.toggle:focus { box-shadow: 0 0 0 3px rgba(45, 212, 191, 0.25); }
 .msg.mine .msg-text { background: var(--teal-bg); color: #e6fffb; border-radius: 18px 18px 6px 18px; }
 .msg.mine.grouped .msg-text { border-top-right-radius: 8px; }
 .msg.mine .msg-text a { color: var(--teal-strong); }
-.msg.mine .msg-attachments { align-items: flex-end; }
+.msg.mine .msg-attachments { align-items: flex-end; align-self: stretch; }
 .msg.mine .voice-note-player { background: var(--teal-bg); }
 .msg.mine .msg-delete { right: auto; left: 6px; }
 .chat .composer { background: var(--bg); border: 1px solid transparent; border-radius: 18px; }
@@ -1562,6 +1616,8 @@ input[aria-invalid="true"] { border-color: var(--red); box-shadow: 0 0 0 4px rgb
 .home-side .st-dot, .member .st-dot { --ring: var(--surface); }
 .member:hover .st-dot { --ring: var(--surface-3); }
 .members-search { border-radius: 999px; }
+/* Champs de recherche en pilule : pas de contour au clic (il se dessinait décalé autour du texte) */
+.members-search input:focus, .gif-search input:focus { box-shadow: none; border-color: transparent; }
 
 /* ---- Scène vocale ---- */
 .stage { padding: 0; gap: 12px; }
@@ -1849,3 +1905,40 @@ input.toggle:checked::after { transform: translateX(18px); background: var(--tea
   .settings-content { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; gap: 18px; }
   .settings-content > :not(.settings-card) { grid-column: 1 / -1; }
 }
+
+/* ---- v0.12.1 — Dossier fermé : on voit les serveurs dedans ---- */
+.rail .folder-mini, .rail-ghost .folder-mini {
+  width: 44px; height: 44px; border-radius: 15px; padding: 2px; box-sizing: border-box;
+  display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 2px;
+  background: var(--block); box-shadow: inset 0 0 0 1px var(--block-line);
+}
+.rail .folder-mini .server-badge, .rail-ghost .folder-mini .server-badge { border-radius: 50%; font-size: 7.5px !important; letter-spacing: -0.02em; }
+.rail .folder-mini.n1 .server-badge { font-size: 10px !important; }
+.folder-more {
+  width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--surface-3); color: var(--text-soft); font: 700 8px var(--font-display);
+}
+.rail.collapsed .rail-server.folder { border-radius: 16px; }
+.rail.collapsed .rail-server.folder:hover .folder-mini { box-shadow: inset 0 0 0 1px var(--line-2); filter: brightness(1.2); }
+.rail.collapsed .rail-server.folder.active .folder-mini { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--teal); }
+.rail-folder.drop-target > .rail-folder-head .rail-badge::after { border-radius: 18px; }
+/* Fiche au survol d'un dossier fermé */
+.popover.folder-peek {
+  position: fixed; z-index: 70; transform: translateY(-50%); min-width: 190px; max-width: 260px; padding: 10px;
+  display: flex; flex-direction: column; gap: 6px; animation: tomo-peek 0.12s ease-out;
+}
+/* pont invisible entre le dossier et la fiche : la souris peut passer de l'un à l'autre */
+.popover.folder-peek::before { content: ""; position: absolute; right: 100%; top: 0; bottom: 0; width: 10px; }
+.folder-peek-title { display: flex; align-items: center; gap: 6px; font: 600 13px var(--font-display); color: var(--text); padding: 0 4px; }
+.folder-peek-title .ellipsis { flex: 1; min-width: 0; }
+.folder-peek-list { display: flex; flex-direction: column; gap: 2px; max-height: 300px; overflow-y: auto; }
+.folder-peek-item {
+  display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; padding: 5px 6px; border: none; border-radius: 10px;
+  background: transparent; color: var(--text-soft); font: 500 13px var(--font); text-align: left; cursor: pointer;
+}
+.folder-peek-item:hover, .folder-peek-item:focus-visible { background: var(--surface-2); color: var(--text); }
+.folder-peek-item.on { color: var(--text); box-shadow: inset 0 0 0 1px var(--line-2); }
+.folder-peek-item .server-badge { border-radius: 50%; }
+.folder-peek .hint { font-size: 11px; color: var(--faint); padding: 2px 2px 0; }
+@keyframes tomo-peek { from { opacity: 0; transform: translate(-4px, -50%); } }
+@media (prefers-reduced-motion: reduce) { .popover.folder-peek { animation: none; } }

@@ -19,11 +19,11 @@ export type DevStats = {
 export type Guest = { id: string; name: string; expiresAt: number; server: { id: string; name: string } };
 export type Session = { kind: "user"; user: User } | { kind: "guest"; guest: Guest };
 
-export type ServerSummary = { id: string; name: string; role: Role; inVoice: number };
+export type ServerSummary = { id: string; name: string; role: Role; inVoice: number; /** Image du serveur (sinon : initiales) */ iconUrl?: string | null };
 export type Participant = { identity: string; name: string; guest: boolean };
 export type RoomInfo = { id: string; label: string; spatial: boolean; participants: Participant[] };
 export type Channel = { id: string; name: string };
-export type ServerDetail = { id: string; name: string; role: Role; rooms: RoomInfo[]; channels: Channel[] };
+export type ServerDetail = { id: string; name: string; iconUrl?: string | null; role: Role; rooms: RoomInfo[]; channels: Channel[] };
 export type Message = {
   id: string;
   scope: "channel" | "room" | "dm";
@@ -257,7 +257,7 @@ export class Api {
     if (v && typeof v === "object") {
       const o = v as Record<string, unknown>;
       for (const k of Object.keys(o)) {
-        if ((k === "avatarUrl" || k === "bannerUrl") && typeof o[k] === "string" && (o[k] as string).startsWith("/")) o[k] = this.baseUrl + o[k];
+        if ((k === "avatarUrl" || k === "bannerUrl" || k === "iconUrl") && typeof o[k] === "string" && (o[k] as string).startsWith("/")) o[k] = this.baseUrl + o[k];
         else if (o[k] && typeof o[k] === "object") o[k] = this.absolutize(o[k]);
       }
     }
@@ -379,6 +379,9 @@ export class Api {
   server = (id: string) => this.request<ServerDetail>("GET", `/servers/${id}`);
   createServer = (name: string) => this.request<ServerSummary>("POST", "/servers", { name });
   renameServer = (id: string, name: string) => this.request("PATCH", `/servers/${id}`, { name });
+  /** Image du serveur (admins) : identifiant d'une image envoyée, ou null pour la retirer. */
+  setServerIcon = (id: string, iconId: string | null) =>
+    this.request<{ id: string; name: string; iconUrl: string | null }>("PATCH", `/servers/${id}`, { iconId });
   deleteServer = (id: string) => this.request("DELETE", `/servers/${id}`);
   leaveServer = (id: string) => this.request("POST", `/servers/${id}/leave`, {});
 

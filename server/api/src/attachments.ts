@@ -205,14 +205,18 @@ export function attachmentUrl(id: string | null | undefined): string | null {
  * Réserve une image envoyée pour le profil (photo / bannière) : elle ne sera plus effacée
  * tant qu'elle sert. Renvoie un message d'erreur, ou null si c'est bon.
  */
-export function claimProfileImage(userId: string, attachmentId: string): string | null {
+export function claimProfileImage(userId: string, attachmentId: string, holder = `profile:${userId}`): string | null {
   const r = db.prepare("SELECT * FROM attachments WHERE id = ?").get(attachmentId) as Row | undefined;
   if (!r || r.owner_id !== userId || r.message_id) return "Image introuvable (renvoie-la).";
   if (r.kind !== "image") return "Ce fichier n'est pas une image (PNG, JPG, GIF ou WebP).";
-  if (r.size > 8 * 1024 * 1024) return "Image trop lourde pour un profil (8 Mo maximum).";
-  db.prepare("UPDATE attachments SET message_id = ? WHERE id = ?").run(`profile:${userId}`, attachmentId);
+  if (r.size > 8 * 1024 * 1024) return "Image trop lourde (8 Mo maximum).";
+  db.prepare("UPDATE attachments SET message_id = ? WHERE id = ?").run(holder, attachmentId);
   return null;
 }
+
+/** Réserve une image envoyée par un admin comme image du serveur (« server:<id> »). */
+export const claimServerImage = (userId: string, serverId: string, attachmentId: string) =>
+  claimProfileImage(userId, attachmentId, `server:${serverId}`);
 
 /**
  * Réserve un fichier envoyé pour une légende (clip du mur des légendes) : `holder` = « legend:<id> ».
@@ -254,10 +258,11 @@ export function sweepAttachments() {
   const rows = db
     .prepare(
       `SELECT id FROM attachments
-       WHERE (message_id IS NOT NULL AND message_id NOT LIKE 'profile:%' AND message_id NOT LIKE 'legend:%' AND message_id NOT IN (SELECT id FROM messages))
+       WHERE (message_id IS NOT NULL AND message_id NOT LIKE 'profile:%' AND message_id NOT LIKE 'legend:%' AND message_id NOT LIKE 'server:%' AND message_id NOT IN (SELECT id FROM messages))
           OR (message_id LIKE 'profile:%' AND id NOT IN (
                 SELECT avatar_id FROM users WHERE avatar_id IS NOT NULL
                 UNION SELECT banner_id FROM users WHERE banner_id IS NOT NULL))
+          OR (message_id LIKE 'server:%' AND id NOT IN (SELECT icon_id FROM servers WHERE icon_id IS NOT NULL))
           OR (message_id LIKE 'legend:%' AND message_id NOT IN (${legends}))
           OR (message_id IS NULL AND created_at < ?)`,
     )
