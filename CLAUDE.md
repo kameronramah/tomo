@@ -150,6 +150,8 @@ Après une modification de l'API : `docker compose -f docker-compose.dev.yml up 
 
 **Publier une version** (installateurs + mise à jour automatique) : voir [docs/PUBLIER-UNE-VERSION.md](docs/PUBLIER-UNE-VERSION.md). En bref : même numéro dans `tauri.conf.json`, `Cargo.toml`, `package.json`, puis `git tag vX.Y.Z` et `git push origin vX.Y.Z`. La Release est **publiée directement** (plus de brouillon) avec `latest.json`. Il faut que le secret GitHub `TAURI_SIGNING_PRIVATE_KEY` existe.
 
+**Description de chaque Release (obligatoire, à chaque version)** : une fois le workflow terminé (la Release n'existe qu'à la fin), ajouter en haut du texte de la Release un court « Quoi de neuf » : un titre `## Quoi de neuf` puis 1 à 4 lignes `- …`, en français simple, sans jargon, qui disent ce qui change pour les utilisateurs. Garder en dessous le texte d'installation mis par le workflow. Commande : `gh release edit vX.Y.Z --repo kameronramah/tomo --notes-file fichier.md`.
+
 **E-mails** : `SMTP_HOST` / `SMTP_PORT` / `SMTP_USER` / `SMTP_PASS` / `MAIL_FROM` (Brevo, voir `docs/HEBERGEMENT.md`).
 **Clés facultatives** dans `server/.env` (dev et prod) : `KLIPY_API_KEY` (GIF), `STEAM_API_KEY` (stats Steam), `RIOT_API_KEY` (Riot / LoL ; la clé « development » expire toutes les 24 h).
 
