@@ -46,7 +46,7 @@ export const loadInstance = () =>
   normalizeInstance(INSTANCE_EDITABLE ? read<string>(KEYS.instance, DEFAULT_INSTANCE) : DEFAULT_INSTANCE);
 export const saveInstance = (url: string) => write(KEYS.instance, normalizeInstance(url));
 
-export type Devices = { input?: string; output?: string };
+export type Devices = { input?: string; output?: string; camera?: string };
 export const loadDevices = () => read<Devices>(KEYS.devices, {});
 export const saveDevices = (d: Devices) => write(KEYS.devices, d);
 

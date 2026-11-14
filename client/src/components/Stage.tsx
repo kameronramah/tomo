@@ -1,24 +1,50 @@
-import { useEffect, useReducer, useState, type ReactNode } from "react";
+import { useEffect, useReducer, useRef, useState, type ReactNode } from "react";
 import {
   ConnectionState,
   Room,
   RoomEvent,
   type Participant,
   type RemoteParticipant,
+  type VideoTrack,
 } from "livekit-client";
 import { getSettings, loadDevices, onSettingsChange, saveDevices, updateSettings } from "../lib/prefs";
-import { getRecorder, getSpatial, onExtrasChange, setParticipantVolume, volumeMemory } from "../lib/voice";
+import { getRecorder, getSpatial, onExtrasChange, setParticipantVolume, setWatchedShare, volumeMemory } from "../lib/voice";
 import { Icon, NetworkBadge, SpeakingBars, UserAvatar } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
 import MapView from "./MapView";
 import ScreenView from "./ScreenView";
-import { SCREEN_PRESETS, listShares, screenShareError, startScreenShare, stopScreenShare, type ScreenPresetId } from "../lib/screen";
+import ShareStrip from "./ShareStrip";
+import SharePicker from "./SharePicker";
+import { nativeCaptureAvailable } from "../lib/nativeCapture";
+import {
+  SCREEN_PRESETS,
+  listShares,
+  screenShareError,
+  setWatching,
+  startScreenShare,
+  stopScreenShare,
+  watchingOf,
+  type ScreenPresetId,
+} from "../lib/screen";
 import { t } from "../lib/i18n";
 import { getCaptions, onCaptions, startCaptions, stopCaptions } from "../lib/captions";
 import CaptionsBar from "./CaptionsBar";
 import { usePtt } from "../lib/ptt";
 import { formatShortcut, shortcutHint, shortcutOf } from "../lib/hotkeys";
 import { CoachRequests } from "./CoachLayer";
+import { cameraError, cameraOf, startCamera, stopCamera, switchCamera } from "../lib/camera";
+
+/** Image d'une caméra dans une bulle (la mienne en miroir, comme dans une glace). */
+function CamVideo({ track, mirror }: { track: VideoTrack; mirror: boolean }) {
+  const ref = useRef<HTMLVideoElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    track.attach(el);
+    return () => void track.detach(el);
+  }, [track]);
+  return <video ref={ref} className={`tile-cam${mirror ? " mirror" : ""}`} autoPlay playsInline muted />;
+}
 
 const REFRESH_EVENTS = [
   RoomEvent.TrackPublished,
@@ -118,13 +144,30 @@ export default function Stage(props: Props) {
   const [deviceError, setDeviceError] = useState<string>();
   const [shareOpen, setShareOpen] = useState(false);
   const [shareBusy, setShareBusy] = useState(false);
+  const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
+  const [camBusy, setCamBusy] = useState(false);
 
-  async function startShare(preset: ScreenPresetId, audio: boolean) {
+  async function toggleCamera() {
+    setCamBusy(true);
+    try {
+      if (room.localParticipant.isCameraEnabled) await stopCamera(room);
+      else await startCamera(room);
+    } catch (err) {
+      props.onNotice?.(cameraError(err));
+    } finally {
+      setCamBusy(false);
+      refresh();
+      // Les noms des caméras ne sont donnés qu'après l'autorisation : on relit la liste.
+      setCameras(await Room.getLocalDevices("videoinput", false).catch(() => []));
+    }
+  }
+
+  async function startShare(preset: ScreenPresetId, audio: boolean, sourceId?: string) {
     setShareOpen(false);
     updateSettings("screen", { preset, audio });
     setShareBusy(true);
     try {
-      await startScreenShare(room, preset, audio);
+      await startScreenShare(room, preset, audio, sourceId);
     } catch (err) {
       const msg = screenShareError(err);
       if (msg) props.onNotice?.(msg);
@@ -144,6 +187,7 @@ export default function Stage(props: Props) {
     const loadDeviceList = async () => {
       setInputs(await Room.getLocalDevices("audioinput", false).catch(() => []));
       setOutputs(await Room.getLocalDevices("audiooutput", false).catch(() => []));
+      setCameras(await Room.getLocalDevices("videoinput", false).catch(() => []));
     };
     loadDeviceList();
     room.on(RoomEvent.MediaDevicesChanged, loadDeviceList);
@@ -183,6 +227,57 @@ export default function Stage(props: Props) {
   const shares = listShares(room);
   const sharing = me.isScreenShareEnabled;
   const screenPrefs = getSettings().screen;
+
+  // Partage regardé : rien ne s'ouvre tout seul, on choisit dans la bande « Écrans partagés ».
+  const [watching, setWatchingId] = useState<string | null>(null);
+  const watched = watching ? shares.find((s) => s.participant.identity === watching) : undefined;
+  const watchedId = watched?.participant.identity ?? null;
+  const watchedName = useRef("");
+  if (watched) watchedName.current = watched.participant.name || watched.participant.identity;
+  // Le partage regardé s'arrête : retour aux bulles, avec un petit mot.
+  useEffect(() => {
+    if (watching && !watched) {
+      if (watching !== me.identity && watchedName.current) props.onNotice?.(t("{0} a arrêté de partager son écran.", { 0: watchedName.current }));
+      setWatchingId(null);
+    }
+  }, [watching, watched]);
+  // Les autres voient ce que je regarde ; seul le son de ce partage est joué.
+  useEffect(() => {
+    setWatching(room, watchedId);
+    setWatchedShare(room, watchedId);
+  }, [room, watchedId]);
+  useEffect(
+    () => () => {
+      setWatchedShare(room, null);
+      if (room.state === ConnectionState.Connected) setWatching(room, null);
+    },
+    [room],
+  );
+
+  // Quelqu'un lance un partage : petite carte « Regarder » pendant 8 s (sans rien ouvrir).
+  const [newShare, setNewShare] = useState<string | null>(null);
+  const knownShares = useRef<Set<string> | null>(null);
+  const shareKey = shares.map((s) => s.participant.identity).join(",");
+  useEffect(() => {
+    const ids = new Set(shares.filter((s) => !s.isLocal).map((s) => s.participant.identity));
+    const before = knownShares.current;
+    knownShares.current = ids;
+    if (!before) return; // partages déjà en cours quand j'arrive : seulement dans la bande
+    const fresh = [...ids].find((id) => !before.has(id));
+    if (fresh) setNewShare(fresh);
+    else if (newShare && !ids.has(newShare)) setNewShare(null);
+  }, [shareKey]);
+  useEffect(() => {
+    if (!newShare) return;
+    const timer = setTimeout(() => setNewShare(null), 8000);
+    return () => clearTimeout(timer);
+  }, [newShare]);
+  const toastShare = newShare && newShare !== watchedId ? shares.find((s) => s.participant.identity === newShare) : undefined;
+
+  function watch(identity: string) {
+    setWatchingId(identity);
+    setNewShare(null);
+  }
 
   return (
     <section className={`stage${props.chatOpen && props.chat ? " with-chat" : ""}`}>
@@ -261,9 +356,40 @@ export default function Stage(props: Props) {
       {props.warning && <p className="warning banner">{props.warning}</p>}
       <CoachRequests room={room} />
 
-      {shares.length > 0 ? (
-        <ScreenView room={room} shares={shares} onStopMine={stopShare} onCapture={props.onCapture} />
-      ) : showMap && engine ? (
+      {toastShare && (
+        <div className="share-toast" role="status">
+          <div className="row gap-10">
+            <UserAvatar identity={toastShare.participant.identity} name={toastShare.participant.name || toastShare.participant.identity} size={32} />
+            <span className="col grow">
+              <strong>{t("{0} partage son écran", { 0: toastShare.participant.name || toastShare.participant.identity })}</strong>
+              <span className="muted small">{props.roomLabel}</span>
+            </span>
+          </div>
+          <div className="row gap-8 share-toast-actions">
+            <button className="btn pill small" onClick={() => setNewShare(null)}>
+              {t("Plus tard")}
+            </button>
+            <button className="btn pill small primary" onClick={() => watch(toastShare.participant.identity)}>
+              <Icon name="eye" size={15} /> {t("Regarder")}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {watched ? (
+        <ScreenView
+          room={room}
+          shares={shares}
+          selected={watched.participant.identity}
+          onSelect={watch}
+          onClose={() => setWatchingId(null)}
+          onStopMine={stopShare}
+          onCapture={props.onCapture}
+        />
+      ) : (
+      <>
+      <ShareStrip room={room} shares={shares} onWatch={watch} onStopMine={stopShare} />
+      {showMap && engine ? (
         <MapView room={room} engine={engine} />
       ) : (
       <div className="tiles">
@@ -279,8 +405,9 @@ export default function Stage(props: Props) {
           const guest = p.identity.startsWith("g:");
           const bot = p.identity.startsWith("bot:");
           const talking = speaking.has(p.identity);
+          const cam = cameraOf(p);
           return (
-            <div key={p.identity} className={`tile${talking ? " speaking" : ""}`}>
+            <div key={p.identity} className={`tile${talking ? " speaking" : ""}${cam ? " has-cam" : ""}`}>
               {muted && (
                 <span className="tile-badge amber-badge">
                   <Icon name="micOff" size={13} /> {t("Micro coupé")}
@@ -288,11 +415,6 @@ export default function Stage(props: Props) {
               )}
               {guest && !muted && <span className="tile-badge">{t("Invité")}</span>}
               {bot && !muted && <span className="tile-badge">{t("Bot de test")}</span>}
-              {p.isScreenShareEnabled && (
-                <span className="tile-share" title={t("Partage son écran")}>
-                  <Icon name="screenShare" size={13} /> {t("En direct")}
-                </span>
-              )}
               {p.attributes?.cc === "1" && (
                 <span className="tile-cc" title={t("Sous-titres activés chez cette personne")}>
                   CC
@@ -312,13 +434,36 @@ export default function Stage(props: Props) {
                 aria-label={t("Profil de {0}", { 0: label })}
                 disabled={!p.identity.startsWith("u:")}
               >
-                <UserAvatar identity={p.identity} name={label} size={92} speaking={talking} className="big" />
+                {cam ? (
+                  <CamVideo track={cam} mirror={isMe} />
+                ) : (
+                  <UserAvatar identity={p.identity} name={label} size={92} speaking={talking} className="big" />
+                )}
               </button>
               <span className="tile-name">
                 {label}
                 {isMe && <span className="muted"> {t("(toi)")}</span>}
                 {talking && <SpeakingBars />}
               </span>
+              {p.isScreenShareEnabled && (
+                <button
+                  className="tile-share"
+                  onClick={() => watch(p.identity)}
+                  title={isMe ? t("Voir ce que voient tes potes") : t("Regarder l'écran de {0}", { 0: label })}
+                >
+                  <Icon name="screenShare" size={13} /> {t("En direct")}
+                </button>
+              )}
+              {(() => {
+                const target = watchingOf(p);
+                const sharer = target ? participants.find((x) => x.identity === target) : undefined;
+                if (!sharer) return null;
+                return (
+                  <span className="tile-watch">
+                    <Icon name="eye" size={12} /> {sharer === me ? t("regarde ton écran") : t("regarde {0}", { 0: sharer.name || sharer.identity })}
+                  </span>
+                );
+              })()}
               {!isMe && (
                 <label className="volume">
                   {t("Volume")}
@@ -340,6 +485,8 @@ export default function Stage(props: Props) {
           );
         })}
       </div>
+      )}
+      </>
       )}
 
       <CaptionsBar />
@@ -370,6 +517,16 @@ export default function Stage(props: Props) {
             <Icon name={props.deafened ? "headphonesOff" : "headphones"} size={22} />
           </button>
           <button
+            className={`dock-btn${me.isCameraEnabled ? " cam-on" : ""}`}
+            onClick={toggleCamera}
+            disabled={camBusy}
+            aria-pressed={me.isCameraEnabled}
+            aria-label={me.isCameraEnabled ? t("Couper la caméra") : t("Allumer la caméra")}
+            title={me.isCameraEnabled ? t("Couper la caméra") : t("Allumer la caméra")}
+          >
+            <Icon name={me.isCameraEnabled ? "camera" : "cameraOff"} size={22} />
+          </button>
+          <button
             className="dock-btn wide"
             onClick={props.onClip}
             disabled={!clipsReady || !props.onClip}
@@ -392,7 +549,15 @@ export default function Stage(props: Props) {
             >
               <Icon name="screenShare" size={22} />
             </button>
-            {shareOpen && (
+            {shareOpen && nativeCaptureAvailable() && (
+              <SharePicker
+                initialPreset={screenPrefs.preset}
+                initialAudio={screenPrefs.audio}
+                onStart={startShare}
+                onClose={() => setShareOpen(false)}
+              />
+            )}
+            {shareOpen && !nativeCaptureAvailable() && (
               <>
                 <div className="click-away" onClick={() => setShareOpen(false)} />
                 <ShareMenu
@@ -407,8 +572,8 @@ export default function Stage(props: Props) {
             <button
               className="dock-btn"
               onClick={() => setDevicesOpen(!devicesOpen)}
-              aria-label={t("Micro et sortie audio")}
-              title={t("Micro et sortie audio")}
+              aria-label={t("Micro, caméra et sortie audio")}
+              title={t("Micro, caméra et sortie audio")}
               aria-expanded={devicesOpen}
             >
               <Icon name="sliders" size={22} />
@@ -437,15 +602,34 @@ export default function Stage(props: Props) {
                       ))}
                     </select>
                   </label>
+                  <label className="field">
+                    {t("Caméra")}
+                    <select
+                      value={room.getActiveDevice("videoinput") ?? loadDevices().camera ?? ""}
+                      onChange={(e) => {
+                        setDeviceError(undefined);
+                        switchCamera(room, e.target.value)
+                          .catch(() => setDeviceError(t("Impossible de changer de périphérique.")))
+                          .finally(refresh);
+                      }}
+                      disabled={!cameras.length}
+                    >
+                      {!cameras.length && <option value="">{t("Aucune caméra trouvée.")}</option>}
+                      {cameras.map((d) => (
+                        <option key={d.deviceId} value={d.deviceId}>
+                          {d.label || t("Caméra")}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
                   {deviceError && <p className="error small">{deviceError}</p>}
                 </div>
               </>
             )}
           </div>
           <span className="dock-sep" />
-          <button className="dock-btn wide leave" onClick={props.onLeave} aria-label={props.isCall ? t("Raccrocher") : t("Quitter le salon")}>
-            <Icon name={props.isCall ? "phoneOff" : "leave"} size={20} />{" "}
-            <span className="dock-label">{props.isCall ? t("Raccrocher") : t("Quitter")}</span>
+          <button className="dock-btn wide leave" onClick={props.onLeave} aria-label={props.isCall ? t("Raccrocher") : t("Quitter le salon")} title={props.isCall ? t("Raccrocher") : t("Quitter le salon")}>
+            <Icon name="hangup" size={22} />
           </button>
         </div>
       </div>

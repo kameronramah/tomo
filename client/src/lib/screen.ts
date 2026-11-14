@@ -14,6 +14,7 @@
 import {
   AudioPresets,
   Room,
+  RoomEvent,
   ScreenSharePresets,
   Track,
   VideoPreset,
@@ -24,6 +25,7 @@ import {
   type TrackPublishOptions,
 } from "livekit-client";
 import { t } from "./i18n";
+import { startNativeCapture, stopNativeCapture } from "./nativeCapture";
 
 export type ScreenPresetId = "game" | "sharp" | "max" | "eco";
 
@@ -52,8 +54,38 @@ export const SCREEN_PRESETS: ScreenPreset[] = [
 export const presetById = (id: string) =>
   SCREEN_PRESETS.find((p) => p.id === id) ?? SCREEN_PRESETS.find((p) => p.id === "game")!;
 
-export async function startScreenShare(room: Room, presetId: ScreenPresetId, withAudio: boolean) {
+/**
+ * `sourceId` (appli Windows) : écran ou fenêtre choisi dans le sélecteur de Tomo, capturé par nous.
+ * Sans lui, c'est la fenêtre de partage du système qui s'ouvre (navigateur, Mac, ou partage avec le son du PC).
+ */
+export async function startScreenShare(room: Room, presetId: ScreenPresetId, withAudio: boolean, sourceId?: string) {
   const p = presetById(presetId);
+  if (sourceId) {
+    const cap = await startNativeCapture({
+      source: sourceId,
+      fps: p.fps,
+      maxWidth: p.width,
+      maxHeight: p.height,
+      onClosed: () => void stopScreenShare(room).catch(() => {}),
+    });
+    cap.track.contentHint = p.hint;
+    try {
+      await room.localParticipant.publishTrack(cap.track, { source: Track.Source.ScreenShare, ...screenPublishOptions(p) });
+    } catch (err) {
+      await stopNativeCapture();
+      throw err;
+    }
+    // Salon quitté ou partage retiré d'une autre façon : on arrête aussi la capture.
+    const off = () => {
+      if (room.localParticipant.isScreenShareEnabled && room.state === "connected") return;
+      room.off(RoomEvent.LocalTrackUnpublished, off);
+      room.off(RoomEvent.Disconnected, off);
+      void stopNativeCapture();
+    };
+    room.on(RoomEvent.LocalTrackUnpublished, off);
+    room.on(RoomEvent.Disconnected, off);
+    return;
+  }
   const capture: ScreenShareCaptureOptions = {
     audio: withAudio ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : false,
     systemAudio: withAudio ? "include" : "exclude",
@@ -82,6 +114,7 @@ export function screenPublishOptions(p: ScreenPreset): TrackPublishOptions {
 
 export async function stopScreenShare(room: Room) {
   await room.localParticipant.setScreenShareEnabled(false);
+  await stopNativeCapture();
 }
 
 export const isSharing = (room: Room) => room.localParticipant.isScreenShareEnabled;
@@ -118,4 +151,25 @@ export function screenShareError(err: unknown): string | null {
   if (name === "NotSupportedError") return t("Le partage d'écran n'est pas pris en charge ici.");
   if (name === "NotReadableError") return t("Impossible de capturer cet écran (protégé ou indisponible).");
   return t("Le partage d'écran n'a pas pu démarrer.");
+}
+
+/*
+ * « Qui regarde quoi » : attribut LiveKit `watch` = identité de celui dont je regarde l'écran
+ * ("" = je ne regarde rien). Les autres s'en servent pour afficher « regarde Léo » et le nombre
+ * de spectateurs. Rien n'est stocké sur le serveur.
+ */
+export function setWatching(room: Room, identity: string | null) {
+  const me = room.localParticipant;
+  const value = identity ?? "";
+  if ((me.attributes?.watch ?? "") === value) return;
+  void me.setAttributes({ ...me.attributes, watch: value }).catch(() => {});
+}
+
+/** Identité de l'écran que regarde cette personne (null si aucun). */
+export const watchingOf = (p: Participant) => p.attributes?.watch || null;
+
+/** Les personnes qui regardent l'écran de `identity` (sans lui-même). */
+export function viewersOf(room: Room, identity: string): Participant[] {
+  const all: Participant[] = [room.localParticipant, ...room.remoteParticipants.values()];
+  return all.filter((p) => p.identity !== identity && watchingOf(p) === identity);
 }

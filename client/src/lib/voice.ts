@@ -1,4 +1,5 @@
-import { ConnectionQuality, Room, RoomEvent, Track, type LocalAudioTrack, type RemoteParticipant } from "livekit-client";
+import { ConnectionQuality, Room, RoomEvent, Track, type LocalAudioTrack, type RemoteParticipant, type RemoteTrackPublication } from "livekit-client";
+import { onCameraSubscribed } from "./camera";
 import type { Api } from "./api";
 import { getSettings, loadDevices, onSettingsChange } from "./prefs";
 import { SpatialEngine, type Pose } from "./spatial";
@@ -23,11 +24,20 @@ const volumeKey = (p: RemoteParticipant) => p.name || p.identity;
 
 /** Volume du son des partages d'écran, par personne. */
 export const screenVolumeMemory = new Map<string, number>();
+/** Le partage d'écran que je regarde : on n'entend que le son de celui-là. */
+let watchedShare: string | null = null;
 
 function applyVolume(p: RemoteParticipant) {
   const master = getSettings().audio.outputVolume;
   p.setVolume(deafened ? 0 : (volumeMemory.get(volumeKey(p)) ?? 1) * master * duck);
-  p.setVolume(deafened ? 0 : (screenVolumeMemory.get(volumeKey(p)) ?? 1) * master, Track.Source.ScreenShareAudio);
+  const screen = watchedShare === p.identity ? (screenVolumeMemory.get(volumeKey(p)) ?? 1) : 0;
+  p.setVolume(deafened ? 0 : screen * master, Track.Source.ScreenShareAudio);
+}
+
+/** Choisir le partage regardé (null = aucun) : seul son son est joué. */
+export function setWatchedShare(room: Room | null, identity: string | null) {
+  watchedShare = identity;
+  room?.remoteParticipants.forEach(applyVolume);
 }
 
 export function setScreenVolume(p: RemoteParticipant, v: number) {
@@ -100,7 +110,7 @@ async function setClips(ex: Extras, on: boolean) {
     ex.recorder = null;
   }
   // Visible par tous : « clips activés » sur ma tuile
-  ex.room.localParticipant.setAttributes({ clips: ex.recorder ? "1" : "0" }).catch(() => {});
+  ex.room.localParticipant.setAttributes({ ...ex.room.localParticipant.attributes, clips: ex.recorder ? "1" : "0" }).catch(() => {});
   extrasListeners.forEach((l) => l());
 }
 
@@ -190,9 +200,9 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
   await ctx.resume().catch(() => {});
   const room = new Room({
     // Pas d'« adaptive stream » : il choisissait la qualité d'un partage d'écran d'après la taille
-    // de la vidéo affichée (4K reçu en 360p dans une fenêtre normale). Les seules vidéos sont des
-    // partages d'écran : ScreenView demande la meilleure qualité pour celui qu'on regarde et met
-    // les autres en pause. Le serveur baisse quand même la qualité si la connexion ne suit pas.
+    // de la vidéo affichée (4K reçu en 360p dans une fenêtre normale). Partages d'écran : ScreenView
+    // demande la meilleure qualité pour celui qu'on regarde et met les autres en pause. Caméras :
+    // version 360p demandée à la réception (camera.ts). Le serveur baisse si la connexion ne suit pas.
     adaptiveStream: false,
     dynacast: true,
     webAudioMix: { audioContext: ctx },
@@ -214,6 +224,7 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
     .on(RoomEvent.TrackSubscribed, (track, pub, participant) => {
       // Un partage d'écran ne se télécharge que quand on le regarde (ScreenView le réactive).
       if (track.kind === Track.Kind.Video && pub.source === Track.Source.ScreenShare) pub.setEnabled(false);
+      if (track.kind === Track.Kind.Video && pub.source === Track.Source.Camera) onCameraSubscribed(pub as RemoteTrackPublication);
       if (track.kind === Track.Kind.Audio) {
         audioContainer().appendChild(track.attach());
         applyVolume(participant);
@@ -230,6 +241,7 @@ export async function connectVoice(url: string, token: string, opts: { micEnable
       stopPtt();
       stopDevices();
       if (activeRoom === room) activeRoom = null;
+      watchedShare = null;
       void stopExtras(room);
     });
 

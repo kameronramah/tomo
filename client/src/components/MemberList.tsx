@@ -46,7 +46,7 @@ export function useServerPeople(api: Api, realtime: Realtime | null, serverId: s
   return people;
 }
 
-/** Membres d'un serveur, rangés par « en vocal / en ligne / hors ligne », avec recherche. */
+/** Membres d'un serveur, rangés par « en vocal / en ligne / hors ligne » (la recherche est dans celle du serveur). */
 export default function MemberList({
   api,
   realtime,
@@ -64,13 +64,10 @@ export default function MemberList({
   onClose?: () => void;
 }) {
   const people = useServerPeople(api, realtime, serverId);
-  const [q, setQ] = useState("");
   const get = usePeople();
 
-  const filter = q.trim().toLowerCase();
   const rows = people
     .map((p) => ({ ...p, ...(p.guest ? {} : get(p.id)) }))
-    .filter((p) => !filter || p.displayName.toLowerCase().includes(filter) || p.username.toLowerCase().includes(filter))
     .sort((a, b) => a.displayName.localeCompare(b.displayName));
   const inVoice = rows.filter((p) => p.room);
   const online = rows.filter((p) => !p.room && p.status !== "offline");
@@ -101,10 +98,6 @@ export default function MemberList({
     <section className="members" aria-label={t("Membres du serveur")}>
       <div className="members-head">
         <span className="side-title grow">{t("Membres")}</span>
-        <label className="members-search">
-          <Icon name="search" size={14} />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Chercher")} aria-label={t("Chercher un membre")} />
-        </label>
         {onClose && (
           <button className="icon-btn sm" onClick={onClose} aria-label={t("Masquer les membres")} title={t("Masquer les membres")}>
             <Icon name="x" size={16} />
@@ -117,7 +110,7 @@ export default function MemberList({
       {online.map(row)}
       {offline.length > 0 && <span className="section-title">{t("Hors ligne ·")} {offline.length}</span>}
       {offline.map(row)}
-      {rows.length === 0 && <p className="muted small pad">{filter ? t("Personne ne correspond.") : t("Chargement…")}</p>}
+      {rows.length === 0 && <p className="muted small pad">{t("Chargement…")}</p>}
     </section>
   );
 }

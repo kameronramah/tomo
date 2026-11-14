@@ -91,6 +91,12 @@ let current: RunningGame | null = null;
 const listeners = new Set<(g: RunningGame | null) => void>();
 
 export const currentGame = () => current;
+
+/** Le programme (nom du .exe) est-il le jeu en cours ? (un jeu peut avoir plusieurs .exe) */
+export function isCurrentGameProgram(program: string) {
+  if (!current) return false;
+  return catalog(getSettings()).get(program.toLowerCase())?.id === current.id;
+}
 export function onGame(fn: (g: RunningGame | null) => void) {
   listeners.add(fn);
   fn(current);

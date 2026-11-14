@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { VideoQuality, type RemoteParticipant, type RemoteTrackPublication, type Room } from "livekit-client";
-import type { Share } from "../lib/screen";
+import { viewersOf, type Share } from "../lib/screen";
 import { screenVolumeMemory, setParticipantVolume, setScreenVolume, volumeMemory } from "../lib/voice";
 import { Icon, SpeakingBars, UserAvatar } from "./Brand";
 import { useSpeaking } from "../lib/speaking";
@@ -13,23 +13,25 @@ const inTauri = typeof window !== "undefined" && "__TAURI_INTERNALS__" in window
 type Props = {
   room: Room;
   shares: Share[];
+  /** Identité de celui dont on regarde l'écran. */
+  selected: string;
+  onSelect: (identity: string) => void;
+  /** Quitter le partage (on reste dans la pièce). */
+  onClose: () => void;
   onStopMine: () => void;
   onCapture?: (png: Blob) => void;
 };
 
-/** Grand écran pour regarder un partage (choix si plusieurs, plein écran, qualité reçue). */
-export default function ScreenView({ room, shares, onStopMine, onCapture }: Props) {
+/** Grand écran pour regarder le partage choisi (passer à un autre, plein écran, qualité reçue). */
+export default function ScreenView({ room, shares, selected, onSelect, onClose, onStopMine, onCapture }: Props) {
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
-  const [selected, setSelected] = useState<string | null>(null);
   const [full, setFull] = useState(false);
   const [stats, setStats] = useState<{ w: number; h: number; fps: number }>({ w: 0, h: 0, fps: 0 });
   const [, setTick] = useState(0);
   const speaking = useSpeaking(room);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Par défaut : le partage d'un autre (pas le mien)
-  const current =
-    shares.find((s) => s.participant.identity === selected) ?? shares.find((s) => !s.isLocal) ?? shares[0];
+  const current = shares.find((s) => s.participant.identity === selected) ?? shares[0];
   const track = current?.publication.track;
 
   useEffect(() => {
@@ -94,17 +96,26 @@ export default function ScreenView({ room, shares, onStopMine, onCapture }: Prop
   const quality = stats.h ? `${stats.h >= 2100 ? "4K" : `${stats.h}p`} · ${stats.fps} i/s` : "connexion…";
 
   const people = [room.localParticipant, ...room.remoteParticipants.values()];
+  const viewers = viewersOf(room, current.participant.identity);
 
   return (
     <div className={`screen-view${full ? " full" : ""}`}>
       <div className="screen-main">
       <div className="screen-bar">
+        <button className="btn pill small screen-back" onClick={onClose} title={t("Fermer le partage (tu restes dans la pièce)")}>
+          <Icon name="chevronLeft" size={16} /> {t("Retour au vocal")}
+        </button>
         <span className="row gap-8 grow">
           <UserAvatar identity={current.participant.identity} name={who} size={26} speaking={speaking.has(current.participant.identity)} />
           <strong className="ellipsis">{current.isLocal ? t("Ton écran") : t("Écran de {0}", { 0: who })}</strong>
           <span className="screen-quality" title={t("Qualité reçue")}>
             {quality}
           </span>
+          {viewers.length > 0 && (
+            <span className="muted small screen-viewers" title={viewers.map((p) => p.name || p.identity).join(", ")}>
+              <Icon name="eye" size={14} /> {viewers.length}
+            </span>
+          )}
         </span>
         {current.hasAudio && !current.isLocal && (
           <label className="screen-volume" title={t("Volume du son partagé")}>
@@ -154,7 +165,7 @@ export default function ScreenView({ room, shares, onStopMine, onCapture }: Prop
             const name = s.participant.name || s.participant.identity;
             const on = s === current;
             return (
-              <button key={s.participant.identity} role="tab" aria-selected={on} className={on ? "on" : ""} onClick={() => setSelected(s.participant.identity)}>
+              <button key={s.participant.identity} role="tab" aria-selected={on} className={on ? "on" : ""} onClick={() => onSelect(s.participant.identity)}>
                 <Icon name="monitor" size={15} /> {s.isLocal ? t("Ton écran") : name}
               </button>
             );

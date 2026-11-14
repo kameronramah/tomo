@@ -48,9 +48,13 @@ import ServerPlan from "./components/ServerPlan";
 import VoiceIsland from "./components/VoiceIsland";
 import { NetworkBadge } from "./components/Brand";
 
-type ServerView = { type: "home" } | { type: "voice" } | { type: "channel"; id: string } | { type: "legends" } | { type: "challenges" };
+/** focus : message à montrer en arrivant (résultat de recherche). */
+type MessageFocus = { id: string; at: number };
+type ServerView = { type: "home" } | { type: "voice" } | { type: "channel"; id: string; focus?: MessageFocus } | { type: "legends" } | { type: "challenges" };
 import Stage from "./components/Stage";
 import ChatView from "./components/ChatView";
+import ServerSearch from "./components/ServerSearch";
+import type { SearchHit } from "./lib/api";
 import FriendsView from "./components/FriendsView";
 import Settings from "./components/Settings";
 import IncomingCall from "./components/IncomingCall";
@@ -116,6 +120,10 @@ export default function App() {
   const [deafened, setDeafened] = useState(false);
   const [joiningRoomId, setJoiningRoomId] = useState<string>();
   const [chatOpen, setChatOpen] = useState(false);
+  /** Recherche dans le serveur ouvert (membres + messages). */
+  const [searchOpen, setSearchOpen] = useState(false);
+  /** Message du chat de la pièce à montrer (résultat de recherche). */
+  const [roomFocus, setRoomFocus] = useState<MessageFocus | undefined>();
   const [incoming, setIncoming] = useState<{ callId: string; from: { id: string; name: string } } | null>(null);
   const [callRinging, setCallRinging] = useState(false); // appel sortant pas encore décroché
 
@@ -411,6 +419,8 @@ export default function App() {
 
   /** Membres du serveur ouvert (pour proposer les @mentions). */
   const serverPeople = useServerPeople(api, realtime, detail?.id);
+  // Changer de serveur ferme sa recherche
+  useEffect(() => setSearchOpen(false), [detail?.id]);
   const mentionables = useMemo(
     () =>
       serverPeople
@@ -662,6 +672,11 @@ export default function App() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (!e.ctrlKey || e.altKey) return;
+      if (!e.shiftKey && (e.key === "f" || e.key === "F" || e.key === "k" || e.key === "K") && mode === "servers" && detail && !settingsOpen) {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
       if (!e.shiftKey) {
         const n = Number(e.key);
         if (n >= 1 && n <= 9 && servers[n - 1]) {
@@ -863,6 +878,22 @@ export default function App() {
     }
   }
 
+  /** Résultat de recherche : ouvrir le fil (ou le chat de la pièce si j'y suis) sur ce message. */
+  function openSearchHit(hit: SearchHit) {
+    const focus = { id: hit.id, at: hit.createdAt };
+    if (hit.place.kind === "channel") {
+      setSearchOpen(false);
+      setServerView({ type: "channel", id: hit.place.id, focus });
+    } else if (voice?.kind === "room" && voice.roomId === hit.place.id) {
+      setSearchOpen(false);
+      setRoomFocus(focus);
+      setChatOpen(true);
+      goToVoice();
+    } else {
+      setToast({ text: t("Ce message est dans le chat de la pièce {0} : rejoins-la pour voir la discussion.", { 0: hit.place.name }) });
+    }
+  }
+
   // ---- Rendu -------------------------------------------------------------------------
   if (!launchChecked) {
     // Appli de bureau : une mise à jour disponible au lancement est installée d'office.
@@ -968,6 +999,7 @@ export default function App() {
               realtime={realtime}
               scope="room"
               target={voice.roomId}
+              focus={roomFocus}
               myId={myId}
               canModerate={isManager}
               onOpenProfile={setProfileId}
@@ -1055,6 +1087,7 @@ export default function App() {
         realtime={realtime}
         scope="channel"
         target={openChannel.id}
+        focus={serverView.type === "channel" ? serverView.focus : undefined}
         myId={myId}
         canModerate={isManager}
         onOpenProfile={setProfileId}
@@ -1136,6 +1169,7 @@ export default function App() {
         onOpenChannel={(c) => setServerView({ type: "channel", id: c.id })}
         onOpenLegends={() => setServerView({ type: "legends" })}
         onOpenChallenges={() => setServerView({ type: "challenges" })}
+        onSearch={() => setSearchOpen(true)}
         onAddChannel={() => setDialog({ kind: "addChannel", serverId: detail.id })}
         onRenameChannel={(channel) => setDialog({ kind: "renameChannel", channel })}
         onDeleteChannel={(channel) => setDialog({ kind: "deleteChannel", channel })}
@@ -1246,6 +1280,7 @@ export default function App() {
               onOpenChannel={(c) => (setPlanPeek(false), setServerView({ type: "channel", id: c.id }))}
               onAddRoom={() => setDialog({ kind: "addRoom", serverId: detail.id })}
               onManage={() => active && setDialog({ kind: "manage", server: active })}
+              onSearch={() => setSearchOpen(true)}
               footer={
                 voice && !stageVisible ? (
                   <VoiceIsland
@@ -1287,6 +1322,18 @@ export default function App() {
           />
         )}
       </div>
+
+      {searchOpen && mode === "servers" && detail && (
+        <ServerSearch
+          api={api}
+          detail={detail}
+          people={serverPeople}
+          myId={myId}
+          onOpenProfile={setProfileId}
+          onOpenMessage={openSearchHit}
+          onClose={() => setSearchOpen(false)}
+        />
+      )}
 
       {devOpen && session.kind === "user" && session.user.isDev && (
         <DevPanel

@@ -56,6 +56,8 @@ type Props = {
   inVoiceHere?: boolean;
   /** Épingler un message au mur des légendes (fils et pièces d'un serveur) */
   onPinLegend?: (messageId: string) => void;
+  /** Message à montrer en arrivant (résultat de recherche) : chargé si besoin, puis mis en évidence. */
+  focus?: { id: string; at: number };
 };
 
 const GROUP_MS = 5 * 60 * 1000;
@@ -176,6 +178,40 @@ export default function ChatView(props: Props) {
       alive = false;
     };
   }, [scope, target]);
+
+  // Arriver sur un message précis (recherche) : on remonte l'historique jusqu'à lui, puis on le montre.
+  const [flash, setFlash] = useState<string | null>(null);
+  const focusDone = useRef<object | null>(null);
+  useEffect(() => {
+    const f = props.focus;
+    if (!f || loading || focusDone.current === f) return;
+    if (!messages.some((m) => m.id === f.id)) {
+      const first = messages[0];
+      // Plus rien d'ancien, ou on est déjà au-delà : le message n'existe plus
+      if (!first || !hasMore || first.createdAt < f.at || messages.length > 2000) {
+        focusDone.current = f;
+        return;
+      }
+      stickToBottom.current = false;
+      api
+        .messages(scope, target, first.createdAt)
+        .then((older) => {
+          setHasMore(older.length >= 50);
+          setMessages((list) => [...older, ...list]);
+        })
+        .catch(() => (focusDone.current = f));
+      return;
+    }
+    focusDone.current = f;
+    stickToBottom.current = false;
+    setFlash(f.id);
+    requestAnimationFrame(() => document.getElementById(`msg-${f.id}`)?.scrollIntoView({ block: "center" }));
+  }, [props.focus, loading, messages, hasMore]);
+  useEffect(() => {
+    if (!flash) return;
+    const timer = setTimeout(() => setFlash(null), 2600);
+    return () => clearTimeout(timer);
+  }, [flash]);
 
   // « X est en train d'écrire… » : nom → heure du dernier signal (effacé après 5 s ou à son message)
   const [typers, setTypers] = useState<Record<string, { name: string; at: number }>>({});
@@ -428,7 +464,7 @@ export default function ChatView(props: Props) {
     const forMe = !mine && mentionsMe(m.content, myId, props.inVoiceHere);
     const remove = () => api.deleteMessage(m.id).then(() => setMessages((l) => l.filter((x) => x.id !== m.id))).catch((e) => setError(errorMessage(e)));
     rows.push(
-      <div key={m.id} className={`msg${grouped ? " grouped" : ""}${mine ? " mine" : ""}${forMe ? " for-me" : ""}`}>
+      <div key={m.id} id={`msg-${m.id}`} className={`msg${grouped ? " grouped" : ""}${mine ? " mine" : ""}${forMe ? " for-me" : ""}${flash === m.id ? " flash" : ""}`}>
         {grouped ? (
           <span className="msg-time-gutter">{timeLabel(m.createdAt)}</span>
         ) : (

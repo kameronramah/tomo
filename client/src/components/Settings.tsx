@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Room } from "livekit-client";
 import type { Api, ServerSummary, SessionInfo, User } from "../lib/api";
 import type { Realtime } from "../lib/realtime";
@@ -21,6 +21,7 @@ import { DuckCard, MicMode, ShortcutsSection } from "./SettingsVoice";
 import { switchDevice } from "../lib/voice";
 import { isRecordingShortcut } from "../lib/hotkeys";
 import { EmailSettings } from "./EmailAccount";
+import { SETTINGS_INDEX, foldText } from "../lib/settingsIndex";
 
 type Section =
   | "profile"
@@ -120,17 +121,108 @@ export default function Settings({ api, user, realtime, voiceRoom, onLogout, onL
     GROUPS.some((g) => g.items.some((i) => i.id === initialSection)) ? (initialSection as Section) : "profile",
   );
   const s = useSettings();
+  const [query, setQuery] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+  /** Réglage à montrer une fois la section affichée (choisi dans la recherche). */
+  const [target, setTarget] = useState<{ label: string } | null>(null);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && !isRecordingShortcut() && onClose();
+    const onKey = (e: KeyboardEvent) => {
+      // Ctrl + F : chercher un réglage
+      if (e.ctrlKey && !e.altKey && !e.shiftKey && (e.key === "f" || e.key === "F")) {
+        e.preventDefault();
+        searchRef.current?.focus();
+        searchRef.current?.select();
+        return;
+      }
+      if (e.key !== "Escape" || isRecordingShortcut()) return;
+      // Échap dans la recherche : on vide d'abord la recherche
+      if (document.activeElement === searchRef.current && searchRef.current?.value) {
+        setQuery("");
+        return;
+      }
+      onClose();
+    };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  // Résultats : les sections dont le nom correspond, puis les réglages (titre ou mots-clés)
+  const words = foldText(query.trim()).split(/s+/).filter(Boolean);
+  const labelOf = (id: Section) => GROUPS.flatMap((g) => g.items).find((i) => i.id === id)?.label ?? "";
+  const matches = (text: string) => words.every((w) => foldText(text).includes(w));
+  const results: { section: Section; label: string; sub?: string }[] = [];
+  if (words.length) {
+    for (const g of GROUPS) for (const i of g.items) if (matches(i.label)) results.push({ section: i.id, label: i.label });
+    for (const e of SETTINGS_INDEX) {
+      const label = t(e.label);
+      const section = e.section as Section;
+      if (results.some((r) => r.section === section && r.label === label)) continue;
+      if (matches(`${label} ${e.label} ${labelOf(section)} ${e.words ?? ""}`)) results.push({ section, label, sub: labelOf(section) });
+    }
+  }
+
+  function pick(r: { section: Section; label: string; sub?: string }) {
+    setSection(r.section);
+    setQuery("");
+    setTarget(r.sub ? { label: r.label } : null);
+  }
+
+  // Une fois la section affichée : faire défiler jusqu'au réglage et le mettre en évidence
+  useEffect(() => {
+    if (!target) return;
+    const timer = setTimeout(() => {
+      const root = document.querySelector(".settings-content");
+      const want = foldText(target.label);
+      const el = [...(root?.querySelectorAll("h1, h3, .setting-row, label, .field") ?? [])].find((x) => foldText(x.textContent ?? "").startsWith(want));
+      const box = (el?.closest(".settings-card") ?? el) as HTMLElement | null;
+      if (box) {
+        box.scrollIntoView({ block: "center", behavior: "smooth" });
+        box.classList.remove("flash");
+        void box.offsetWidth;
+        box.classList.add("flash");
+        setTimeout(() => box.classList.remove("flash"), 2600);
+      }
+      setTarget(null);
+    }, 80);
+    return () => clearTimeout(timer);
+  }, [target, section]);
+
   return (
     <div className="settings" role="dialog" aria-modal="true" aria-label={t("Paramètres")}>
       <nav className="settings-nav">
-        {GROUPS.map((g) => (
+        <label className="settings-search">
+          <Icon name="search" size={15} />
+          <input
+            ref={searchRef}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && results[0] && pick(results[0])}
+            placeholder={t("Chercher un réglage")}
+            aria-label={t("Chercher un réglage")}
+          />
+          {query && (
+            <button className="icon-btn sm" onClick={() => (setQuery(""), searchRef.current?.focus())} aria-label={t("Effacer")} title={t("Effacer")}>
+              <Icon name="x" size={14} />
+            </button>
+          )}
+        </label>
+        {words.length > 0 && (
+          <div className="col gap-2 settings-group" aria-live="polite">
+            <span className="section-title">{t("Résultats")}</span>
+            {results.map((r) => (
+              <button key={`${r.section}:${r.label}`} className="nav-item search-result" onClick={() => pick(r)}>
+                <Icon name={GROUPS.flatMap((g) => g.items).find((i) => i.id === r.section)?.icon ?? "settings"} size={17} />
+                <span className="grow left col" style={{ minWidth: 0 }}>
+                  <span className="ellipsis">{r.label}</span>
+                  {r.sub && <span className="muted small ellipsis">{r.sub}</span>}
+                </span>
+              </button>
+            ))}
+            {results.length === 0 && <p className="muted small pad">{t("Aucun réglage ne correspond.")}</p>}
+          </div>
+        )}
+        {words.length === 0 && GROUPS.map((g) => (
           <div key={g.title} className="col gap-2 settings-group">
             <span className="section-title">{g.title}</span>
             {g.items.map((x) => (

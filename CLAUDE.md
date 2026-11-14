@@ -14,10 +14,11 @@
 Ce qui existe (v0.11) :
 - **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils (**rangés par glisser-déposer**), invitations (membre + **invité d'un soir sans compte**).
 - **Messagerie** temps réel : fils, chat de chaque pièce, amis, messages privés (demandes hors amis), **appels privés** ; pièces jointes, messages vocaux, GIF (Klipy), **modifier, réactions, mentions** @pseudo / @vocal / @tous, « en train d'écrire… ».
+- **Recherche dans un serveur** (Ctrl + F, champ en haut de l'accueil et du plan) : membres + messages des fils et des chats de pièces, filtres qui / où / quoi (images, GIF, vocaux, fichiers, liens) / quand / « me mentionne », clic = ouvre le fil sur le message. **Recherche dans les Paramètres** (Ctrl + F) : index des réglages dans `lib/settingsIndex.ts` (à compléter quand on ajoute un réglage).
 - **Profils, statuts, confidentialité, blocage**, membres du serveur, notifications système, pastilles de non-lus.
 - **Adresse e-mail obligatoire** (vérifiée par un code) et **mot de passe oublié** par code à 6 chiffres envoyé par mail (Brevo, SMTP), ou **code de secours** donné par l'admin (`cli-secours.js`).
 - **Micro** : **appuyer pour parler** (touche ou bouton de souris) ou **seuil de voix**, option **« baisser les autres quand je parle »** ; **raccourcis configurables qui marchent en jeu** (Paramètres › Raccourcis clavier).
-- **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **partage d'écran** HD + **mode coach** (annotations sur demande, affichées sur l'écran de celui qui partage), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
+- **Vocal** : volume uniformisé, **suppression de bruit RNNoise** + porte de bruit, **audio spatial** (carte ou Mumble Link), **clips**, **caméra** (dans la bulle, `lib/camera.ts` : 720p envoyé, 360p reçu, toujours coupée en arrivant), **partage d'écran** HD + **mode coach** (annotations sur demande, affichées sur l'écran de celui qui partage), **sous-titres + traduction** FR ⇄ EN locaux, **overlay en jeu**.
 - **Jeux** : détection du jeu lancé (« joue à … »), réglages par jeu (pièce auto, mode focus, spatial, overlay, masquer), proposition de rejoindre les potes, **stats Steam / League of Legends**.
 - **Social** : **mur des légendes** (citations, images, clips), **défis à points** (sans paris), classement du mois.
 - **Appli** : français / anglais, **mises à jour imposées** (GitHub Releases signées : installée d'office au lancement, pop-up après le vocal pendant l'utilisation), installateurs Windows + Mac, **version navigateur** (https://app-tomo.grylix.dev), Paramètres complets.
@@ -101,6 +102,7 @@ Points techniques notables :
 - **Canaux de données LiveKit** : `pos` (positions spatiales, ~10/s), `coach` (annotations).
 - **Jeux** : Rust `running_programs` (crate `sysinfo`, noms des programmes seulement) → `games.ts` (liste connue + jeux ajoutés) → WebSocket `{type:"game"}` → serveur en mémoire (`gameOf`, respecte `show_game`).
 - **Sous-titres** : Transformers.js 3.7 dans un Web Worker ; modèles `onnx-community/whisper-*` et `Xenova/opus-mt-fr-en` / `en-fr` téléchargés depuis Hugging Face au premier usage ; WebGPU si dispo. Modèle « auto » = `whisper-small` avec WebGPU, `whisper-base` sinon. Découpage dans `captions.ts` (300 ms gardées avant le premier son, bruits de moins de 180 ms ignorés, phrase coupée en route recollée à la suivante puis retraduite en entier) ; le worker traite les demandes une par une.
+- **Audio spatial sans mod** : la liste des jeux visés (intérêt réel + faisable) et l'ordre prévu sont dans `docs/AUDIO-SPATIAL-JEUX.md`. Règle : **jamais de lecture mémoire sur un jeu avec anti-triche** ; pas de connecteur pour les jeux de course, d'avion ou de stratégie (aucun intérêt, demande du propriétaire).
 - **Overlay** : fenêtre Tauri `overlay` créée depuis le JS (`overlay.ts`), transparente, `setIgnoreCursorEvents(true)`, état envoyé par `emitTo("overlay", "overlay:state")` toutes les 200 ms. `macOSPrivateApi` activé (transparence sur Mac).
 - **Mise à jour** (`updater.ts`, `UpdateCard.tsx`) : plugin `updater` + `process` ; endpoint `releases/latest/download/latest.json`. Au lancement : `updateAtLaunch` (8 s max) installe d'office et relance (écran « Mise à jour en cours… »). Pendant l'utilisation : vérif toutes les 30 min, téléchargement en arrière-plan, **pop-up jamais pendant un vocal**, « Plus tard » → revient au prochain départ du vocal ; jamais de redémarrage tout seul. Version navigateur : `/version.json` (écrit par `~/maj-tomo.sh`) relu toutes les 10 min → pop-up « Recharger ». `GET /version` → `{ minClient }` (constante `MIN_CLIENT` dans `server/api/src/index.ts`) : en dessous, « Mise à jour obligatoire ».
 - **Déploiement du serveur** : sur le VPS, un minuteur (`tomo-maj-auto.timer`, toutes les 5 min) lance `~/maj-tomo.sh` dès qu'il y a du nouveau sur `main` : **un `git push` met le serveur et la version web à jour tout seuls**, sans redémarrer LiveKit (le vocal continue). Donc ne pousser sur `main` que du code testé, et **garder l'API compatible avec la version précédente de l'appli** (ne pas supprimer / renommer une route ou un champ encore utilisé ; sinon monter `MIN_CLIENT`). Clé publique dans `tauri.conf.json`, **clé privée** dans `C:\Users\Kameron\.tauri\tomo-updater.key` (jamais dans le dépôt ; secret GitHub `TAURI_SIGNING_PRIVATE_KEY`).
@@ -140,7 +142,7 @@ powershell -ExecutionPolicy Bypass -File server\api\tests\test-api.ps1
 ```bash
 node server/api/tests/test-games.mjs
 ```
-(idem `test-legends.mjs`, `test-stats.mjs`, `test-v09.mjs`, `test-email.mjs`, `test-server-icon.mjs`)
+(idem `test-search.mjs`, `test-legends.mjs`, `test-stats.mjs`, `test-v09.mjs`, `test-email.mjs`, `test-server-icon.mjs`)
 ```bash
 cd client/src-tauri && cargo test --lib
 ```

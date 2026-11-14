@@ -2,7 +2,7 @@
  * Outils de test côté client : faux joueurs (« bots ») et retour micro.
  * Utilisés uniquement depuis le panneau « Outils de test » du compte de test.
  */
-import { Room, Track, createLocalAudioTrack, type LocalAudioTrack } from "livekit-client";
+import { Room, Track, VideoPresets, createLocalAudioTrack, type LocalAudioTrack } from "livekit-client";
 import type { Api } from "./api";
 import { getSpatial } from "./voice";
 import { presetById, screenPublishOptions, type ScreenPresetId } from "./screen";
@@ -147,6 +147,55 @@ export async function addScreenBot(api: Api, roomId: string, presetId: ScreenPre
   await room.localParticipant.setAttributes({ coach: "all" }).catch(() => {});
 
   // Rangé avec les autres bots (retiré par « Tout retirer »)
+  const ctx = new AudioContext();
+  bots.push({ name, room, ctx, gain: ctx.createGain(), timer: 0, talking: false, walk: timer });
+  notify();
+}
+
+/** Un bot allume une « fausse caméra » (visage stylisé qui bouge, heure) pour tester les bulles vidéo. */
+export async function addCameraBot(api: Api, roomId: string) {
+  const name = "Bot Caméra";
+  const { url, token } = await api.devBotToken(roomId, name);
+  const room = new Room();
+  await room.connect(url, token, { autoSubscribe: false });
+
+  const canvas = document.createElement("canvas");
+  canvas.width = 1280;
+  canvas.height = 720;
+  const g = canvas.getContext("2d")!;
+  const start = performance.now();
+  const draw = () => {
+    const t = (performance.now() - start) / 1000;
+    const grad = g.createLinearGradient(0, 0, 1280, 720);
+    grad.addColorStop(0, "#1d2b3a");
+    grad.addColorStop(1, "#3a2a1d");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 1280, 720);
+    // « Tête » qui se balance doucement
+    const x = 640 + Math.sin(t * 0.9) * 60;
+    const y = 380 + Math.sin(t * 1.7) * 12;
+    g.fillStyle = "#e8c4a0";
+    g.beginPath();
+    g.arc(x, y, 150, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#2a1d14";
+    const blink = t % 4 < 0.15 ? 3 : 16;
+    g.fillRect(x - 60, y - 40, 24, blink);
+    g.fillRect(x + 36, y - 40, 24, blink);
+    g.fillRect(x - 40, y + 60, 80, 10 + Math.abs(Math.sin(t * 6)) * 14);
+    g.fillStyle = "#f4f0ea";
+    g.font = "bold 36px Inter, sans-serif";
+    g.fillText(`Caméra de test · ${new Date().toLocaleTimeString()}`, 40, 680);
+  };
+  draw();
+  const timer = window.setInterval(draw, 1000 / 30);
+  const track = canvas.captureStream(30).getVideoTracks()[0];
+  await room.localParticipant.publishTrack(track, {
+    source: Track.Source.Camera,
+    name: "bot-camera",
+    videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360],
+  });
+
   const ctx = new AudioContext();
   bots.push({ name, room, ctx, gain: ctx.createGain(), timer: 0, talking: false, walk: timer });
   notify();

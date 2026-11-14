@@ -9,7 +9,7 @@
 import type { Room } from "livekit-client";
 import { inTauri } from "./desktop";
 import { getSettings, type Settings } from "./prefs";
-import { currentGame, gamePrefs } from "./games";
+import { currentGame, gamePrefs, isCurrentGameProgram } from "./games";
 import { speakingDetector } from "./speaking";
 import { getCaptions } from "./captions";
 import { colorFor } from "./ui";
@@ -112,13 +112,32 @@ export function toggleOverlayHidden() {
   hiddenByShortcut = !hiddenByShortcut;
 }
 
+/**
+ * Programme au premier plan (relu toutes les 500 ms) : en mode « jeu », l'overlay n'apparaît
+ * que quand la fenêtre du jeu est devant (pas sur le bureau, tomo, le navigateur…).
+ * `null` = on ne sait pas le dire (hors Windows) : on garde l'ancien comportement.
+ */
+let foreground: string | null = null;
+let foregroundAt = 0;
+async function refreshForeground() {
+  if (Date.now() - foregroundAt < 500) return;
+  foregroundAt = Date.now();
+  try {
+    const { invoke } = await import("@tauri-apps/api/core");
+    foreground = await invoke<string | null>("foreground_program");
+  } catch {
+    foreground = null;
+  }
+}
+
 function wanted(): boolean {
   if (hiddenByShortcut) return false;
   const o = getSettings().overlay;
   if (o.mode === "off") return false;
   if (o.mode === "always") return true;
   const g = currentGame();
-  return !!g && gamePrefs(g.id).overlay;
+  if (!g || !gamePrefs(g.id).overlay) return false;
+  return foreground === null || isCurrentGameProgram(foreground);
 }
 
 function stateFor(room: Room, label: string): OverlayState {
@@ -152,6 +171,8 @@ export function startOverlay(room: Room, label: () => string) {
   if (!inTauri) return () => {};
   let stopped = false;
   const tick = async () => {
+    if (stopped) return;
+    await refreshForeground();
     if (stopped) return;
     const want = wanted();
     if (!want) {

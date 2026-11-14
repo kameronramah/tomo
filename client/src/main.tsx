@@ -15,6 +15,9 @@ const isCoach = params.has("coach");
 // Pas de menu clic droit Windows ni de bulles blanches natives
 installNativeUiGuards();
 
+// Banc d'essai de la capture d'écran maison (dev seulement, fenêtre principale de l'appli)
+if (import.meta.env.DEV && inDesktopApp && !isOverlay && !isCoach) void import("./lib/captureSpike");
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     {isCoach ? (

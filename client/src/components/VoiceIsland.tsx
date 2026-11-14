@@ -54,7 +54,7 @@ export default function VoiceIsland(p: Props) {
         {mic}
         {deaf}
         <button className="island-btn leave" onClick={p.onLeave} aria-label={p.isCall ? t("Raccrocher") : t("Quitter")} title={p.isCall ? t("Raccrocher") : t("Quitter")}>
-          <Icon name={p.isCall ? "phoneOff" : "leave"} size={16} />
+          <Icon name="hangup" size={18} />
         </button>
       </div>
     );
@@ -76,8 +76,8 @@ export default function VoiceIsland(p: Props) {
         <div className="row gap-6">
           {mic}
           {deaf}
-          <button className="voice-panel-leave" onClick={p.onLeave}>
-            {p.isCall ? t("Raccrocher") : t("Quitter")}
+          <button className="voice-panel-leave" onClick={p.onLeave} aria-label={p.isCall ? t("Raccrocher") : t("Quitter")} title={p.isCall ? t("Raccrocher") : t("Quitter")}>
+            <Icon name="hangup" size={18} />
           </button>
         </div>
       </div>
@@ -95,8 +95,8 @@ export default function VoiceIsland(p: Props) {
         <CoachPending room={p.room} onOpen={p.onOpen} compact />
         {mic}
         {deaf}
-        <button className="island-leave" onClick={p.onLeave}>
-          {p.isCall ? t("Raccrocher") : t("Quitter")}
+        <button className="island-leave" onClick={p.onLeave} aria-label={p.isCall ? t("Raccrocher") : t("Quitter")} title={p.isCall ? t("Raccrocher") : t("Quitter")}>
+          <Icon name="hangup" size={18} />
         </button>
       </div>
     </div>

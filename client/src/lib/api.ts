@@ -38,6 +38,9 @@ export type Message = {
   reactions?: Reaction[];
 };
 export type Reaction = { emoji: string; count: number; userIds: string[] };
+/** Recherche dans un serveur : où le message a été écrit. */
+export type SearchHit = Message & { place: { kind: "channel" | "room"; id: string; name: string } };
+export type SearchFilters = { q?: string; from?: string; in?: string; has?: "image" | "gif" | "audio" | "file" | "link"; mentions?: "me"; when?: "day" | "week" | "month" };
 export type Attachment = {
   id: string;
   kind: "image" | "audio" | "file";
@@ -456,6 +459,13 @@ export class Api {
   messages(scope: Message["scope"], target: string, before?: number) {
     const base = scope === "channel" ? `/channels/${target}` : scope === "room" ? `/rooms/${target}` : `/dm/${target}`;
     return this.request<Message[]>("GET", `${base}/messages${before ? `?before=${before}` : ""}`);
+  }
+  /** Messages des fils et des chats vocaux d'un serveur, du plus récent au plus ancien (25 par page). */
+  searchMessages(serverId: string, filters: SearchFilters, before?: number) {
+    const q = new URLSearchParams();
+    for (const [k, v] of Object.entries(filters)) if (v) q.set(k, v);
+    if (before) q.set("before", String(before));
+    return this.request<{ results: SearchHit[]; hasMore: boolean }>("GET", `/servers/${serverId}/search?${q}`);
   }
   sendMessage(scope: Message["scope"], target: string, content: string, attachments: string[] = []) {
     const base = scope === "channel" ? `/channels/${target}` : scope === "room" ? `/rooms/${target}` : `/dm/${target}`;

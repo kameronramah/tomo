@@ -177,6 +177,98 @@ export function reorderChannels(serverId: string, ids: unknown): string | null {
   return null;
 }
 
+/** Où a été écrit un message trouvé : un fil, ou le chat d'une pièce vocale. */
+export type SearchPlace = { kind: "channel" | "room"; id: string; name: string };
+export type SearchHit = Message & { place: SearchPlace };
+const SEARCH_PAGE = 25;
+const HAS = ["image", "gif", "audio", "file", "link"] as const;
+const WHEN: Record<string, number> = { day: 86400_000, week: 7 * 86400_000, month: 30 * 86400_000 };
+
+/** Minuscules sans accents : « Été » trouve « ete », « été », « ÉTÉ »… */
+const fold = (s: string) => s.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase();
+try {
+  db.function("tomo_fold", { deterministic: true }, (v) => (typeof v === "string" ? fold(v) : ""));
+} catch {
+  /* déjà déclarée (rechargement des routes en test) */
+}
+
+/**
+ * Messages des fils et des chats vocaux d'un serveur, du plus récent au plus ancien.
+ * Filtres : q (texte), from (auteur), in (fil ou pièce), has (image|gif|audio|file|link),
+ * mentions=me, when (day|week|month), before (pagination : date du dernier résultat reçu).
+ */
+export function searchMessages(serverId: string, myId: string, query: Record<string, string | undefined>): { results: SearchHit[]; hasMore: boolean } | string {
+  const q = fold((query.q ?? "").trim()).slice(0, 100);
+  const channels = db.prepare("SELECT id, name FROM channels WHERE server_id = ?").all(serverId) as { id: string; name: string }[];
+  const rooms = db.prepare("SELECT id, label AS name FROM rooms WHERE server_id = ?").all(serverId) as { id: string; name: string }[];
+  const places = new Map<string, SearchPlace>();
+  for (const c of channels) places.set(c.id, { kind: "channel", id: c.id, name: c.name });
+  for (const r of rooms) places.set(r.id, { kind: "room", id: r.id, name: r.name });
+
+  const where: string[] = [];
+  const args: (string | number)[] = [];
+  // Où chercher : tout le serveur, ou un seul fil / une seule pièce
+  if (query.in) {
+    const place = places.get(query.in);
+    if (!place) return "Fil ou pièce introuvable.";
+    where.push("scope = ? AND target = ?");
+    args.push(place.kind, place.id);
+  } else {
+    if (places.size === 0) return { results: [], hasMore: false };
+    const parts: string[] = [];
+    if (channels.length) parts.push(`(scope = 'channel' AND target IN (${channels.map(() => "?").join(",")}))`);
+    if (rooms.length) parts.push(`(scope = 'room' AND target IN (${rooms.map(() => "?").join(",")}))`);
+    where.push(`(${parts.join(" OR ")})`);
+    args.push(...channels.map((c) => c.id), ...rooms.map((r) => r.id));
+  }
+  if (q) {
+    const escaped = q.replace(/[\\%_]/g, (c) => "\\" + c);
+    where.push("tomo_fold(content) LIKE ? ESCAPE '\\'");
+    args.push(`%${escaped}%`);
+  }
+  if (query.from) {
+    where.push("author_id = ?");
+    args.push(query.from);
+  }
+  if (query.mentions === "me") {
+    where.push("(instr(content, ?) > 0 OR instr(content, '<@tous>') > 0)");
+    args.push(`<@${myId}>`);
+  }
+  if (query.has) {
+    if (!(HAS as readonly string[]).includes(query.has)) return "Filtre inconnu.";
+    if (query.has === "link") where.push("(content LIKE '%http://%' OR content LIKE '%https://%')");
+    else if (query.has === "gif") where.push("EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = messages.id AND a.mime = 'image/gif')");
+    else if (query.has === "image") where.push("EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = messages.id AND a.kind = 'image' AND a.mime <> 'image/gif')");
+    else {
+      where.push("EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = messages.id AND a.kind = ?)");
+      args.push(query.has);
+    }
+  }
+  if (query.when) {
+    const span = WHEN[query.when];
+    if (!span) return "Filtre inconnu.";
+    where.push("created_at >= ?");
+    args.push(Date.now() - span);
+  }
+  const before = parseBefore(query.before);
+  if (before) {
+    where.push("created_at < ?");
+    args.push(before);
+  }
+  const rows = db
+    .prepare(`SELECT * FROM messages WHERE ${where.join(" AND ")} ORDER BY created_at DESC LIMIT ${SEARCH_PAGE + 1}`)
+    .all(...args) as Row[];
+  const hasMore = rows.length > SEARCH_PAGE;
+  const page = rows.slice(0, SEARCH_PAGE);
+  const ids = page.map((r) => r.id);
+  const files = attachmentsFor(ids);
+  const reacts = reactionsFor(ids);
+  return {
+    results: page.map((r) => ({ ...toMessage(r, files.get(r.id), reacts.get(r.id)), place: places.get(r.target)! })),
+    hasMore,
+  };
+}
+
 export default async function chatRoutes(app: FastifyInstance) {
   // Par adresse IP (large : plusieurs potes peuvent partager une box) ; la vraie limite est par compte.
   const writeLimit = { config: { rateLimit: { max: 60, timeWindow: "10 seconds" } } };
@@ -302,6 +394,20 @@ export default async function chatRoutes(app: FastifyInstance) {
       if (typeof msg === "string") return reply.code(400).send({ error: msg });
       sendToServer(room.server_id, { type: "message", serverId: room.server_id, message: msg });
       return msg;
+    },
+  );
+
+  // ---- Rechercher dans les messages d'un serveur ----------------------------
+  app.get<{ Params: { id: string }; Querystring: Record<string, string | undefined> }>(
+    "/servers/:id/search",
+    { config: { rateLimit: { max: 60, timeWindow: "1 minute" } } },
+    async (req, reply) => {
+      const me = await authenticate(req, reply);
+      if (!me) return;
+      if (!accessOf(me, req.params.id)) return notFound(reply, "Serveur introuvable.");
+      const result = searchMessages(req.params.id, me.id, req.query);
+      if (typeof result === "string") return reply.code(400).send({ error: result });
+      return result;
     },
   );
 

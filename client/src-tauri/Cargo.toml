@@ -34,7 +34,12 @@ sysinfo = { version = "0.37", default-features = false, features = ["system"] }
 
 # Lecture de la mémoire partagée « Mumble Link » (position du joueur dans son jeu)
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.60", features = ["Win32_Foundation", "Win32_System_Memory", "Win32_Security", "Win32_UI_Input_KeyboardAndMouse"] }
+# Capture maison (essai) : memoire partagee WebView2 + capture integree a Windows
+webview2-com = "0.39.1"
+windows-core = "0.62"
+base64 = "0.22"
+windows-capture = "2.0.1"
+windows-sys = { version = "0.60", features = ["Win32_Foundation", "Win32_System_Memory", "Win32_Security", "Win32_UI_Input_KeyboardAndMouse", "Win32_UI_WindowsAndMessaging", "Win32_Graphics_Gdi", "Win32_Graphics_Dwm", "Win32_Storage_Xps"] }
 
 # Une seule fenêtre tomo à la fois (relancer tomo ramène la fenêtre déjà ouverte)
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]

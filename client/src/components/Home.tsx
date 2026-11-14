@@ -134,6 +134,8 @@ type HomeProps = {
   onOpenChannel: (c: Channel) => void;
   onOpenLegends: () => void;
   onOpenChallenges: () => void;
+  /** Ouvrir la recherche du serveur (membres + messages) */
+  onSearch: () => void;
   onAddChannel: () => void;
   onRenameChannel: (c: Channel) => void;
   onDeleteChannel: (c: Channel) => void;
@@ -192,6 +194,11 @@ export function ServerHome(p: HomeProps) {
             </span>
           </div>
           <div className="row gap-8 wrap">
+            <button className="server-search-btn wide" onClick={p.onSearch} title={t("Messages, membres… (Ctrl + F)")}>
+              <Icon name="search" size={16} />
+              <span className="grow ellipsis">{t("Rechercher dans le serveur")}</span>
+              <kbd>Ctrl F</kbd>
+            </button>
             <button className="btn soft" onClick={p.onOpenLegends} title={t("Mur des légendes")}>
               <Icon name="star" size={16} /> {t("Légendes")}
             </button>

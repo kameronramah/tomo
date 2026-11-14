@@ -116,6 +116,7 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 ### Interface
 - [x] Nom écrit « Tomo » (T majuscule) partout dans les textes, Windows et Mac ; « tomo » en minuscules seulement à côté du logo
 - [x] Icône de Tomo absente dans la recherche Windows / le menu Démarrer après une mise à jour : l'installateur rafraîchit maintenant le cache d'icônes
+- [ ] Autorisations maison (appli Windows) — sélecteur de partage d'écran de Tomo à la place de la fenêtre de Windows : image faite (`capture.rs`, `SharePicker.tsx`), **à tester dans un vrai salon**. Restent : le **son du PC** capturé par nous (pour l'instant, avec le son, la fenêtre de Windows s'ouvre encore), le **cadre jaune** de Windows 10 autour de ce qui est capté (autre méthode pour un écran entier), les cartes « Active ton micro » / « Windows bloque ton micro », retirer le banc d'essai `captureSpike.ts` avant de publier. Mac et navigateur gardent la fenêtre du système.
 - [ ] Refonte v0.12 : nettoyer dans `App.css` les anciens styles devenus inutiles (ancienne connexion `auth-brand`, `feature-list`, `screen-people`…) et, dans `ServerRail.tsx`, le code de l'ancienne colonne large (branches `!collapsed`)
 - [ ] Plan replié : la pastille d'une pièce affiche parfois « 0 » alors que j'y suis (le compteur ne me compte pas tout de suite)
 - [ ] Colonne des serveurs : vraies info-bulles au survol (nom du serveur, qui est en vocal) à la place de l'info-bulle du système
@@ -149,6 +150,8 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Vérifier le « retour micro » des outils de test avec un vrai micro
 - [ ] Clips : format .ogg plus léger ; les partager directement dans un fil ou un message privé
 - [ ] Carte spatiale : se déplacer aux flèches du clavier ; onde autour de l'avatar qui parle
+- [x] Partage d'écran à rejoindre : un partage ne s'affiche plus d'office, chacun choisit lequel regarder (plusieurs partages en même temps, « regarde Léo », qui regarde mon écran, notification « Regarder »)
+- [ ] Partage d'écran : afficher « Léo partage son écran » dans l'overlay en jeu ; rejoindre un partage depuis le plan du serveur (badge « Écran »)
 - [ ] Partage d'écran : choisir la qualité reçue, changer de profil sans arrêter, vignette « en direct », AV1
 - [x] Sous-titres : ne pas recharger le modèle à chaque entrée dans une pièce
 - [x] Sous-titres plus justes : début des phrases gardé, bruits ignorés, phrases coupées recollées (et traduites en entier), modèle « Automatique » (Précis si la carte graphique suit) + « Très précis »

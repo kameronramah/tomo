@@ -4,6 +4,7 @@
 //! (Gestionnaire d'identification Windows, Trousseau macOS, Secret Service Linux),
 //! jamais dans un fichier lisible par d'autres programmes.
 
+mod capture;
 mod clips;
 mod games;
 mod input;
@@ -90,6 +91,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             launched_at_login,
             games::running_programs,
+            games::foreground_program,
             input::input_set_keys,
             input::input_record,
             input::input_permission,
@@ -100,7 +102,14 @@ pub fn run() {
             clips::list_clips,
             clips::read_clip,
             clips::delete_clip,
-            clips::open_clips_folder
+            clips::open_clips_folder,
+            capture::capture_sources,
+            capture::capture_start,
+            capture::capture_stop,
+            capture::capture_stats,
+            capture::capture_cpu_ms,
+            capture::capture_spike_poll,
+            capture::capture_spike_report
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

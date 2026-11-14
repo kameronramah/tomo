@@ -33,7 +33,7 @@ export default function SettingsOverlay() {
       <div className="settings-card">
         <h3 className="dev-title">{t("Quand l'afficher")}</h3>
         <select value={o.mode} onChange={(e) => updateSettings("overlay", { mode: e.target.value as Settings["overlay"]["mode"] })}>
-          <option value="game">{t("En vocal, quand un jeu est lancé (réglable par jeu dans Paramètres › Jeux)")}</option>
+          <option value="game">{t("En vocal, par-dessus le jeu quand il est devant (réglable par jeu dans Paramètres › Jeux)")}</option>
           <option value="always">{t("Toujours quand je suis en vocal")}</option>
           <option value="off">{t("Jamais")}</option>
         </select>

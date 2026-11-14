@@ -30,6 +30,8 @@ type Props = {
   onOpenChannel: (c: Channel) => void;
   onAddRoom: () => void;
   onManage: () => void;
+  /** Ouvrir la recherche du serveur (membres + messages) */
+  onSearch: () => void;
   /** Contrôles du vocal en cours (en bas du plan) */
   footer?: ReactNode;
 };
@@ -49,14 +51,59 @@ export default function ServerPlan(p: Props) {
         <button className="icon-btn sm" onClick={p.onToggleCollapsed} aria-label={t("Afficher le plan du serveur")} title={t("Afficher le plan du serveur")}>
           <Icon name="chevronRight" size={16} />
         </button>
-        {detail.rooms
-          .filter((r) => r.participants.length > 0 || r.id === p.voice?.roomId)
-          .map((r) => (
-            <button key={r.id} className={`plan-mini${r.id === p.openRoomId ? " on" : ""}`} onClick={() => p.onJoinRoom(r)} title={t("{0} · {1} en vocal", { 0: r.label, 1: r.participants.length })}>
-              <span className="plan-mini-count">{r.participants.length}</span>
-            </button>
-          ))}
-        <div className="grow" />
+        <button className="icon-btn sm" onClick={p.onSearch} aria-label={t("Rechercher dans le serveur")} title={t("Rechercher dans le serveur")}>
+          <Icon name="search" size={16} />
+        </button>
+        <div className="plan-mini-scroll">
+          {detail.rooms.length > 0 && (
+            <span className="plan-mini-sep" title={t("Pièces")} aria-hidden="true">
+              <Icon name="volume" size={13} />
+            </span>
+          )}
+          {detail.rooms.map((r) => {
+            const here = p.voice?.roomId === r.id;
+            const count = here && p.voice && !r.participants.some((x) => x.identity === p.voice!.identity) ? r.participants.length + 1 : r.participants.length;
+            const talking = r.participants.some((x) => p.speaking.has(x.identity)) || (here && !!p.voice && p.speaking.has(p.voice.identity));
+            const chat = p.unread[`room:${r.id}`] ?? 0;
+            const tip = count > 0 ? t("{0} · {1} en vocal", { 0: r.label, 1: count }) : r.label;
+            return (
+              <button
+                key={r.id}
+                className={`plan-mini${here ? " here" : ""}${r.id === p.openRoomId ? " on" : ""}${count ? "" : " empty"}${talking ? " talking" : ""}`}
+                onClick={() => p.onJoinRoom(r)}
+                disabled={p.joiningRoomId === r.id}
+                title={tip}
+                aria-label={tip}
+              >
+                <span className="plan-mini-label">{shortName(r.label)}</span>
+                {count > 0 && <span className="plan-mini-count">{count}</span>}
+                {chat > 0 && <span className="plan-mini-dot amber" />}
+              </button>
+            );
+          })}
+          {detail.channels.length > 0 && (
+            <span className="plan-mini-sep" title={t("Fils")} aria-hidden="true">
+              <Icon name="hash" size={13} />
+            </span>
+          )}
+          {detail.channels.map((c) => {
+            const n = p.unread[`channel:${c.id}`] ?? 0;
+            const at = p.mentions?.[`channel:${c.id}`] ?? 0;
+            return (
+              <button
+                key={c.id}
+                className={`plan-mini fil${c.id === p.openChannelId ? " on" : ""}${n ? " unread" : ""}`}
+                onClick={() => p.onOpenChannel(c)}
+                title={`# ${c.name}`}
+                aria-label={`# ${c.name}`}
+                aria-current={c.id === p.openChannelId ? "page" : undefined}
+              >
+                <span className="plan-mini-label">{shortName(c.name)}</span>
+                {at > 0 ? <span className="plan-mini-badge red">@{at > 9 ? "9+" : at}</span> : n > 0 && <span className="plan-mini-dot amber" />}
+              </button>
+            );
+          })}
+        </div>
         {p.footer && <div className="plan-footer mini">{p.footer}</div>}
       </aside>
     );
@@ -77,6 +124,12 @@ export default function ServerPlan(p: Props) {
           <Icon name="chevronLeft" size={16} />
         </button>
       </div>
+
+      <button className="server-search-btn" onClick={p.onSearch} title={t("Messages, membres… (Ctrl + F)")}>
+        <Icon name="search" size={15} />
+        <span className="grow ellipsis">{t("Rechercher…")}</span>
+        <kbd>Ctrl F</kbd>
+      </button>
 
       <div className="plan-scroll">
         <span className="section-title">{t("Pièces")}</span>
@@ -143,6 +196,17 @@ export default function ServerPlan(p: Props) {
       {p.footer && <div className="plan-footer">{p.footer}</div>}
     </aside>
   );
+}
+
+/** Deux lettres pour le plan réduit : « Salon détente » → « SD », « general » → « Ge ». */
+function shortName(name: string): string {
+  const words = name.replace(/[^\p{L}\p{N}\s]/gu, " ").trim().split(/\s+/).filter(Boolean);
+  if (words.length === 0) return Array.from(name.trim()).slice(0, 2).join("") || "?";
+  if (words.length === 1) {
+    const w = Array.from(words[0]);
+    return (w[0].toUpperCase() + (w[1] ?? "").toLowerCase());
+  }
+  return (Array.from(words[0])[0] + Array.from(words[1])[0]).toUpperCase();
 }
 
 /** « En ligne, pas en vocal » : qui est là et à quoi il joue, sans quitter le vocal. */

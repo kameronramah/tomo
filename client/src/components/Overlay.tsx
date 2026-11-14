@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { OverlayState } from "../lib/overlay";
 import { initials } from "../lib/ui";
 import { t } from "../lib/i18n";
+import { Icon } from "./Brand";
 
 /** Contenu de la fenêtre overlay (transparente, par-dessus le jeu). */
 export default function Overlay() {
@@ -26,17 +27,20 @@ export default function Overlay() {
         </div>
       ))}
       {p.voices && (
-        <div className="ov-card">
+        <div className="ov-voices">
           {s.voices.map((v) => (
             <div key={v.id} className={`ov-voice${v.speaking ? " speaking" : ""}`}>
               <span className="ov-avatar" style={{ background: v.photo ? undefined : v.color }}>
                 {v.photo ? <img src={v.photo} alt="" draggable={false} /> : initials(v.name)}
               </span>
               <span className="ov-name">{v.name}</span>
-              {v.muted && <span className="ov-muted">{t("micro coupé")}</span>}
+              {v.muted && (
+                <span className="ov-muted">
+                  <Icon name="micOff" size={12} label={t("micro coupé")} />
+                </span>
+              )}
             </div>
           ))}
-          <div className="ov-room">{s.room}</div>
         </div>
       )}
       {p.chat &&
