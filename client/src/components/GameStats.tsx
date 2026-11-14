@@ -160,9 +160,9 @@ export function GameAccountsSection({ api, realtime }: { api: Api; realtime: Rea
         <span className="hint">
           {waitingSteam
             ? t("Connecte-toi sur la page Steam qui vient de s'ouvrir, puis reviens ici.")
-            : t("Connexion officielle Steam : tomo ne voit jamais ton mot de passe. Il faut que les détails de jeu de ton profil Steam soient publics.")}
+            : t("Connexion officielle Steam : Tomo ne voit jamais ton mot de passe. Il faut que les détails de jeu de ton profil Steam soient publics.")}
         </span>
-        {!links.available.steam && <span className="hint">{t("Ce serveur tomo n'a pas de clé Steam : la liaison marche, mais pas encore les stats.")}</span>}
+        {!links.available.steam && <span className="hint">{t("Ce serveur Tomo n'a pas de clé Steam : la liaison marche, mais pas encore les stats.")}</span>}
       </div>
 
       <div className="settings-card">
@@ -200,7 +200,7 @@ export function GameAccountsSection({ api, realtime }: { api: Api; realtime: Rea
               </button>
             </form>
           ) : (
-            <span className="hint">{t("Ce serveur tomo n'a pas de clé Riot : la liaison Riot n'est pas disponible.")}</span>
+            <span className="hint">{t("Ce serveur Tomo n'a pas de clé Riot : la liaison Riot n'est pas disponible.")}</span>
           ))}
         <span className="hint">
           {t("Riot réserve sa connexion officielle aux applis validées : on lie donc avec ton Riot ID. Valorant n'est pas encore accessible (API réservée aux applis validées par Riot).")}

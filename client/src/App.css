@@ -1908,19 +1908,20 @@ input.toggle:checked::after { transform: translateX(18px); background: var(--tea
 
 /* ---- v0.12.1 — Dossier fermé : on voit les serveurs dedans ---- */
 .rail .folder-mini, .rail-ghost .folder-mini {
-  width: 44px; height: 44px; border-radius: 15px; padding: 2px; box-sizing: border-box;
+  width: 36px; height: 36px; border-radius: 12px; padding: 2px; box-sizing: border-box;
   display: flex; flex-wrap: wrap; align-content: center; justify-content: center; gap: 2px;
   background: var(--block); box-shadow: inset 0 0 0 1px var(--block-line);
 }
-.rail .folder-mini .server-badge, .rail-ghost .folder-mini .server-badge { border-radius: 50%; font-size: 7.5px !important; letter-spacing: -0.02em; }
-.rail .folder-mini.n1 .server-badge { font-size: 10px !important; }
+.rail .folder-mini .server-badge, .rail-ghost .folder-mini .server-badge { border-radius: 50%; font-size: 6.5px !important; letter-spacing: -0.02em; }
+.rail .folder-mini.n1 .server-badge { font-size: 9px !important; }
 .folder-more {
-  width: 19px; height: 19px; border-radius: 50%; display: grid; place-items: center;
+  width: 15px; height: 15px; border-radius: 50%; display: grid; place-items: center;
   background: var(--surface-3); color: var(--text-soft); font: 700 8px var(--font-display);
 }
 .rail.collapsed .rail-server.folder { border-radius: 16px; }
 .rail.collapsed .rail-server.folder:hover .folder-mini { box-shadow: inset 0 0 0 1px var(--line-2); filter: brightness(1.2); }
-.rail.collapsed .rail-server.folder.active .folder-mini { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--teal); }
+/* serveur ouvert rangé dans ce dossier : liseré turquoise À L'INTÉRIEUR de la tuile (ne déborde plus de la colonne) */
+.rail.collapsed .rail-server.folder.active .folder-mini { box-shadow: inset 0 0 0 1.5px var(--teal); background: var(--surface); }
 .rail-folder.drop-target > .rail-folder-head .rail-badge::after { border-radius: 18px; }
 /* Fiche au survol d'un dossier fermé */
 .popover.folder-peek {
@@ -1942,3 +1943,34 @@ input.toggle:checked::after { transform: translateX(18px); background: var(--tea
 .folder-peek .hint { font-size: 11px; color: var(--faint); padding: 2px 2px 0; }
 @keyframes tomo-peek { from { opacity: 0; transform: translate(-4px, -50%); } }
 @media (prefers-reduced-motion: reduce) { .popover.folder-peek { animation: none; } }
+
+/* ---------- Bulles d'aide (remplacent les bulles blanches natives des `title`) ---------- */
+.tip-bubble {
+  position: fixed; z-index: 10000; pointer-events: none; max-width: 260px;
+  padding: 6px 10px; border-radius: 10px;
+  background: var(--surface-3); color: var(--text); border: 1px solid var(--line-2);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .45);
+  font: 500 12px/1.35 var(--font); white-space: pre-line;
+  opacity: 0; transform: translateY(2px); transition: opacity .12s, transform .12s; visibility: hidden;
+}
+.tip-bubble.show { opacity: 1; transform: none; visibility: visible; }
+
+/* ---------- Accueil d'un serveur : le bloc Membres prend toute la hauteur ---------- */
+/* Il reste collé en haut quand la page défile et a sa propre barre de défilement. */
+.content:has(> .home) { container-type: size; }
+.home { --home-pad: clamp(20px, 2.6vw, 44px); padding-bottom: var(--home-pad); }
+.home-main { padding-bottom: 86px; }
+.home-side { position: sticky; top: var(--home-pad); align-self: flex-start; height: calc(100cqh - 2 * var(--home-pad)); min-height: 320px; }
+.home-side .members { flex: 1; min-height: 0; max-height: none; }
+.home-side .members-head { position: sticky; top: -16px; z-index: 1; margin-top: -16px; padding-top: 16px; background: var(--surface); }
+
+/* ---------- Bloc Membres à droite d'un vocal ou d'un fil (bouton « Membres ») ---------- */
+.side-members { width: clamp(280px, 22vw, 360px); flex-shrink: 0; height: 100%; display: flex; flex-direction: column; min-height: 0; }
+.side-members .members { flex: 1; min-height: 0; max-height: none; border-radius: 24px; }
+.side-members .members-head { position: sticky; top: -16px; z-index: 1; margin-top: -16px; padding-top: 16px; background: var(--surface); }
+.side-members .members-search { width: auto; flex: 0 1 140px; min-width: 0; }
+/* Fenêtre étroite : le bloc s'ouvre par-dessus, à droite */
+@media (max-width: 1100px) {
+  .side-members { position: absolute; right: 0; top: 0; bottom: 0; z-index: 20; height: auto; }
+  .side-members .members { box-shadow: inset 0 0 0 1px var(--line-2), -24px 0 60px rgba(0, 0, 0, 0.55); }
+}

@@ -1,7 +1,7 @@
 /**
  * Comptes de jeu et stats (Steam, Riot / League of Legends).
  *
- * - Steam : liaison par la connexion officielle Steam (OpenID 2.0) — tomo ne voit jamais le mot
+ * - Steam : liaison par la connexion officielle Steam (OpenID 2.0) — Tomo ne voit jamais le mot
  *   de passe. Stats : heures jouées ces 2 dernières semaines (profil Steam public nécessaire).
  *   Clé gratuite : https://steamcommunity.com/dev/apikey → STEAM_API_KEY.
  * - Riot : la connexion officielle (RSO) est réservée aux applis validées par Riot ; on lie donc
@@ -217,7 +217,7 @@ export default async function gameStatsRoutes(app: FastifyInstance) {
         .header("Content-Type", "text/html; charset=utf-8")
         .header("Content-Security-Policy", "default-src 'none'; style-src 'unsafe-inline'")
         .send(
-          `<!doctype html><meta charset="utf-8"><title>tomo</title><body style="font-family:system-ui;background:#0E1014;color:#ECEEF3;display:grid;place-items:center;height:100vh;margin:0"><div style="text-align:center"><h1 style="color:${ok ? "#2DD4BF" : "#E5484D"}">${ok ? "Compte Steam lié" : "Liaison impossible"}</h1><p>${text}</p></div></body>`,
+          `<!doctype html><meta charset="utf-8"><title>Tomo</title><body style="font-family:system-ui;background:#0E1014;color:#ECEEF3;display:grid;place-items:center;height:100vh;margin:0"><div style="text-align:center"><h1 style="color:${ok ? "#2DD4BF" : "#E5484D"}">${ok ? "Compte Steam lié" : "Liaison impossible"}</h1><p>${text}</p></div></body>`,
         );
     const q = req.query;
     const pending = pendingSteam.get(q.state ?? "");

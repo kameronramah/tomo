@@ -10,8 +10,8 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 - [x] Choix du micro et de la sortie audio, volume par personne, indicateur « qui parle »
 - [x] Test avec un vrai micro
 
-## V0.2 — tomo : comptes, serveurs, nouvelle interface ✅
-- [x] Nouveau nom (**tomo**), logo et charte, interface selon les maquettes validées
+## V0.2 — Tomo : comptes, serveurs, nouvelle interface ✅
+- [x] Nouveau nom (**Tomo**), logo et charte, interface selon les maquettes validées
 - [x] Comptes sécurisés : scrypt, sessions 15 min + renouvellement à rotation, blocage après 5 échecs, limitation par IP
 - [x] « Rester connecté » via le coffre-fort du système
 - [x] Serveurs créés par les utilisateurs (créateur = admin), aucun serveur par défaut
@@ -45,8 +45,8 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 
 ## V0.8 — Pensé pour le jeu ✅
 - [x] **Suppression de bruit avancée** (RNNoise sur le PC) + porte de bruit + test « s'écouter » avant / après
-- [x] **Mise à jour automatique** depuis GitHub Releases (signée), carte « tomo X est prête », sans canal bêta
-- [x] **Langue de tomo** : français / anglais (Paramètres › Apparence)
+- [x] **Mise à jour automatique** depuis GitHub Releases (signée), carte « Tomo X est prête », sans canal bêta
+- [x] **Langue de Tomo** : français / anglais (Paramètres › Apparence)
 - [x] **Jeu détecté** (liste des programmes) + « joue à … » (profil, membres, cartes des pièces)
 - [x] **Paramètres › Jeux** : par jeu audio spatial, overlay, **pièce automatique**, **mode focus**, masquer ; ajout d'un jeu à la main
 - [x] Proposition de rejoindre les potes qui jouent au même jeu en vocal
@@ -114,11 +114,14 @@ Les versions sont classées par ordre de priorité. Chaque case cochée = foncti
 Repérées en route. À glisser entre deux grosses fonctionnalités.
 
 ### Interface
+- [x] Nom écrit « Tomo » (T majuscule) partout dans les textes, Windows et Mac ; « tomo » en minuscules seulement à côté du logo
+- [x] Icône de Tomo absente dans la recherche Windows / le menu Démarrer après une mise à jour : l'installateur rafraîchit maintenant le cache d'icônes
 - [ ] Refonte v0.12 : nettoyer dans `App.css` les anciens styles devenus inutiles (ancienne connexion `auth-brand`, `feature-list`, `screen-people`…) et, dans `ServerRail.tsx`, le code de l'ancienne colonne large (branches `!collapsed`)
 - [ ] Plan replié : la pastille d'une pièce affiche parfois « 0 » alors que j'y suis (le compteur ne me compte pas tout de suite)
 - [ ] Colonne des serveurs : vraies info-bulles au survol (nom du serveur, qui est en vocal) à la place de l'info-bulle du système
 - [ ] Refonte v0.12 : vérifier en vrai, à plusieurs, le bloc « En ligne, pas en vocal » du plan et le Mac (`:has()` et requêtes de conteneur demandent macOS 13.3+)
-- [x] Désinstaller tomo (Windows) efface la session « rester connecté » : à la réinstallation, il faut redonner ses identifiants (pas pendant une mise à jour)
+- [x] Désinstaller Tomo (Windows) efface la session « rester connecté » : à la réinstallation, il faut redonner ses identifiants (pas pendant une mise à jour)
+- [x] « Ta session a expiré » quand deux Tomo tournent en même temps (ex. appli installée + version de dev) : une seule fenêtre Tomo à la fois, l'appli reprend le jeton renouvelé par un autre Tomo, la version de dev garde sa session à part
 - [ ] Même chose sur Mac : une appli jetée à la corbeille ne prévient pas, le jeton reste dans le Trousseau (piste : effacer la session si l'appli ne trouve plus son dossier de réglages)
 - [x] Bloc « En vocal » : le ping passe à la ligne quand le panneau latéral est étroit
 - [x] Pseudo coupé dans la carte profil en fenêtre étroite (3 boutons à côté)
@@ -127,8 +130,8 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Recherche dans les messages
 - [ ] Mettre à jour les maquettes « Connexion » et « Créer un compte »
 - [ ] Mode coach : barre d'outils en icônes seules quand la fenêtre est petite
-- [ ] Mode coach : partage d'une seule fenêtre → retrouver sa position pour afficher aussi les traits sur l'écran (aujourd'hui : seulement dans tomo)
-- [ ] Mode coach : répondre à une demande depuis l'overlay (aujourd'hui : notification + réponse dans tomo)
+- [ ] Mode coach : partage d'une seule fenêtre → retrouver sa position pour afficher aussi les traits sur l'écran (aujourd'hui : seulement dans Tomo)
+- [ ] Mode coach : répondre à une demande depuis l'overlay (aujourd'hui : notification + réponse dans Tomo)
 - [ ] Quelques textes restent en français en mode anglais (notifications système, messages d'erreur rares du serveur) : à traduire au fil de l'eau
 - [ ] Le mur des légendes affiche le pseudo de l'époque (pas le nom affiché actuel)
 - [ ] Ranger les pièces aussi depuis le plan du serveur (colonne visible en vocal), pas seulement depuis l'accueil
@@ -149,7 +152,7 @@ Repérées en route. À glisser entre deux grosses fonctionnalités.
 - [ ] Partage d'écran : choisir la qualité reçue, changer de profil sans arrêter, vignette « en direct », AV1
 - [x] Sous-titres : ne pas recharger le modèle à chaque entrée dans une pièce
 - [x] Sous-titres plus justes : début des phrases gardé, bruits ignorés, phrases coupées recollées (et traduites en entier), modèle « Automatique » (Précis si la carte graphique suit) + « Très précis »
-- [ ] Sous-titres : reconnaître la langue parlée au lieu de se fier à la langue de tomo de la personne
+- [ ] Sous-titres : reconnaître la langue parlée au lieu de se fier à la langue de Tomo de la personne
 - [ ] Traduction : essayer un modèle plus gros (Opus-MT se trompe sur le langage familier, ex. « il lui reste presque plus de vie »)
 
 ### Jeux

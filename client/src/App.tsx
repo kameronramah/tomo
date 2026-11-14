@@ -124,6 +124,23 @@ export default function App() {
   const [devOpen, setDevOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSection, setSettingsSection] = useState<string | undefined>();
+  // Bloc « Membres » à droite d'un vocal ou d'un fil (fermé par défaut, choix retenu)
+  const [membersOpen, setMembersOpenState] = useState(() => {
+    try {
+      return localStorage.getItem("tomo.membersOpen") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleMembers = () => {
+    const v = !membersOpen;
+    setMembersOpenState(v);
+    try {
+      localStorage.setItem("tomo.membersOpen", v ? "1" : "0");
+    } catch {
+      // pas de mémoire : tant pis
+    }
+  };
   const [planCollapsed, setPlanCollapsedState] = useState(() => {
     try {
       return localStorage.getItem("tomo.planCollapsed") === "1";
@@ -142,6 +159,7 @@ export default function App() {
   // Fenêtre étroite : le plan se replie tout seul ; on peut l'ouvrir par-dessus le reste (planPeek).
   const smallWindow = useMedia("(max-width: 900px)");
   const mediumWindow = useMedia("(max-width: 1100px)");
+  const wideWindow = !useMedia("(max-width: 1500px)");
   const [planPeek, setPlanPeek] = useState(false);
 
   const voiceRef = useRef<Voice | null>(null);
@@ -522,7 +540,7 @@ export default function App() {
             playSound("message");
             void flashIcon();
             const known = dmsRef.current.find((d) => d.userId === key.slice(3));
-            if (known?.request) void notify(`Demande de message de ${m.authorName}`, "Ouvre tomo pour lire et accepter.");
+            if (known?.request) void notify(`Demande de message de ${m.authorName}`, "Ouvre Tomo pour lire et accepter.");
             else void notify(m.authorName, m.content || (m.attachments?.length ? "a envoyé un fichier" : ""));
           }
           return;
@@ -854,7 +872,7 @@ export default function App() {
         {launchUpdate && (
           <div className="col gap-8 center launch-update" role="status">
             <strong>{t("Mise à jour en cours…")}</strong>
-            <span className="muted small">{t("tomo {0} s'installe, puis se relance tout seul.", { 0: launchUpdate.version })}</span>
+            <span className="muted small">{t("Tomo {0} s'installe, puis se relance tout seul.", { 0: launchUpdate.version })}</span>
             <span className="launch-bar" aria-hidden="true">
               <span style={{ width: `${Math.round(launchUpdate.progress * 100)}%` }} />
             </span>
@@ -896,7 +914,8 @@ export default function App() {
   // Plan du serveur : visible dans une pièce vocale ou un fil (pas sur l'accueil, qui montre déjà tout)
   const planVisible = mode === "servers" && !!detail && ((stageVisible && voice?.kind === "room") || !!openChannel);
   // Le chat du salon ouvert prend de la place : le plan se replie plus tôt.
-  const planNarrow = smallWindow || (mediumWindow && chatOpen && stageVisible);
+  // Chat du salon + bloc Membres ouverts : il faut un grand écran pour garder le plan déplié.
+  const planNarrow = smallWindow || (stageVisible && chatOpen && (mediumWindow || (membersOpen && !wideWindow)));
   const planIsCollapsed = planNarrow ? !planPeek : planCollapsed;
 
   // ---- Zone principale ----
@@ -939,6 +958,8 @@ export default function App() {
         onNotice={(text) => setToast({ text })}
         chatOpen={chatOpen}
         onToggleChat={() => setChatOpen(!chatOpen)}
+        membersOpen={membersOpen}
+        onToggleMembers={voice.kind === "room" && planVisible ? toggleMembers : undefined}
         chatUnread={voice.kind === "room" ? unread[`room:${voice.roomId}`] : undefined}
         chat={
           voice.kind === "room" ? (
@@ -1050,6 +1071,15 @@ export default function App() {
             <span className="fil-hash sm">#</span>
             <strong className="grow">{openChannel.name}</strong>
             <span className="muted small">{detail.name}</span>
+            <button
+              className={`btn pill${membersOpen ? " active" : ""}`}
+              onClick={toggleMembers}
+              aria-pressed={membersOpen}
+              aria-label={t("Membres")}
+              title={membersOpen ? t("Masquer les membres") : t("Afficher les membres")}
+            >
+              <Icon name="users" size={16} /> <span className="pill-label">{t("Membres")}</span>
+            </button>
           </header>
         }
       />
@@ -1234,6 +1264,11 @@ export default function App() {
               }
             />
             <main className="content">{main}</main>
+            {membersOpen && (
+              <aside className="side-members" aria-label={t("Membres")}>
+                <MemberList api={api} realtime={realtime} serverId={detail.id} myId={myId} onOpenProfile={setProfileId} onClose={toggleMembers} />
+              </aside>
+            )}
           </div>
         ) : (
           <main className="content">{main}</main>

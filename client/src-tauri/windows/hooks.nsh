@@ -14,3 +14,25 @@
     Pop $0
   ${EndIf}
 !macroend
+
+; Après l'installation (et après chaque mise à jour) : on prévient Windows que l'icône
+; a pu changer. Sans ça, la recherche Windows et le menu Démarrer gardaient une icône
+; générique (cache d'icônes pas rafraîchi quand tomo.exe est remplacé).
+!macro NSIS_HOOK_POSTINSTALL
+  System::Call 'shell32::SHChangeNotify(i 0x08000000, i 0, p 0, p 0)'
+  nsExec::Exec `"$SYSDIR\ie4uinit.exe" -show`
+  Pop $0
+!macroend
+
+; Le nom est passé de « tomo » à « Tomo » (v0.12.2). Windows garde la casse d'un fichier
+; qu'on réécrit : on renomme donc l'ancien raccourci pour que le menu Démarrer affiche « Tomo ».
+!macro NSIS_HOOK_PREINSTALL
+  ${If} ${FileExists} "$SMPROGRAMS\tomo.lnk"
+    Rename "$SMPROGRAMS\tomo.lnk" "$SMPROGRAMS\tomo-renomme.lnk"
+    Rename "$SMPROGRAMS\tomo-renomme.lnk" "$SMPROGRAMS\Tomo.lnk"
+  ${EndIf}
+  ${If} ${FileExists} "$DESKTOP\tomo.lnk"
+    Rename "$DESKTOP\tomo.lnk" "$DESKTOP\tomo-renomme.lnk"
+    Rename "$DESKTOP\tomo-renomme.lnk" "$DESKTOP\Tomo.lnk"
+  ${EndIf}
+!macroend

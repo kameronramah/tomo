@@ -54,7 +54,7 @@ export default function SettingsGames({ api }: { api: Api }) {
         <label className="setting-row">
           <span className="col gap-2 grow">
             <span>{t("Détecter les jeux lancés")}</span>
-            <span className="hint">{t("tomo regarde la liste des programmes ouverts (rien d'autre). Aucun envoi tant que « Montrer à quoi je joue » est coupé.")}</span>
+            <span className="hint">{t("Tomo regarde la liste des programmes ouverts (rien d'autre). Aucun envoi tant que « Montrer à quoi je joue » est coupé.")}</span>
           </span>
           <input type="checkbox" className="toggle" checked={s.games.detect} onChange={(e) => updateSettings("games", { detect: e.target.checked })} />
         </label>
@@ -152,7 +152,7 @@ export default function SettingsGames({ api }: { api: Api }) {
           </button>
         </div>
         <span className="hint">
-          {t("« Pièce auto » : quand tu lances ce jeu, tomo te met dans cette pièce (si tu n'es pas déjà en vocal). « Mode focus » : coupe les notifications sauf tes coéquipiers tant que le jeu tourne. « Masquer » : ne s'affiche jamais dans « joue à … ».")}
+          {t("« Pièce auto » : quand tu lances ce jeu, Tomo te met dans cette pièce (si tu n'es pas déjà en vocal). « Mode focus » : coupe les notifications sauf tes coéquipiers tant que le jeu tourne. « Masquer » : ne s'affiche jamais dans « joue à … ».")}
         </span>
       </div>
     </>

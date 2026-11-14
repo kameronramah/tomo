@@ -4,11 +4,11 @@ import { Icon } from "./Brand";
 import { t } from "../lib/i18n";
 
 /**
- * Pop-up « Une nouvelle version de tomo est prête ».
+ * Pop-up « Une nouvelle version de Tomo est prête ».
  * - Jamais pendant un vocal : elle attend qu'on le quitte.
  * - « Plus tard » la ferme ; elle revient au prochain départ d'un vocal (et la mise à jour est imposée au prochain lancement).
  * - Version imposée par le serveur (« required ») : pas de « Plus tard ».
- * tomo ne redémarre jamais tout seul.
+ * Tomo ne redémarre jamais tout seul.
  */
 export default function UpdateCard({ inVoice, apiBase }: { inVoice: boolean; apiBase: string }) {
   const [up, setUp] = useState<UpdateState>(getUpdateState());
@@ -39,19 +39,19 @@ export default function UpdateCard({ inVoice, apiBase }: { inVoice: boolean; api
 
   return (
     <div className="modal-backdrop">
-      <div className="modal update-modal" role="dialog" aria-modal="true" aria-label={t("Mise à jour de tomo")}>
+      <div className="modal update-modal" role="dialog" aria-modal="true" aria-label={t("Mise à jour de Tomo")}>
         <div className="row gap-12">
           <span className="feature-icon teal">
             <Icon name="download" size={18} />
           </span>
           <div className="col gap-4 grow">
-            <h2 className="title-sm">{required ? t("Mise à jour obligatoire") : t("Une nouvelle version de tomo est prête")}</h2>
+            <h2 className="title-sm">{required ? t("Mise à jour obligatoire") : t("Une nouvelle version de Tomo est prête")}</h2>
             <span className="muted small">
               {required
-                ? t("Ton serveur tomo demande au moins la version {0}. Mets à jour pour continuer.", { 0: up.minVersion })
+                ? t("Ton serveur Tomo demande au moins la version {0}. Mets à jour pour continuer.", { 0: up.minVersion })
                 : web
                   ? t("Recharge la page pour l'utiliser (quelques secondes).")
-                  : t("tomo {0} est téléchargée. L'installation prend quelques secondes, puis tomo se relance.", { 0: up.kind === "ready" ? up.version : "" })}
+                  : t("Tomo {0} est téléchargée. L'installation prend quelques secondes, puis Tomo se relance.", { 0: up.kind === "ready" ? up.version : "" })}
             </span>
           </div>
         </div>

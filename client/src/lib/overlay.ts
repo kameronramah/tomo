@@ -77,7 +77,7 @@ async function ensureWindow(): Promise<OverlayWindow | null> {
       const w = (existing ??
         new WebviewWindow("overlay", {
           url: "/?overlay=1",
-          title: "tomo overlay",
+          title: "Tomo overlay",
           transparent: true,
           decorations: false,
           alwaysOnTop: true,

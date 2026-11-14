@@ -366,7 +366,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
           )}
 
           {recovering && (
-            <p className="hint center">{t("Pas d'adresse e-mail, ou plus accès à ta boîte ? Demande à l'admin de ton serveur tomo : il peut te donner un code de secours.")}</p>
+            <p className="hint center">{t("Pas d'adresse e-mail, ou plus accès à ta boîte ? Demande à l'admin de ton serveur Tomo : il peut te donner un code de secours.")}</p>
           )}
         </form>
 
@@ -381,7 +381,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
         {INSTANCE_EDITABLE &&
           (editInstance ? (
             <span className="auth-instance">
-              <input value={instance} onChange={(e) => setInstance(e.target.value)} aria-label={t("Adresse de l'instance tomo")} />
+              <input value={instance} onChange={(e) => setInstance(e.target.value)} aria-label={t("Adresse de l'instance Tomo")} />
               <button
                 type="button"
                 className="btn small"
@@ -402,7 +402,7 @@ export default function AuthScreen({ api, notice, onSession, onChangeInstance }:
               </button>
             </span>
           ))}
-        <span className="muted small">tomo {APP_VERSION}</span>
+        <span className="muted small">Tomo {APP_VERSION}</span>
       </div>
       </div>
     </div>

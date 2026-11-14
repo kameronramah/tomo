@@ -23,7 +23,7 @@ function write(key: string, value: unknown) {
   }
 }
 
-/** Le serveur tomo (VPS). En dev, l'API locale. VITE_TOMO_INSTANCE permet d'en forcer une autre à la compilation. */
+/** Le serveur Tomo (VPS). En dev, l'API locale. VITE_TOMO_INSTANCE permet d'en forcer une autre à la compilation. */
 const VPS_INSTANCE = "https://tomo.grylix.dev";
 const DEFAULT_INSTANCE =
   (import.meta.env.VITE_TOMO_INSTANCE as string | undefined) ?? (import.meta.env.DEV ? "http://localhost:3000" : VPS_INSTANCE);
@@ -82,7 +82,7 @@ export type Settings = {
   shortcuts: Record<string, string[] | null>;
   appearance: { zoom: number; reducedMotion: boolean; compact: boolean };
   /**
-   * desktop : notifications Windows / Mac quand tomo est en arrière-plan (messages privés, demandes, appels)
+   * desktop : notifications Windows / Mac quand Tomo est en arrière-plan (messages privés, demandes, appels)
    * quiet* : heures calmes (pas de sons ni de notifications sur ce créneau, comme « Ne pas déranger »)
    */
   notifications: {
@@ -95,7 +95,7 @@ export type Settings = {
     quietTo: string;
   };
   clips: { enabled: boolean; seconds: 30 | 60 | 120 };
-  /** Lancement : réduit quand tomo démarre avec l'ordinateur ; fermer = réduire */
+  /** Lancement : réduit quand Tomo démarre avec l'ordinateur ; fermer = réduire */
   startup: { minimized: boolean };
   /** Mise à jour automatique (téléchargée en arrière-plan, installée au redémarrage) */
   updates: { auto: boolean };

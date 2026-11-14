@@ -1,4 +1,4 @@
-# Fabrique les installateurs de tomo (Windows + Mac) sur les machines de GitHub.
+# Fabrique les installateurs de Tomo (Windows + Mac) sur les machines de GitHub.
 #
 # Comment s'en servir :
 #  - Créer une version : changer la version dans client/src-tauri/tauri.conf.json, puis
@@ -67,11 +67,11 @@ jobs:
           args: ${{ matrix.args }}
           # Sans tag (lancement à la main), on garde juste les fichiers dans l'onglet Actions.
           tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
-          releaseName: "tomo ${{ github.ref_name }}"
+          releaseName: "Tomo ${{ github.ref_name }}"
           releaseBody: |
-            **Windows** : télécharge `tomo_…_x64-setup.exe` et lance-le.
-            **Mac** : télécharge `tomo_…_universal.dmg`, ouvre-le et glisse tomo dans Applications.
-            Au premier lancement sur Mac : clic droit sur tomo > Ouvrir (l'app n'est pas encore signée par Apple).
+            **Windows** : télécharge `Tomo_…_x64-setup.exe` et lance-le.
+            **Mac** : télécharge `Tomo_…_universal.dmg`, ouvre-le et glisse Tomo dans Applications.
+            Au premier lancement sur Mac : clic droit sur Tomo > Ouvrir (l'app n'est pas encore signée par Apple).
           # Publiée directement : le lien « releases/latest » et la mise à jour automatique la voient tout de suite.
           releaseDraft: false
           includeUpdaterJson: true

@@ -52,7 +52,7 @@ export default function CoachScreen() {
       {requests.length > 0 && (
         <div className="coach-screen-banner">
           {requests.map((r) => (
-            <div key={r.identity}>{t("{0} veut annoter ton écran : réponds dans tomo", { 0: r.name })}</div>
+            <div key={r.identity}>{t("{0} veut annoter ton écran : réponds dans Tomo", { 0: r.name })}</div>
           ))}
         </div>
       )}

@@ -215,7 +215,7 @@ function Account({ api, user, onLogoutAll }: { api: Api; user: User; onLogoutAll
         <div className="col gap-4">
           <strong className="title-sm">{user.username}</strong>
           <span className="muted small">
-            {t("Pseudo de connexion ·")} {user.isDev ? t("compte de test, outils de test activés") : t("compte tomo")}
+            {t("Pseudo de connexion ·")} {user.isDev ? t("compte de test, outils de test activés") : t("compte Tomo")}
           </span>
         </div>
       </div>
@@ -521,8 +521,8 @@ function Sounds({ s }: { s: S }) {
       </Card>
       <Card title={t("Notifications du système")}>
         <Toggle
-          label={t("Notifications quand tomo est en arrière-plan")}
-          hint={t("Messages privés, demandes de message et d'ami, appels entrants. Rien quand tomo est au premier plan.")}
+          label={t("Notifications quand Tomo est en arrière-plan")}
+          hint={t("Messages privés, demandes de message et d'ami, appels entrants. Rien quand Tomo est au premier plan.")}
           checked={s.notifications.desktop}
           onChange={(v) => updateSettings("notifications", { desktop: v })}
         />
@@ -573,10 +573,10 @@ function Appearance({ s }: { s: S }) {
       <Card title={t("Langue")}>
         <label className="setting-row">
           <span className="grow col gap-2">
-            <span>{t("Langue de tomo")}</span>
-            <span className="hint">{t("tomo redémarre la fenêtre pour changer de langue.")}</span>
+            <span>{t("Langue de Tomo")}</span>
+            <span className="hint">{t("Tomo redémarre la fenêtre pour changer de langue.")}</span>
           </span>
-          <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} aria-label={t("Langue de tomo")}>
+          <select value={lang} onChange={(e) => setLang(e.target.value as Lang)} aria-label={t("Langue de Tomo")}>
             {LANGS.map((l) => (
               <option key={l.id} value={l.id}>
                 {l.label}
@@ -633,8 +633,8 @@ function Startup({ s }: { s: S }) {
       <h1 className="title">{t("Démarrage")}</h1>
       <Card title={t("Au démarrage de l'ordinateur")}>
         <Toggle
-          label={t("Lancer tomo avec Windows / macOS")}
-          hint={t("tomo s'ouvre tout seul quand tu allumes ton PC : tes potes te voient en ligne.")}
+          label={t("Lancer Tomo avec Windows / macOS")}
+          hint={t("Tomo s'ouvre tout seul quand tu allumes ton PC : tes potes te voient en ligne.")}
           checked={!!auto}
           onChange={async (v) => {
             setError(undefined);
@@ -648,7 +648,7 @@ function Startup({ s }: { s: S }) {
         />
         <Toggle
           label={t("Démarrer réduit")}
-          hint={t("Quand tomo se lance avec l'ordinateur, la fenêtre reste dans la barre des tâches.")}
+          hint={t("Quand Tomo se lance avec l'ordinateur, la fenêtre reste dans la barre des tâches.")}
           checked={s.startup.minimized}
           onChange={(v) => updateSettings("startup", { minimized: v })}
         />
@@ -678,7 +678,7 @@ function Network({ api, realtime, voiceRoom }: { api: Api; realtime: Realtime | 
       <Card title={t("Connexion")}>
         <ul className="list">
           <li>
-            <span className="grow">{t("Instance tomo")}</span>
+            <span className="grow">{t("Instance Tomo")}</span>
             <span className="muted">{api.baseUrl.replace(/^https?:\/\//, "")}</span>
           </li>
           <li>
@@ -710,7 +710,7 @@ function About(_: { s: S }) {
       <Card title={t("Mises à jour")}>
         <div className="setting-row">
           <span className="grow col gap-2">
-            <span>{t("tomo")} {APP_VERSION}</span>
+            <span>{t("Tomo")} {APP_VERSION}</span>
             <span className="muted small">
               {!desktop
                 ? t("Version navigateur : toujours à jour.")
@@ -719,12 +719,12 @@ function About(_: { s: S }) {
                   : up.kind === "none"
                     ? t("Tu as la dernière version.")
                     : up.kind === "downloading"
-                      ? t("Téléchargement de tomo {0}… {1} %", { 0: up.version, 1: Math.round(up.progress * 100) })
+                      ? t("Téléchargement de Tomo {0}… {1} %", { 0: up.version, 1: Math.round(up.progress * 100) })
                       : up.kind === "ready"
-                        ? t("tomo {0} est prête : redémarre pour l'installer.", { 0: up.version })
+                        ? t("Tomo {0} est prête : redémarre pour l'installer.", { 0: up.version })
                         : up.kind === "error"
                           ? up.message
-                          : t("tomo vérifie à chaque lancement (la mise à jour s'installe alors d'office) puis toutes les 30 minutes.")}
+                          : t("Tomo vérifie à chaque lancement (la mise à jour s'installe alors d'office) puis toutes les 30 minutes.")}
             </span>
           </span>
           {desktop &&
@@ -739,10 +739,10 @@ function About(_: { s: S }) {
             ))}
         </div>
         <span className="hint">
-          {t("Les mises à jour sont obligatoires : tes potes et toi avez toujours la même version. Pendant l'utilisation, tomo te propose de l'installer, jamais pendant un vocal.")}
+          {t("Les mises à jour sont obligatoires : tes potes et toi avez toujours la même version. Pendant l'utilisation, Tomo te propose de l'installer, jamais pendant un vocal.")}
         </span>
       </Card>
-      <Card title={t("tomo")}>
+      <Card title={t("Tomo")}>
         <p className="text">{t("Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, open source (licence MIT).")}</p>
         <ul className="list">
           <li>
@@ -842,7 +842,7 @@ function Clips({ s, api }: { s: S; api: Api }) {
       <Card title={t("Garder les {0} dernières secondes", { 0: s.clips.seconds })}>
         <Toggle
           label={t("Activer les clips")}
-          hint={t("tomo garde en mémoire les {0} dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C.", { 0: s.clips.seconds })}
+          hint={t("Tomo garde en mémoire les {0} dernières secondes du salon (toutes les voix + ton micro). Rien n'est enregistré tant que tu n'appuies pas sur le bouton Clip ou Ctrl+Maj+C.", { 0: s.clips.seconds })}
           checked={s.clips.enabled}
           onChange={(v) => updateSettings("clips", { enabled: v })}
         />
@@ -860,7 +860,7 @@ function Clips({ s, api }: { s: S; api: Api }) {
           </select>
         </label>
         <span className="hint">
-          {t("Par respect pour tes potes, une petite icône ⏪ s'affiche sur ta tuile tant que les clips sont activés. Les clips restent sur ton PC (dossier Musique\\tomo Clips).")}
+          {t("Par respect pour tes potes, une petite icône ⏪ s'affiche sur ta tuile tant que les clips sont activés. Les clips restent sur ton PC (dossier Musique\\Tomo Clips).")}
         </span>
       </Card>
       <Card title={t("Mes clips · {0}", { 0: clips.length })}>

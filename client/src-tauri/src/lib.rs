@@ -48,7 +48,7 @@ fn secret_delete(key: String) -> Result<(), String> {
     }
 }
 
-/// tomo a-t-il été lancé automatiquement au démarrage de l'ordinateur ?
+/// Tomo a-t-il été lancé automatiquement au démarrage de l'ordinateur ?
 /// (l'appli peut alors se réduire toute seule si l'option « Démarrer réduit » est cochée)
 #[tauri::command]
 fn launched_at_login() -> bool {
@@ -57,7 +57,20 @@ fn launched_at_login() -> bool {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
+    let builder = tauri::Builder::default();
+    // Une seule fenêtre Tomo à la fois : deux Tomo ouverts partageraient la même session et
+    // l'un déconnecterait l'autre. Relancer Tomo ramène donc la fenêtre déjà ouverte.
+    // Pas en dev : la version de dev doit pouvoir tourner à côté de l'appli installée.
+    #[cfg(not(debug_assertions))]
+    let builder = builder.plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        use tauri::Manager;
+        if let Some(w) = app.get_webview_window("main") {
+            let _ = w.show();
+            let _ = w.unminimize();
+            let _ = w.set_focus();
+        }
+    }));
+    builder
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
         // Mise à jour automatique depuis les Releases GitHub (fichiers signés)

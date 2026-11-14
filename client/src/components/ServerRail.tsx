@@ -237,7 +237,7 @@ export default function ServerRail(props: Props) {
     };
     const move = (ev: PointerEvent) => {
       if (!started) {
-        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 5) return;
+        if (Math.hypot(ev.clientX - sx, ev.clientY - sy) < 7) return;
         started = true;
         setPeek(null);
         document.body.classList.add("rail-dragging");
@@ -263,11 +263,14 @@ export default function ServerRail(props: Props) {
       document.body.classList.remove("rail-dragging");
       setDragging(null);
       setOver(null);
-      // le relâcher ne doit pas compter comme un clic (ouvrir le serveur, plier le dossier)
+      // Relâché sur place (main qui a un peu bougé pendant le clic) : c'est un vrai clic,
+      // on le laisse passer (déplier le dossier, ouvrir le serveur).
+      if (!commit || !hit) return;
+      // sinon le relâcher ne doit pas compter comme un clic
       const swallow = (c: MouseEvent) => (c.stopPropagation(), c.preventDefault());
       window.addEventListener("click", swallow, true);
       setTimeout(() => window.removeEventListener("click", swallow, true), 0);
-      if (commit && hit) applyDrop(key, hit);
+      applyDrop(key, hit);
     };
     const up = () => stop(true);
     const cancel = () => stop(false);
@@ -352,7 +355,7 @@ export default function ServerRail(props: Props) {
     return (
       <span className={`folder-mini n${Math.min(items.length, 4)}`} aria-hidden="true">
         {shown.map((s) => (
-          <ServerBadge key={s.id} name={s.name} src={s.iconUrl} size={items.length === 1 ? 26 : 19} />
+          <ServerBadge key={s.id} name={s.name} src={s.iconUrl} size={items.length === 1 ? 24 : 15} />
         ))}
         {extra > 0 && <span className="folder-more">+{extra}</span>}
       </span>

@@ -1,4 +1,4 @@
-//! Clips audio : enregistrés dans le dossier Musique\tomo Clips de l'utilisateur.
+//! Clips audio : enregistrés dans le dossier Musique\Tomo Clips de l'utilisateur.
 
 use serde::Serialize;
 use std::fs;
@@ -15,7 +15,7 @@ fn clips_dir(app: &AppHandle) -> Result<PathBuf, String> {
         .audio_dir()
         .or_else(|_| app.path().document_dir())
         .map_err(|e| e.to_string())?;
-    let dir = base.join("tomo Clips");
+    let dir = base.join("Tomo Clips");
     fs::create_dir_all(&dir).map_err(|e| e.to_string())?;
     Ok(dir)
 }

@@ -4,7 +4,7 @@
  *
  * - Windows : pastille rouge en surimpression sur l'icône de la barre des tâches (« 9+ » au-delà).
  * - Mac : pastille du Dock.
- * - Navigateur : « (4) tomo » dans le titre de l'onglet + point rouge sur l'icône de l'onglet.
+ * - Navigateur : « (4) Tomo » dans le titre de l'onglet + point rouge sur l'icône de l'onglet.
  */
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { inTauri } from "./desktop";
@@ -12,7 +12,7 @@ import { inTauri } from "./desktop";
 const isWindows = typeof navigator !== "undefined" && /Windows/i.test(navigator.userAgent);
 let last = -1;
 
-/** Dessine le logo tomo (deux bulles) dans un canvas, avec ou sans point rouge. */
+/** Dessine le logo Tomo (deux bulles) dans un canvas, avec ou sans point rouge. */
 function drawFavicon(withDot: boolean): string {
   const c = document.createElement("canvas");
   c.width = c.height = 64;
@@ -70,7 +70,7 @@ function setFavicon(href: string) {
 export async function setAppBadge(n: number) {
   if (n === last) return;
   last = n;
-  document.title = n > 0 ? `(${n > 99 ? "99+" : n}) tomo` : "tomo";
+  document.title = n > 0 ? `(${n > 99 ? "99+" : n}) Tomo` : "Tomo";
   setFavicon(drawFavicon(n > 0));
   if (!inTauri) return;
   const win = getCurrentWindow();
@@ -82,7 +82,7 @@ export async function setAppBadge(n: number) {
   }
 }
 
-/** Fait clignoter l'icône une fois (nouveau message privé alors que tomo est en arrière-plan). */
+/** Fait clignoter l'icône une fois (nouveau message privé alors que Tomo est en arrière-plan). */
 export async function flashIcon() {
   if (!inTauri || document.hasFocus()) return;
   try {

@@ -9,7 +9,7 @@
 
 ## 1. Le projet en bref
 
-**tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire). La marque s'écrit **« tomo » en minuscules, partout**.
+**tomo** (« ami » en japonais ; anciennement *Talk2Mates / T2M*) est une appli de **chat vocal pour jouer entre amis**, alternative à Discord avec des fonctionnalités en plus. **100 % gratuite et auto-hébergée** : aucun service payant, tout tourne sur un VPS (celui d'un ami du propriétaire). Le nom s'écrit **« Tomo » avec un T majuscule** dans les textes (interface, Windows / Mac, installateurs, mails, docs) ; **« tomo » en minuscules seulement dans la version stylisée**, à côté du logo (composant `Logo`, barre de titre). Les identifiants techniques restent en minuscules (`com.tomo.app`, `tomo.lang`, adresses, `tomo.exe`…).
 
 Ce qui existe (v0.11) :
 - **Comptes, serveurs** (créateur = admin, dossiers de serveurs), pièces vocales et fils (**rangés par glisser-déposer**), invitations (membre + **invité d'un soir sans compte**).
@@ -106,7 +106,7 @@ Points techniques notables :
 - **Déploiement du serveur** : sur le VPS, un minuteur (`tomo-maj-auto.timer`, toutes les 5 min) lance `~/maj-tomo.sh` dès qu'il y a du nouveau sur `main` : **un `git push` met le serveur et la version web à jour tout seuls**, sans redémarrer LiveKit (le vocal continue). Donc ne pousser sur `main` que du code testé, et **garder l'API compatible avec la version précédente de l'appli** (ne pas supprimer / renommer une route ou un champ encore utilisé ; sinon monter `MIN_CLIENT`). Clé publique dans `tauri.conf.json`, **clé privée** dans `C:\Users\Kameron\.tauri\tomo-updater.key` (jamais dans le dépôt ; secret GitHub `TAURI_SIGNING_PRIVATE_KEY`).
 - **Langues** : `t("texte français")` + `i18n-en.ts` ; changer de langue recharge la fenêtre ; les erreurs du serveur passent aussi par `t()` dans `errorMessage`.
 - Clips : `AudioWorklet` → tampon circulaire → WAV écrit par Rust ; « Mettre au mur » l'envoie comme pièce jointe (type `audio/wav`).
-- « Rester connecté » : jeton de renouvellement dans le coffre-fort du système (crate `keyring`). Le coffre-fort survit à la désinstallation → `client/src-tauri/windows/hooks.nsh` efface les entrées `session:…` à la désinstallation Windows (sauf mise à jour `/UPDATE`). Pas d'équivalent sur Mac.
+- « Rester connecté » : jeton de renouvellement dans le coffre-fort du système (crate `keyring`). **Une seule instance** en release (`tauri-plugin-single-instance`, relancer = ramener la fenêtre) ; si `/auth/refresh` répond 401, `renew()` relit le coffre-fort et reprend le jeton qu'un autre tomo y a rangé. La version de dev utilise la clé `session:dev:…` (sinon elle déconnecte l'appli installée). Le coffre-fort survit à la désinstallation → `client/src-tauri/windows/hooks.nsh` efface les entrées `session:…` à la désinstallation Windows (sauf mise à jour `/UPDATE`). Pas d'équivalent sur Mac.
 
 ---
 

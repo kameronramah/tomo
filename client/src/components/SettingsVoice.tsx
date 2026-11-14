@@ -270,10 +270,10 @@ export function DuckCard({ s }: { s: S }) {
 function GlobalNote() {
   const [ok, setOk] = useState(hotkeysGlobal());
   if (ok) return null;
-  if (!inTauri) return <span className="hint">{t("Version navigateur : les raccourcis ne marchent que quand tomo est au premier plan.")}</span>;
+  if (!inTauri) return <span className="hint">{t("Version navigateur : les raccourcis ne marchent que quand Tomo est au premier plan.")}</span>;
   return (
     <div className="key-conflict">
-      <span>{t("Pour que les raccourcis marchent en jeu, autorise tomo dans Réglages Système › Confidentialité › Surveillance de l'entrée.")}</span>
+      <span>{t("Pour que les raccourcis marchent en jeu, autorise Tomo dans Réglages Système › Confidentialité › Surveillance de l'entrée.")}</span>
       <button className="btn small" onClick={() => void askInputPermission().then(setOk)}>
         {t("Autoriser")}
       </button>
@@ -287,7 +287,7 @@ function GlobalNote() {
 const GROUPS: { id: ActionDef["group"]; label: string }[] = [
   { id: "voice", label: t("Vocal") },
   { id: "game", label: t("En jeu") },
-  { id: "app", label: t("Dans tomo") },
+  { id: "app", label: t("Dans Tomo") },
 ];
 
 export function ShortcutsSection(_: { s: S }) {
@@ -303,7 +303,7 @@ export function ShortcutsSection(_: { s: S }) {
       </div>
       <p className="hint">
         {t("Clique sur une touche pour la changer, puis appuie sur la combinaison voulue (Échap pour annuler).")}{" "}
-        <span className="chip teal">{t("En jeu")}</span> {t("= marche même quand tomo est en arrière-plan, sans bloquer la touche pour le jeu.")}
+        <span className="chip teal">{t("En jeu")}</span> {t("= marche même quand Tomo est en arrière-plan, sans bloquer la touche pour le jeu.")}
       </p>
       <GlobalNote />
       {rec.conflict && <ConflictNote c={rec.conflict} onConfirm={rec.confirm} onCancel={rec.dismiss} />}
@@ -320,7 +320,7 @@ export function ShortcutsSection(_: { s: S }) {
                     <span>{a.label}</span>
                     {a.hint && <span className="hint">{a.hint}</span>}
                   </span>
-                  <span className={`chip ${a.global ? "teal" : ""}`}>{a.global ? t("En jeu") : t("Dans tomo")}</span>
+                  <span className={`chip ${a.global ? "teal" : ""}`}>{a.global ? t("En jeu") : t("Dans Tomo")}</span>
                   <button
                     className={`key-chip${recording ? " rec" : keys ? "" : " empty"}`}
                     onClick={() => (recording ? rec.cancel() : void rec.record(a.id))}
@@ -342,25 +342,25 @@ export function ShortcutsSection(_: { s: S }) {
               <>
                 <li>
                   <span className="grow">{t("Aller au serveur n°1 à 9")}</span>
-                  <span className="chip">{t("Dans tomo")}</span>
+                  <span className="chip">{t("Dans Tomo")}</span>
                   <kbd>Ctrl + 1 … 9</kbd>
                   <span className="icon-btn-space" />
                 </li>
                 <li>
                   <span className="grow">{t("Envoyer un message")}</span>
-                  <span className="chip">{t("Dans tomo")}</span>
+                  <span className="chip">{t("Dans Tomo")}</span>
                   <kbd>{t("Entrée")}</kbd>
                   <span className="icon-btn-space" />
                 </li>
                 <li>
                   <span className="grow">{t("Retour à la ligne dans un message")}</span>
-                  <span className="chip">{t("Dans tomo")}</span>
+                  <span className="chip">{t("Dans Tomo")}</span>
                   <kbd>{t("Maj + Entrée")}</kbd>
                   <span className="icon-btn-space" />
                 </li>
                 <li>
                   <span className="grow">{t("Fermer une fenêtre ou les paramètres")}</span>
-                  <span className="chip">{t("Dans tomo")}</span>
+                  <span className="chip">{t("Dans Tomo")}</span>
                   <kbd>{t("Échap")}</kbd>
                   <span className="icon-btn-space" />
                 </li>

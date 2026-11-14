@@ -1,8 +1,8 @@
 [package]
 name = "tomo"
-version = "0.12.1"
-description = "tomo - le vocal pour jouer entre potes"
-authors = ["tomo contributors"]
+version = "0.12.2"
+description = "Tomo - le vocal pour jouer entre potes"
+authors = ["Tomo contributors"]
 edition = "2024"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -35,6 +35,10 @@ sysinfo = { version = "0.37", default-features = false, features = ["system"] }
 # Lecture de la mémoire partagée « Mumble Link » (position du joueur dans son jeu)
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "0.60", features = ["Win32_Foundation", "Win32_System_Memory", "Win32_Security", "Win32_UI_Input_KeyboardAndMouse"] }
+
+# Une seule fenêtre tomo à la fois (relancer tomo ramène la fenêtre déjà ouverte)
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = "2"
 
 
 # Read the optimization guideline for more details: https://tauri.app/concept/size/#cargo-configuration

@@ -1,4 +1,4 @@
-# 🖥️ Héberger tomo sur un VPS
+# 🖥️ Héberger Tomo sur un VPS
 
 ## Ce qu'il faut demander au propriétaire du VPS
 
@@ -70,11 +70,11 @@ docker compose logs -f
 
 ### Vérifier que ça marche
 - `https://<API_DOMAIN>/health` doit répondre `{"ok":true}`.
-- Dans l'appli tomo : elle se connecte d'office à `https://tomo.grylix.dev` (adresse fixée dans `client/src/lib/prefs.ts`, `VPS_INSTANCE` ; à changer si l'API déménage). Crée ton compte et ton serveur.
+- Dans l'appli Tomo : elle se connecte d'office à `https://tomo.grylix.dev` (adresse fixée dans `client/src/lib/prefs.ts`, `VPS_INSTANCE` ; à changer si l'API déménage). Crée ton compte et ton serveur.
 - Une fois tes potes inscrits, tu peux fermer les inscriptions avec `REGISTRATION=closed` dans `.env` (puis `docker compose up -d`).
 
 ### Ce que tes potes doivent faire
-1. Installer tomo depuis https://github.com/kameronramah/tomo/releases/latest.
+1. Installer Tomo depuis https://github.com/kameronramah/tomo/releases/latest.
 2. Créer leur compte, puis « Rejoindre avec un code » avec le code d'invitation que tu crées dans ton serveur (bouton « Inviter »).
 
 Pour un invité d'un soir, pas besoin de compte : « J'ai un code invité » sur l'écran de connexion.
@@ -86,12 +86,12 @@ Pour un invité d'un soir, pas besoin de compte : « J'ai un code invité » sur
 | `STEAM_API_KEY` | Stats Steam sur les profils (heures jouées) | https://steamcommunity.com/dev/apikey (mettre le domaine de l'API) |
 | `RIOT_API_KEY` | Liaison Riot + stats League of Legends | https://developer.riotgames.com — la clé « development » expire toutes les 24 h : demander une clé « personal » (gratuite) |
 
-Sans ces clés, tomo marche normalement ; seules ces options sont désactivées. Après un changement : `docker compose up -d`.
+Sans ces clés, Tomo marche normalement ; seules ces options sont désactivées. Après un changement : `docker compose up -d`.
 
 > La liaison Steam renvoie le navigateur vers `https://<API_DOMAIN>/links/steam/callback` : l'API doit donc être joignable en HTTPS (c'est le cas avec Caddy).
 
 ### E-mails (mot de passe oublié) avec Brevo, gratuit
-Chaque compte tomo a une adresse e-mail obligatoire. Elle sert à vérifier l'adresse et à envoyer un code quand on oublie son mot de passe. tomo envoie par SMTP : n'importe quel service marche, on utilise **Brevo** (gratuit jusqu'à 300 mails par jour).
+Chaque compte Tomo a une adresse e-mail obligatoire. Elle sert à vérifier l'adresse et à envoyer un code quand on oublie son mot de passe. Tomo envoie par SMTP : n'importe quel service marche, on utilise **Brevo** (gratuit jusqu'à 300 mails par jour).
 1. Crée un compte sur https://www.brevo.com (offre gratuite).
 2. **Authentifie ton domaine** : Paramètres › *Expéditeurs, domaines et IP dédiées* › *Domaines* › *Ajouter un domaine* (ex. `grylix.dev`). Brevo affiche 3 ou 4 enregistrements DNS (code Brevo, DKIM, DMARC) à ajouter chez l'hébergeur du domaine, puis *Authentifier*. Sans ça, les mails tombent en indésirables.
 3. **Ajoute l'expéditeur** : *Expéditeurs* › *Ajouter un expéditeur* : nom `tomo`, adresse `noreply@<ton domaine>` (pas besoin de vraie boîte mail une fois le domaine authentifié).
@@ -108,7 +108,7 @@ Chaque compte tomo a une adresse e-mail obligatoire. Elle sert à vérifier l'ad
 
 Gmail marche aussi (`SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=465`, un « mot de passe d'application ») mais Google bloque souvent les comptes récents.
 
-Sans ces lignes, tomo marche, mais sans vérification d'adresse ni mot de passe oublié par e-mail (il reste le code de secours ci-dessous).
+Sans ces lignes, Tomo marche, mais sans vérification d'adresse ni mot de passe oublié par e-mail (il reste le code de secours ci-dessous).
 
 ### Code de secours (mot de passe oublié sans accès à l'e-mail)
 Sur le serveur, l'admin génère un code à usage unique, valable 1 h, et le donne à la personne. Elle le tape dans « Mot de passe oublié › J'ai déjà un code » :

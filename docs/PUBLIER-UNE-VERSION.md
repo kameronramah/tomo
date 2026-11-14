@@ -1,4 +1,4 @@
-# 📦 Publier une nouvelle version de tomo
+# 📦 Publier une nouvelle version de Tomo
 
 Une version = des installateurs Windows et Mac **toujours à jour** sur GitHub, et la **mise à jour automatique** pour ceux qui ont déjà tomo.
 
@@ -7,10 +7,10 @@ Une version = des installateurs Windows et Mac **toujours à jour** sur GitHub, 
 👉 **https://github.com/kameronramah/tomo/releases/latest**
 
 Ce lien pointe toujours vers la dernière version publiée :
-- **Windows** : `tomo_x.y.z_x64-setup.exe` (double-clic, installation sans droits administrateur) ;
-- **Mac** : `tomo_x.y.z_universal.dmg` (Intel et Apple). Premier lancement : clic droit sur tomo › Ouvrir (l'app n'est pas signée par Apple, c'est payant).
+- **Windows** : `Tomo_x.y.z_x64-setup.exe` (double-clic, installation sans droits administrateur) ;
+- **Mac** : `Tomo_x.y.z_universal.dmg` (Intel et Apple). Premier lancement : clic droit sur Tomo › Ouvrir (l'app n'est pas signée par Apple, c'est payant).
 
-Une fois installé, tomo se met à jour **tout seul** : il vérifie au démarrage puis toutes les 6 heures, télécharge en arrière-plan et propose « Redémarrer ».
+Une fois installé, Tomo se met à jour **tout seul** : il vérifie au démarrage puis toutes les 6 heures, télécharge en arrière-plan et propose « Redémarrer ».
 
 ## À faire une seule fois : la clé de signature des mises à jour
 

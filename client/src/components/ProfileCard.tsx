@@ -51,7 +51,7 @@ export function ProfileView({ p, children }: { p: FullProfile; children?: React.
         {p.bio && <p className="profile-bio">{p.bio}</p>}
         <div className="profile-meta">
           <span>
-            <strong>{t("Sur tomo")}</strong> {t("depuis")} {monthYear(p.createdAt)}
+            <strong>{t("Sur Tomo")}</strong> {t("depuis")} {monthYear(p.createdAt)}
           </span>
           {!p.self && p.commonServers > 0 && (
             <span>

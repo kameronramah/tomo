@@ -24,4 +24,4 @@ if (!row) {
 }
 const code = newCode(row.id, "rescue", 60 * 60_000);
 console.log(`Code de secours pour « ${row.username} » : ${code.slice(0, 3)} ${code.slice(3)}`);
-console.log("Valable 1 heure, une seule fois. À taper dans tomo › Mot de passe oublié › J'ai déjà un code.");
+console.log("Valable 1 heure, une seule fois. À taper dans Tomo › Mot de passe oublié › J'ai déjà un code.");

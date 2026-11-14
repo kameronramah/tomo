@@ -62,6 +62,9 @@ type Props = {
   chatUnread?: number;
   chatOpen?: boolean;
   onToggleChat?: () => void;
+  /** Bloc « Membres » du serveur (affiché à droite par App). */
+  membersOpen?: boolean;
+  onToggleMembers?: () => void;
   /** Enregistrer les 60 dernières secondes. */
   onClip?: () => void;
   /** Mode coach : image annotée à envoyer dans le chat de la pièce */
@@ -209,6 +212,17 @@ export default function Stage(props: Props) {
             >
               <Icon name="chat" size={16} /> <span className="pill-label">{t("Chat")}</span>
               {!props.chatOpen && !!props.chatUnread && <span className="badge">{props.chatUnread}</span>}
+            </button>
+          )}
+          {props.onToggleMembers && (
+            <button
+              className={`btn pill${props.membersOpen ? " active" : ""}`}
+              onClick={props.onToggleMembers}
+              aria-pressed={!!props.membersOpen}
+              aria-label={t("Membres")}
+              title={props.membersOpen ? t("Masquer les membres") : t("Afficher les membres")}
+            >
+              <Icon name="users" size={16} /> <span className="pill-label">{t("Membres")}</span>
             </button>
           )}
           {!props.isCall && (

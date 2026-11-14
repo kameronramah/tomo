@@ -4,7 +4,7 @@
  * Appli de bureau (versions publiées sur GitHub, fichier latest.json signé) :
  *  - au lancement, une mise à jour disponible est IMPOSÉE (écran « Mise à jour en cours… », puis relance) ;
  *  - pendant l'utilisation, on vérifie toutes les 30 min et on télécharge en arrière-plan ; une pop-up
- *    propose d'installer, jamais pendant un vocal ; tomo ne redémarre jamais tout seul.
+ *    propose d'installer, jamais pendant un vocal ; Tomo ne redémarre jamais tout seul.
  * Version navigateur : le serveur écrit /version.json à chaque mise à jour ; si la valeur change,
  *  même pop-up avec « Recharger ». Au prochain chargement, la nouvelle version est utilisée d'office.
  * Si GitHub ou le réseau ne répondent pas, on laisse entrer : rien ne doit bloquer l'appli.
@@ -56,7 +56,7 @@ function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
 // Au lancement (appli de bureau) : mise à jour imposée
 // ---------------------------------------------------------------------------
 /**
- * Renvoie true si une mise à jour s'installe (tomo va se relancer), false sinon (on continue).
+ * Renvoie true si une mise à jour s'installe (Tomo va se relancer), false sinon (on continue).
  * onProgress reçoit la version et l'avancement (0..1) pour l'écran « Mise à jour en cours… ».
  */
 export async function updateAtLaunch(onProgress: (version: string, progress: number) => void): Promise<boolean> {

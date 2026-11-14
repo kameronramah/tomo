@@ -4,7 +4,7 @@
  * Dans l'appli de bureau, l'état des touches vient de la partie Rust (`input.rs`) : les raccourcis
  * marchent aussi quand le jeu est au premier plan, sans bloquer la touche. Seules les touches
  * des raccourcis sont surveillées. Dans le navigateur (ou sur Mac sans l'autorisation),
- * on se rabat sur le clavier de la fenêtre : ça ne marche alors que quand tomo est au premier plan.
+ * on se rabat sur le clavier de la fenêtre : ça ne marche alors que quand Tomo est au premier plan.
  */
 import { getSettings, onSettingsChange, updateSettings } from "./prefs";
 import { t } from "./i18n";

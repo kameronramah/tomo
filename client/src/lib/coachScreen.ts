@@ -41,7 +41,7 @@ async function ensureWindow(): Promise<Win | null> {
       const w = ((await WebviewWindow.getByLabel("coach-screen")) ??
         new WebviewWindow("coach-screen", {
           url: "/?coach=1",
-          title: "tomo coach",
+          title: "Tomo coach",
           transparent: true,
           decorations: false,
           alwaysOnTop: true,
@@ -83,10 +83,10 @@ export function startCoachScreen(room: Room) {
   let lastSent = "";
   let knownRequests = new Set<string>();
 
-  // Nouvelle demande : notification système (tomo est souvent derrière le jeu)
+  // Nouvelle demande : notification système (Tomo est souvent derrière le jeu)
   const offReq = coach.on(() => {
     for (const r of coach.requests)
-      if (!knownRequests.has(r.identity)) void notify(`${r.name} veut annoter ton écran`, "Ouvre tomo pour autoriser ou refuser.");
+      if (!knownRequests.has(r.identity)) void notify(`${r.name} veut annoter ton écran`, "Ouvre Tomo pour autoriser ou refuser.");
     knownRequests = new Set(coach.requests.map((r) => r.identity));
   });
 

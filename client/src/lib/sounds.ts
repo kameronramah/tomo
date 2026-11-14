@@ -1,5 +1,5 @@
 /**
- * Sons d'interface de tomo, synthétisés à la volée (aucun fichier audio, aucune licence).
+ * Sons d'interface de Tomo, synthétisés à la volée (aucun fichier audio, aucune licence).
  *
  * Direction artistique commune : des « bulles » douces, entre le marimba et le verre.
  * - Toutes les notes viennent de la même gamme (ré majeur pentatonique) → les sons vont ensemble.

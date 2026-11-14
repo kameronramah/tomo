@@ -31,12 +31,12 @@ export type CodeKind = "verify" | "reset";
 
 const TEXTS: Record<CodeKind, (code: string, username: string) => { subject: string; intro: string; outro: string }> = {
   verify: (code, username) => ({
-    subject: `Ton code tomo : ${code}`,
+    subject: `Ton code Tomo : ${code}`,
     intro: `Voici le code pour vérifier l'adresse e-mail du compte « ${username} ».`,
-    outro: "Il marche 30 minutes. Si tu n'as pas créé de compte tomo, ignore ce mail.",
+    outro: "Il marche 30 minutes. Si tu n'as pas créé de compte Tomo, ignore ce mail.",
   }),
   reset: (code, username) => ({
-    subject: `Ton code tomo : ${code}`,
+    subject: `Ton code Tomo : ${code}`,
     intro: `Quelqu'un (sans doute toi) veut changer le mot de passe du compte « ${username} ».`,
     outro: "Ce code marche 30 minutes. Si ce n'est pas toi, ignore ce mail : ton mot de passe ne change pas.",
   }),
@@ -57,15 +57,15 @@ export async function sendCode(to: string, kind: CodeKind, code: string, usernam
   const spaced = `${code.slice(0, 3)} ${code.slice(3)}`;
   try {
     await transporter()!.sendMail({
-      from: `tomo <${config.mail.from}>`,
+      from: `Tomo <${config.mail.from}>`,
       to,
       subject: t.subject,
-      text: `${t.intro}\n\nTon code : ${spaced}\n\n${t.outro}\n\n— tomo`,
+      text: `${t.intro}\n\nTon code : ${spaced}\n\n${t.outro}\n\n— Tomo`,
       html: `<div style="font-family:Inter,Arial,sans-serif;max-width:480px;color:#141413">
 <p>${esc(t.intro)}</p>
 <p style="font-size:28px;font-weight:700;letter-spacing:4px;margin:24px 0">${spaced}</p>
 <p style="color:#555">${esc(t.outro)}</p>
-<p style="color:#888">— tomo</p></div>`,
+<p style="color:#888">— Tomo</p></div>`,
     });
     return true;
   } catch (err) {

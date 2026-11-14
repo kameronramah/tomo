@@ -41,14 +41,16 @@ export type ScreenPreset = {
   layers: VideoPreset[];
 };
 
+// Rangés du plus léger au plus lourd ; « Jeu fluide » reste le choix par défaut (voir presetById).
 export const SCREEN_PRESETS: ScreenPreset[] = [
+  { id: "eco", label: t("Économie"), detail: t("720p · 30 i/s · petite connexion"), width: 1280, height: 720, fps: 30, bitrate: 2_500_000, codec: "h264", hint: "motion", layers: [ScreenSharePresets.h720fps15] },
   { id: "game", label: t("Jeu fluide"), detail: t("1080p · 60 i/s"), width: 1920, height: 1080, fps: 60, bitrate: 8_000_000, codec: "h264", hint: "motion", layers: [ScreenSharePresets.h720fps15, ScreenSharePresets.h1080fps30] },
   { id: "sharp", label: t("Netteté"), detail: t("1440p · 30 i/s · texte, code"), width: 2560, height: 1440, fps: 30, bitrate: 10_000_000, codec: "h264", hint: "detail", layers: [new VideoPreset(1280, 720, 2_500_000, 30), new VideoPreset(1920, 1080, 5_000_000, 30)] },
-  { id: "max", label: "Maximum", detail: "4K · 30 i/s · grosse connexion", width: 3840, height: 2160, fps: 30, bitrate: 18_000_000, codec: "h264", hint: "detail", layers: [new VideoPreset(1920, 1080, 5_000_000, 30), new VideoPreset(2560, 1440, 9_000_000, 30)] },
-  { id: "eco", label: t("Économie"), detail: t("720p · 30 i/s · petite connexion"), width: 1280, height: 720, fps: 30, bitrate: 2_500_000, codec: "h264", hint: "motion", layers: [ScreenSharePresets.h720fps15] },
+  { id: "max", label: t("Maximum"), detail: t("4K · 30 i/s · grosse connexion"), width: 3840, height: 2160, fps: 30, bitrate: 18_000_000, codec: "h264", hint: "detail", layers: [new VideoPreset(1920, 1080, 5_000_000, 30), new VideoPreset(2560, 1440, 9_000_000, 30)] },
 ];
 
-export const presetById = (id: string) => SCREEN_PRESETS.find((p) => p.id === id) ?? SCREEN_PRESETS[0];
+export const presetById = (id: string) =>
+  SCREEN_PRESETS.find((p) => p.id === id) ?? SCREEN_PRESETS.find((p) => p.id === "game")!;
 
 export async function startScreenShare(room: Room, presetId: ScreenPresetId, withAudio: boolean) {
   const p = presetById(presetId);

@@ -4,7 +4,7 @@
  * Pour chaque voix reçue : on écoute à 16 kHz, on découpe en phrases (silence de 0,6 s ; passé
  * 7 s, à la première respiration ; 15 s au plus), en gardant le tout début de la phrase (les
  * 300 ms d'avant le premier son), puis le fil de calcul (captions.worker.ts) transcrit avec
- * Whisper dans la langue de la personne (attribut LiveKit `lang`, sa langue de tomo).
+ * Whisper dans la langue de la personne (attribut LiveKit `lang`, sa langue de Tomo).
  * Une phrase coupée en route est recollée à la suivante : c'est la phrase entière qui est
  * affichée, et traduite si la personne parle une autre langue que moi (français ⇄ anglais).
  * Rien n'est envoyé ailleurs ; la transcription s'efface quand on quitte la pièce.

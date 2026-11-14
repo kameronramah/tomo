@@ -53,12 +53,15 @@ export default function MemberList({
   serverId,
   myId,
   onOpenProfile,
+  onClose,
 }: {
   api: Api;
   realtime: Realtime | null;
   serverId: string;
   myId: string;
   onOpenProfile: (userId: string) => void;
+  /** Bouton pour masquer le bloc (vocal, fils). */
+  onClose?: () => void;
 }) {
   const people = useServerPeople(api, realtime, serverId);
   const [q, setQ] = useState("");
@@ -102,6 +105,11 @@ export default function MemberList({
           <Icon name="search" size={14} />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("Chercher")} aria-label={t("Chercher un membre")} />
         </label>
+        {onClose && (
+          <button className="icon-btn sm" onClick={onClose} aria-label={t("Masquer les membres")} title={t("Masquer les membres")}>
+            <Icon name="x" size={16} />
+          </button>
+        )}
       </div>
       {inVoice.length > 0 && <span className="section-title">{t("En vocal ·")} {inVoice.length}</span>}
       {inVoice.map(row)}

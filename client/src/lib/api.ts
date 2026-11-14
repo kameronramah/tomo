@@ -220,7 +220,9 @@ export class Api {
   constructor(public readonly baseUrl: string) {}
 
   private get storeKey() {
-    return `session:${this.baseUrl}`;
+    // La version de dev garde sa session à part : sinon, en tournant à côté de l'appli installée,
+    // elle renouvellerait le même jeton et déconnecterait l'appli installée.
+    return import.meta.env.DEV ? `session:dev:${this.baseUrl}` : `session:${this.baseUrl}`;
   }
 
   async request<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
@@ -235,17 +237,18 @@ export class Api {
         body: body !== undefined ? JSON.stringify(body) : undefined,
       });
     } catch {
-      throw new ApiError(t("Serveur tomo injoignable. Vérifie ta connexion."), 0);
+      throw new ApiError(t("Serveur Tomo injoignable. Vérifie ta connexion."), 0);
     }
     if (res.status === 401 && retry && this.refresh && !path.startsWith("/auth/")) {
       const renewed = await this.renew();
       if (renewed === "ok") return this.request<T>(method, path, body, false);
       // Serveur momentanément injoignable (mise à jour, coupure réseau) : on garde la session.
-      if (renewed === "later") throw new ApiError(t("Serveur tomo injoignable. Vérifie ta connexion."), 0);
+      if (renewed === "later") throw new ApiError(t("Serveur Tomo injoignable. Vérifie ta connexion."), 0);
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      if (res.status === 401 && !path.startsWith("/auth/login")) this.onSessionLost?.();
+      // /auth/refresh : c'est renew() qui décide (il peut encore rattraper la session).
+      if (res.status === 401 && !path.startsWith("/auth/login") && path !== "/auth/refresh") this.onSessionLost?.();
       throw new ApiError(data.error ?? `Erreur serveur (${res.status})`, res.status);
     }
     return this.absolutize(data) as T;
@@ -274,12 +277,33 @@ export class Api {
     if (!this.refreshing) {
       this.refreshing = (async () => {
         try {
-          const r = await this.request<AuthResult>("POST", "/auth/refresh", { refreshToken: this.refresh }, false);
-          await this.setTokens(r);
-          return "ok" as const;
+          for (let attempt = 0; ; attempt++) {
+            const sent = this.refresh;
+            try {
+              const r = await this.request<AuthResult>("POST", "/auth/refresh", { refreshToken: sent }, false);
+              await this.setTokens(r);
+              return "ok" as const;
+            } catch (e) {
+              // Jeton refusé : un autre Tomo (ou une autre fenêtre) l'a peut-être déjà renouvelé et a rangé
+              // le nouveau dans le coffre-fort. On le reprend plutôt que de déconnecter.
+              if (attempt === 0 && this.remember && e instanceof ApiError && e.status === 401) {
+                const saved = await secretGet(this.storeKey);
+                if (saved && saved !== sent) {
+                  this.refresh = saved;
+                  continue;
+                }
+              }
+              throw e;
+            }
+          }
         } catch (e) {
           if (e instanceof ApiError && (e.status === 400 || e.status === 401)) {
-            await this.clear();
+            // On n'efface le coffre-fort que s'il contient encore notre jeton refusé
+            // (pas celui, peut-être encore bon, qu'un autre Tomo vient d'y ranger).
+            const mine = this.refresh;
+            this.access = null;
+            this.refresh = null;
+            if ((await secretGet(this.storeKey)) === mine) await secretDelete(this.storeKey);
             return "lost" as const;
           }
           return "later" as const;
@@ -317,6 +341,7 @@ export class Api {
       await new Promise((r) => setTimeout(r, 2000));
       renewed = await this.renew();
     }
+    if (renewed === "lost") this.onSessionLost?.();
     if (renewed !== "ok") return null;
     const user = await this.request<User>("GET", "/me");
     return { kind: "user", user };

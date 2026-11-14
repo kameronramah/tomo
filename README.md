@@ -1,26 +1,26 @@
-# tomo
+# Tomo
 
 > Le vocal pensé pour jouer entre potes. Gratuit, auto-hébergé, léger.
 > *(anciennement Talk2Mates / T2M)*
 
-**tomo** (« ami » en japonais) est une application de chat vocal pour les groupes d'amis qui jouent ensemble. Une alternative à Discord, avec des choses en plus : audio spatial (y compris la position lue dans le jeu), invités d'un soir sans compte, clips des dernières secondes, sous-titres et traduction calculés sur le PC, overlay en jeu, mode coach, mur des légendes…
+**Tomo** (« ami » en japonais) est une application de chat vocal pour les groupes d'amis qui jouent ensemble. Une alternative à Discord, avec des choses en plus : audio spatial (y compris la position lue dans le jeu), invités d'un soir sans compte, clips des dernières secondes, sous-titres et traduction calculés sur le PC, overlay en jeu, mode coach, mur des légendes…
 
 Le projet est **100 % gratuit** : pas d'abonnement, pas de service payant, tout tourne sur votre propre serveur.
 
 ---
 
-## ⬇️ Installer tomo
+## ⬇️ Installer Tomo
 
 👉 **[Télécharger la dernière version](https://github.com/kameronramah/tomo/releases/latest)**
 
-- **Windows** : `tomo_…_x64-setup.exe`, double-clic (pas besoin d'être administrateur).
-- **Mac** (Intel et Apple) : `tomo_…_universal.dmg`, glisser tomo dans Applications. Premier lancement : clic droit › Ouvrir (l'app n'est pas signée par Apple).
+- **Windows** : `Tomo_…_x64-setup.exe`, double-clic (pas besoin d'être administrateur).
+- **Mac** (Intel et Apple) : `Tomo_…_universal.dmg`, glisser Tomo dans Applications. Premier lancement : clic droit › Ouvrir (l'app n'est pas signée par Apple).
 
-Ensuite, tomo **se met à jour tout seul** (Paramètres › À propos). L'appli se connecte d'office au serveur tomo (`https://tomo.grylix.dev`) : rien à régler.
+Ensuite, Tomo **se met à jour tout seul** (Paramètres › À propos). L'appli se connecte d'office au serveur Tomo (`https://tomo.grylix.dev`) : rien à régler.
 
 ---
 
-## ✨ Ce que fait tomo (v0.9)
+## ✨ Ce que fait Tomo (v0.9)
 
 **Vocal**
 - Pièces vocales : qui parle (mesuré en direct), volume par personne, couper micro / son, choix du micro et de la sortie.

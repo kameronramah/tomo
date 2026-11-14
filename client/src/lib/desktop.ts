@@ -29,7 +29,7 @@ export function inQuietHours(now = new Date()): boolean {
 let permission: boolean | null = null;
 
 /**
- * Notification système, seulement si tomo n'est pas au premier plan, hors « Ne pas déranger »
+ * Notification système, seulement si Tomo n'est pas au premier plan, hors « Ne pas déranger »
  * et hors heures calmes.
  */
 export async function notify(title: string, body: string) {

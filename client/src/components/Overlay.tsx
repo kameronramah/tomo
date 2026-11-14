@@ -22,7 +22,7 @@ export default function Overlay() {
     <div className={`ov${bottom ? " bottom" : ""}${right ? " right" : ""}`} style={{ opacity: p.opacity }}>
       {s.coach?.map((name) => (
         <div key={name} className="ov-card ov-coach">
-          <strong>{name}</strong> {t("veut annoter ton écran : réponds dans tomo")}
+          <strong>{name}</strong> {t("veut annoter ton écran : réponds dans Tomo")}
         </div>
       ))}
       {p.voices && (
