@@ -19,11 +19,12 @@ type Props = {
   /** Quitter le partage (on reste dans la pièce). */
   onClose: () => void;
   onStopMine: () => void;
+  onSwitchMine?: () => void;
   onCapture?: (png: Blob) => void;
 };
 
 /** Grand écran pour regarder le partage choisi (passer à un autre, plein écran, qualité reçue). */
-export default function ScreenView({ room, shares, selected, onSelect, onClose, onStopMine, onCapture }: Props) {
+export default function ScreenView({ room, shares, selected, onSelect, onClose, onStopMine, onSwitchMine, onCapture }: Props) {
   const [videoEl, setVideoEl] = useState<HTMLVideoElement | null>(null);
   const [full, setFull] = useState(false);
   const [stats, setStats] = useState<{ w: number; h: number; fps: number }>({ w: 0, h: 0, fps: 0 });
@@ -133,6 +134,11 @@ export default function ScreenView({ room, shares, selected, onSelect, onClose, 
               aria-label={t("Volume du son partagé par {0}", { 0: who })}
             />
           </label>
+        )}
+        {current.isLocal && onSwitchMine && (
+          <button className="btn small" onClick={onSwitchMine} title={t("Changer d'écran ou de fenêtre")}>
+            {t("Changer d'écran")}
+          </button>
         )}
         {current.isLocal && (
           <button className="btn small danger" onClick={onStopMine}>

@@ -23,6 +23,7 @@ import {
   setWatching,
   startScreenShare,
   stopScreenShare,
+  switchScreenSource,
   watchingOf,
   type ScreenPresetId,
 } from "../lib/screen";
@@ -144,6 +145,7 @@ export default function Stage(props: Props) {
   const [deviceError, setDeviceError] = useState<string>();
   const [shareOpen, setShareOpen] = useState(false);
   const [shareBusy, setShareBusy] = useState(false);
+  const [switchOpen, setSwitchOpen] = useState(false);
   const [cameras, setCameras] = useState<MediaDeviceInfo[]>([]);
   const [camBusy, setCamBusy] = useState(false);
 
@@ -177,7 +179,35 @@ export default function Stage(props: Props) {
     }
   }
 
+  /** Changer d'écran / de fenêtre sans couper le partage. */
+  async function switchShare(preset: ScreenPresetId, audio: boolean, sourceId?: string) {
+    setShareOpen(false);
+    setSwitchOpen(false);
+    updateSettings("screen", { preset, audio });
+    setShareBusy(true);
+    try {
+      await switchScreenSource(room, preset, audio, sourceId);
+    } catch (err) {
+      const msg = screenShareError(err);
+      if (msg) props.onNotice?.(msg);
+    } finally {
+      setShareBusy(false);
+      refresh();
+    }
+  }
+
+  /** Bouton « Changer d'écran » : sélecteur de Tomo (appli Windows) ou fenêtre du système. */
+  function askSwitch() {
+    setShareOpen(false);
+    if (nativeCaptureAvailable()) setSwitchOpen(true);
+    else {
+      const { preset, audio } = getSettings().screen;
+      void switchShare(preset, audio);
+    }
+  }
+
   async function stopShare() {
+    setShareOpen(false);
     await stopScreenShare(room).catch(() => {});
     refresh();
   }
@@ -384,11 +414,12 @@ export default function Stage(props: Props) {
           onSelect={watch}
           onClose={() => setWatchingId(null)}
           onStopMine={stopShare}
+          onSwitchMine={askSwitch}
           onCapture={props.onCapture}
         />
       ) : (
       <>
-      <ShareStrip room={room} shares={shares} onWatch={watch} onStopMine={stopShare} />
+      <ShareStrip room={room} shares={shares} onWatch={watch} onStopMine={stopShare} onSwitchMine={askSwitch} />
       {showMap && engine ? (
         <MapView room={room} engine={engine} />
       ) : (
@@ -541,15 +572,36 @@ export default function Stage(props: Props) {
           <div className="relative">
             <button
               className={`dock-btn${sharing ? " live" : ""}`}
-              onClick={() => (sharing ? stopShare() : setShareOpen(!shareOpen))}
+              onClick={() => setShareOpen(!shareOpen)}
               disabled={shareBusy}
-              aria-label={sharing ? t("Arrêter le partage d'écran") : t("Partager mon écran")}
-              title={sharing ? t("Arrêter le partage d'écran") : t("Partager mon écran")}
+              aria-label={sharing ? t("Mon partage d'écran") : t("Partager mon écran")}
+              title={sharing ? t("Mon partage d'écran") : t("Partager mon écran")}
               aria-expanded={shareOpen}
             >
               <Icon name="screenShare" size={22} />
             </button>
-            {shareOpen && nativeCaptureAvailable() && (
+            {shareOpen && sharing && (
+              <>
+                <div className="click-away" onClick={() => setShareOpen(false)} />
+                <div className="popover share-menu" role="dialog" aria-label={t("Mon partage d'écran")}>
+                  <button className="btn primary" onClick={askSwitch}>
+                    <Icon name="screenShare" size={16} /> {t("Changer d'écran ou de fenêtre")}
+                  </button>
+                  <button className="btn danger" onClick={stopShare}>
+                    {t("Arrêter le partage")}
+                  </button>
+                </div>
+              </>
+            )}
+            {switchOpen && sharing && (
+              <SharePicker
+                initialPreset={screenPrefs.preset}
+                initialAudio={screenPrefs.audio}
+                onStart={switchShare}
+                onClose={() => setSwitchOpen(false)}
+              />
+            )}
+            {shareOpen && !sharing && nativeCaptureAvailable() && (
               <SharePicker
                 initialPreset={screenPrefs.preset}
                 initialAudio={screenPrefs.audio}
@@ -557,7 +609,7 @@ export default function Stage(props: Props) {
                 onClose={() => setShareOpen(false)}
               />
             )}
-            {shareOpen && !nativeCaptureAvailable() && (
+            {shareOpen && !sharing && !nativeCaptureAvailable() && (
               <>
                 <div className="click-away" onClick={() => setShareOpen(false)} />
                 <ShareMenu

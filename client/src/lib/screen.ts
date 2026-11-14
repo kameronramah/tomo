@@ -13,6 +13,7 @@
  */
 import {
   AudioPresets,
+  LocalAudioTrack,
   Room,
   RoomEvent,
   ScreenSharePresets,
@@ -75,15 +76,7 @@ export async function startScreenShare(room: Room, presetId: ScreenPresetId, wit
       await stopNativeCapture();
       throw err;
     }
-    // Salon quitté ou partage retiré d'une autre façon : on arrête aussi la capture.
-    const off = () => {
-      if (room.localParticipant.isScreenShareEnabled && room.state === "connected") return;
-      room.off(RoomEvent.LocalTrackUnpublished, off);
-      room.off(RoomEvent.Disconnected, off);
-      void stopNativeCapture();
-    };
-    room.on(RoomEvent.LocalTrackUnpublished, off);
-    room.on(RoomEvent.Disconnected, off);
+    stopNativeWithShare(room);
     return;
   }
   const capture: ScreenShareCaptureOptions = {
@@ -95,6 +88,89 @@ export async function startScreenShare(room: Room, presetId: ScreenPresetId, wit
     surfaceSwitching: "include",
   };
   await room.localParticipant.setScreenShareEnabled(true, capture, screenPublishOptions(p));
+}
+
+/** Salon quitté ou partage retiré d'une autre façon : on arrête aussi la capture maison. */
+function stopNativeWithShare(room: Room) {
+  const off = () => {
+    if (room.localParticipant.isScreenShareEnabled && room.state === "connected") return;
+    room.off(RoomEvent.LocalTrackUnpublished, off);
+    room.off(RoomEvent.Disconnected, off);
+    void stopNativeCapture();
+  };
+  room.on(RoomEvent.LocalTrackUnpublished, off);
+  room.on(RoomEvent.Disconnected, off);
+}
+
+/**
+ * Changer d'écran ou de fenêtre sans couper le partage : on remplace l'image (et le son) dans le
+ * flux déjà envoyé, les potes ne voient pas le partage s'arrêter.
+ * `sourceId` : source choisie dans le sélecteur de Tomo ; sans lui, fenêtre de choix du système
+ * (si on l'annule, l'ancien partage continue).
+ */
+export async function switchScreenSource(room: Room, presetId: ScreenPresetId, withAudio: boolean, sourceId?: string) {
+  const me = room.localParticipant;
+  const video = me.getTrackPublication(Track.Source.ScreenShare)?.videoTrack;
+  if (!video) return startScreenShare(room, presetId, withAudio, sourceId);
+  const p = presetById(presetId);
+  const oldVideo = video.mediaStreamTrack;
+  let newAudio: MediaStreamTrack | undefined;
+
+  if (sourceId) {
+    // La capture maison n'en fait qu'une à la fois et arrête l'ancienne en démarrant : on met
+    // d'abord une piste d'attente, sinon LiveKit verrait l'ancienne finir et couperait le partage.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const waiting = new (window as any).MediaStreamTrackGenerator({ kind: "video" }) as MediaStreamTrack;
+    await video.replaceTrack(waiting, true);
+    try {
+      const cap = await startNativeCapture({
+        source: sourceId,
+        fps: p.fps,
+        maxWidth: p.width,
+        maxHeight: p.height,
+        onClosed: () => void stopScreenShare(room).catch(() => {}),
+      });
+      cap.track.contentHint = p.hint;
+      await video.replaceTrack(cap.track, true);
+    } catch (err) {
+      await stopScreenShare(room).catch(() => {});
+      throw err;
+    } finally {
+      waiting.stop();
+    }
+    oldVideo.stop();
+    stopNativeWithShare(room);
+  } else {
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: { width: { ideal: p.width }, height: { ideal: p.height }, frameRate: { ideal: p.fps } },
+      audio: withAudio ? { echoCancellation: false, noiseSuppression: false, autoGainControl: false } : false,
+      systemAudio: withAudio ? "include" : "exclude",
+      selfBrowserSurface: "exclude",
+      surfaceSwitching: "include",
+    } as DisplayMediaStreamOptions);
+    const [newVideo] = stream.getVideoTracks();
+    [newAudio] = stream.getAudioTracks();
+    newVideo.contentHint = p.hint;
+    await video.replaceTrack(newVideo, true);
+    oldVideo.stop();
+    await stopNativeCapture(); // si l'ancienne source venait de la capture maison
+  }
+
+  const audio = me.getTrackPublication(Track.Source.ScreenShareAudio)?.audioTrack;
+  if (newAudio && audio) {
+    const oldAudio = audio.mediaStreamTrack;
+    await audio.replaceTrack(newAudio, true);
+    oldAudio.stop();
+  } else if (newAudio) {
+    await me.publishTrack(new LocalAudioTrack(newAudio, undefined, true), {
+      source: Track.Source.ScreenShareAudio,
+      audioPreset: AudioPresets.musicHighQualityStereo,
+      dtx: false,
+      red: false,
+    });
+  } else if (audio) {
+    await me.unpublishTrack(audio, true);
+  }
 }
 
 /** Réglages d'envoi d'un partage (aussi utilisés par le bot de test, pour qu'il se comporte pareil). */

@@ -1,7 +1,7 @@
 # CLAUDE.md — Contexte du projet tomo
 
 > Fichier lu automatiquement par Claude Code. Il résume tout ce qu'il faut savoir pour reprendre le projet.
-> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.13.0**.
+> Dépôt : https://github.com/kameronramah/tomo (anciennement `T2M`, renommé le 8 novembre 2026) — branche `main`. Version actuelle : **0.13.1**.
 > Copie locale du propriétaire : `C:\Users\Kameron\Documents\tomo`.
 > Installer la dernière version : https://github.com/kameronramah/tomo/releases/latest
 

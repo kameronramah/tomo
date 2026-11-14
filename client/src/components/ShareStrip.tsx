@@ -11,6 +11,7 @@ type Props = {
   shares: Share[];
   onWatch: (identity: string) => void;
   onStopMine: () => void;
+  onSwitchMine?: () => void;
 };
 
 const nameOf = (p: Participant) => p.name || p.identity;
@@ -31,7 +32,7 @@ function Viewers({ people }: { people: Participant[] }) {
 }
 
 /** Mon partage : petit aperçu (piste locale, rien n'est téléchargé) + qui me regarde. */
-function MyShare({ room, share, onWatch, onStop }: { room: Room; share: Share; onWatch: () => void; onStop: () => void }) {
+function MyShare({ room, share, onWatch, onStop, onSwitch }: { room: Room; share: Share; onWatch: () => void; onStop: () => void; onSwitch?: () => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const track = share.publication.track;
   useEffect(() => {
@@ -67,6 +68,11 @@ function MyShare({ room, share, onWatch, onStop }: { room: Room; share: Share; o
           <button className="btn pill small" onClick={onWatch}>
             <Icon name="eye" size={15} /> {t("Aperçu")}
           </button>
+          {onSwitch && (
+            <button className="btn pill small" onClick={onSwitch} title={t("Changer d'écran ou de fenêtre")}>
+              <Icon name="screenShare" size={15} /> {t("Changer d'écran")}
+            </button>
+          )}
           <button className="btn pill small leave" onClick={onStop}>
             <Icon name="x" size={15} /> {t("Arrêter le partage")}
           </button>
@@ -77,7 +83,7 @@ function MyShare({ room, share, onWatch, onStop }: { room: Room; share: Share; o
 }
 
 /** Les partages d'écran en cours : on choisit celui qu'on veut regarder (rien ne s'ouvre tout seul). */
-export default function ShareStrip({ room, shares, onWatch, onStopMine }: Props) {
+export default function ShareStrip({ room, shares, onWatch, onStopMine, onSwitchMine }: Props) {
   usePeople(shares.map((s) => userIdOf(s.participant.identity)));
   if (!shares.length) return null;
   return (
@@ -88,7 +94,7 @@ export default function ShareStrip({ room, shares, onWatch, onStopMine }: Props)
       <div className="share-cards">
         {shares.map((s) => {
           const id = s.participant.identity;
-          if (s.isLocal) return <MyShare key={id} room={room} share={s} onWatch={() => onWatch(id)} onStop={onStopMine} />;
+          if (s.isLocal) return <MyShare key={id} room={room} share={s} onWatch={() => onWatch(id)} onStop={onStopMine} onSwitch={onSwitchMine} />;
           const name = nameOf(s.participant);
           const game = getPerson(userIdOf(id))?.game?.name;
           const detail = [game, s.hasAudio ? t("avec le son") : null].filter(Boolean).join(" · ");
